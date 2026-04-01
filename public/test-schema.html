@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="output">Loading...</div>
+    <script>
+        async function run() {
+            try {
+                // Fetch the env vars from window - we hardcode it for this test
+                const supabaseUrl = 'https://ngduavjaiqyiqjzelfpl.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZHVhdmphaXF5aXFqemVsZnBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTIwNzMsImV4cCI6MjA4NzE4ODA3M30.zuNey1ADktf5reHYO8Op8z_P9fN40tvBPqRMM5lD4fE';
+                const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+                
+                const { data, error } = await supabase.from('profiles').select('*').limit(1);
+                if (error) {
+                    document.getElementById('output').innerText = 'ERROR: ' + JSON.stringify(error);
+                } else {
+                    document.getElementById('output').innerText = 'COLUMNS: ' + Object.keys(data[0]).join(', ');
+                }
+            } catch (err) {
+                document.getElementById('output').innerText = 'EXC: ' + err.message;
+            }
+        }
+        run();
+    </script>
+</body>
+</html>

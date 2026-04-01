@@ -1,0 +1,61 @@
+project_id = "ngduavjaiqyiqjzelfpl"
+
+[functions.jeenie]
+verify_jwt = false
+
+[functions.admin-delete-user]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false
+
+[functions.create-razorpay-order]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.create-batch-order]
+verify_jwt = false
+
+[functions.sync-batch-payment]
+verify_jwt = false
+
+[functions.extract-pdf-questions]
+verify_jwt = false
+
+[functions.bulk-import]
+verify_jwt = false
+
+[functions.fetch-and-import]
+verify_jwt = false
+
+[functions.classify-difficulty]
+verify_jwt = false
+
+[functions.deduplicate-questions]
+verify_jwt = false
+
+[functions.fix-chapter-distribution]
+verify_jwt = false
+
+[functions.calculate-topic-mastery]
+verify_jwt = false
+
+[functions.generate-study-plan]
+verify_jwt = false
+
+[functions.generate-vapid-keys]
+verify_jwt = false
+
+[functions.reset-streak-freeze]
+verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false
+
+[functions.voice-to-text]
+verify_jwt = false

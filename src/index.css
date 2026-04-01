@@ -1,0 +1,392 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Apple-inspired color system */
+    --background: 0 0% 100%;
+    --foreground: 216 15% 12%;
+    
+    /* Primary: #013062 */
+    --primary: 213 100% 19%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 213 100% 95%;
+    --primary-glow: 213 100% 40%;
+    
+    /* Surface colors */
+    --surface: 0 0% 98%;
+    --surface-elevated: 0 0% 100%;
+    
+    /* Secondary: #e6eeff */  
+    --secondary: 213 100% 95%;
+    --secondary-foreground: 213 100% 19%;
+    
+    /* Muted/Gray: #e9e9e9 */
+    --muted: 0 0% 91%;
+    --muted-foreground: 216 10% 40%;
+    
+    /* Accent */
+    --accent: 213 100% 95%;
+    --accent-foreground: 213 100% 19%;
+    
+    /* Card */
+    --card: 0 0% 100%;
+    --card-foreground: 216 15% 12%;
+    
+    /* Popover - SOLID background for dropdowns */
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 15% 12%;
+
+    /* Sidebar tokens (used by admin sidebar/drawer) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 216 15% 12%;
+    --sidebar-primary: 213 100% 19%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 213 100% 95%;
+    --sidebar-accent-foreground: 213 100% 19%;
+    --sidebar-border: 216 15% 90%;
+    --sidebar-ring: 213 100% 19%;
+    
+    /* Border */
+    --border: 216 15% 92%;
+    --input: 216 15% 92%;
+    --ring: 213 100% 19%;
+    
+    /* Apple-style radius */
+    --radius: 1rem;
+    --radius-sm: 0.75rem;
+    --radius-lg: 1.25rem;
+    
+    /* Glassmorphism */
+    --glass-bg: 255 255 255 / 0.7;
+    --glass-border: 255 255 255 / 0.2;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 213 100% 3%;
+    --foreground: 0 0% 98%;
+    --primary: 213 100% 19%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 213 30% 10%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 213 30% 15%;
+    --muted-foreground: 213 15% 60%;
+    --accent: 213 30% 15%;
+    --accent-foreground: 0 0% 98%;
+    --card: 213 50% 5%;
+    --card-foreground: 0 0% 98%;
+    /* Popover - SOLID dark background for dropdowns */
+    --popover: 213 50% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Sidebar tokens (dark mode) */
+    --sidebar-background: 213 50% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 213 100% 60%;
+    --sidebar-primary-foreground: 213 100% 6%;
+    --sidebar-accent: 213 30% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 213 30% 18%;
+    --sidebar-ring: 213 100% 60%;
+    --border: 213 30% 18%;
+    --input: 213 30% 18%;
+    --ring: 213 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Saira', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  /* Apple-inspired animations */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  
+  /* Glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(1, 48, 98, 0.1);
+  }
+  
+  /* Apple-style shadows */
+  .shadow-apple {
+    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-apple-lg {
+    box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.12), 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Smooth transitions */
+  .transition-apple {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Apple-inspired keyframes */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+  }
+  50% { 
+    transform: translateY(-20px) rotate(2deg); 
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  /* Safe area padding for iOS notch/home indicator */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  /* Touch-friendly tap targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Mobile text sizing */
+  .text-mobile-xs {
+    font-size: 0.65rem;
+    line-height: 1rem;
+  }
+  
+  .text-mobile-sm {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+  
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Hardware acceleration for smooth animations */
+  .gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Smaller base font on mobile */
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Apple-inspired gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #013062 0%, #0147a3 100%);
+}
+
+.gradient-surface {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.gradient-overlay {
+  background: linear-gradient(135deg, rgba(1, 48, 98, 0.05) 0%, rgba(230, 238, 255, 0.2) 100%);
+}
+/* 🧠 JEEnie AI Formula & Highlight Theme */
+.jeenius-formula {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--primary));
+  font-family: 'Saira', monospace;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 1px 3px hsl(var(--primary) / 0.1);
+  transition: all 0.25s ease-in-out;
+}
+
+.jeenius-formula:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--primary));
+  box-shadow: 0 0 6px hsl(var(--primary) / 0.25);
+  transform: scale(1.02);
+}
+
+/* Bold & Important Text */
+.jeenius-strong {
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+
+/* 💬 Chat bubbles */
+.jeenius-ai {
+  background-color: hsl(var(--background));
+  color: hsl(var(--primary));
+  border-left: 4px solid hsl(var(--primary));
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin: 0.5rem 0;
+  box-shadow: 0 2px 6px hsl(var(--primary) / 0.05);
+}
+
+.jeenius-user {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  text-align: right;
+}
+
+/* Italic or subtle emphasis */
+.jeenius-em {
+  color: hsl(var(--primary));
+  font-style: italic;
+}
+
+/* KaTeX Math Display Styles */
+.math-display {
+  display: inline;
+}
+
+.math-display .katex {
+  font-size: 1.1em;
+}
+
+.math-display .katex-display {
+  margin: 0.5em 0;
+}
+
+.katex-error {
+  color: inherit;
+  font-family: inherit;
+}
