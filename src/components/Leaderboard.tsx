@@ -179,52 +179,28 @@ const Leaderboard: React.FC = () => {
 
   useEffect(() => {
     fetchLeaderboard(true);
-    
-    // Set up real-time subscription for leaderboard updates
-    const channel = supabase
-      .channel('leaderboard-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        () => {
-          logger.info('Profile changed, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'question_attempts'
-        },
-        () => {
-          logger.info('New question attempt, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'points_log'
-        },
-        () => {
-          logger.info('Points changed, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .subscribe();
+  }, [fetchLeaderboard]);
+
+  useEffect(() => {
+    // Polling is intentionally preferred here over broad realtime table listeners,
+    // which can trigger request storms for every connected client at scale.
+    const interval = setInterval(() => {
+      fetchLeaderboard(false);
+    }, 45000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLeaderboard(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [timeFilter, user, fetchLeaderboard]);
+  }, [fetchLeaderboard]);
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;

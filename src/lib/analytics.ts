@@ -1,9 +1,14 @@
 // Analytics service for tracking user events and page views
 // Supports multiple analytics providers (Google Analytics, Mixpanel, custom)
 
-import mixpanel from 'mixpanel-browser';
-
 type EventProperties = Record<string, string | number | boolean | undefined>;
+type MixpanelClient = {
+  init: (token: string, config?: Record<string, unknown>) => void;
+  track: (eventName: string, properties?: EventProperties) => void;
+  identify: (userId: string) => void;
+  people: { set: (traits: Record<string, unknown>) => void };
+  reset: () => void;
+};
 
 interface AnalyticsConfig {
   googleAnalyticsId?: string;
@@ -17,6 +22,27 @@ class Analytics {
   };
   private initialized = false;
   private mixpanelEnabled = false;
+  private mixpanel: MixpanelClient | null = null;
+  private mixpanelInitPromise: Promise<void> | null = null;
+
+  private ensureMixpanelLoaded(token: string): Promise<void> {
+    if (this.mixpanelInitPromise) {
+      return this.mixpanelInitPromise;
+    }
+
+    this.mixpanelInitPromise = (async () => {
+      const module = await import('mixpanel-browser');
+      const mixpanel = module.default as unknown as MixpanelClient;
+      mixpanel.init(token, {
+        api_host: 'https://api.mixpanel.com',
+        debug: import.meta.env.DEV,
+      });
+      this.mixpanel = mixpanel;
+      this.mixpanelEnabled = true;
+    })();
+
+    return this.mixpanelInitPromise;
+  }
 
   init(config: Partial<AnalyticsConfig> = {}) {
     this.config = {
@@ -36,11 +62,7 @@ class Analytics {
 
     // Initialize Mixpanel if token is provided
     if (this.config.mixpanelToken) {
-      mixpanel.init(this.config.mixpanelToken, {
-        api_host: 'https://api.mixpanel.com',
-        debug: import.meta.env.DEV,
-      });
-      this.mixpanelEnabled = true;
+      void this.ensureMixpanelLoaded(this.config.mixpanelToken);
     }
 
     this.initialized = true;
@@ -78,8 +100,8 @@ class Analytics {
       });
     }
 
-    if (this.mixpanelEnabled) {
-      mixpanel.track('page_view', {
+    if (this.mixpanelEnabled && this.mixpanel) {
+      this.mixpanel.track('page_view', {
         page_path: path,
         page_title: title,
       });
@@ -94,8 +116,8 @@ class Analytics {
       window.gtag('event', eventName, properties);
     }
 
-    if (this.mixpanelEnabled) {
-      mixpanel.track(eventName, properties);
+    if (this.mixpanelEnabled && this.mixpanel) {
+      this.mixpanel.track(eventName, properties);
     }
   }
 
@@ -201,12 +223,12 @@ class Analytics {
       });
     }
 
-    if (this.mixpanelEnabled) {
-      mixpanel.identify(userId);
+    if (this.mixpanelEnabled && this.mixpanel) {
+      this.mixpanel.identify(userId);
       if (traits && Object.keys(traits).length > 0) {
         try {
           // Mixpanel people properties for richer profiles
-          mixpanel.people.set(traits as Record<string, any>);
+          this.mixpanel.people.set(traits as Record<string, unknown>);
         } catch {
           // Ignore if people API is not available
         }
@@ -223,8 +245,8 @@ class Analytics {
       });
     }
 
-    if (this.mixpanelEnabled) {
-      mixpanel.reset();
+    if (this.mixpanelEnabled && this.mixpanel) {
+      this.mixpanel.reset();
     }
   }
 }

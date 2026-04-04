@@ -7,7 +7,15 @@ interface ExamConfig {
   exam_date: string;
 }
 
+interface CachedExamDates {
+  ts: number;
+  data: ExamConfig[];
+}
+
 export type ExamType = 'JEE' | 'NEET' | 'Scholarship' | 'Foundation' | string;
+
+const EXAM_DATES_CACHE_KEY = 'jeenie_exam_dates_cache_v1';
+const EXAM_DATES_TTL_MS = 30 * 60 * 1000;
 
 export const useExamDates = () => {
   const [jeeDate, setJeeDate] = useState('2026-05-24');
@@ -18,50 +26,51 @@ export const useExamDates = () => {
 
   useEffect(() => {
     loadExamDates();
-
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel('exam_dates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'exam_config'
-        },
-        () => {
-          loadExamDates();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const loadExamDates = async () => {
     try {
+      const rawCache = localStorage.getItem(EXAM_DATES_CACHE_KEY);
+      if (rawCache) {
+        const parsed = JSON.parse(rawCache) as CachedExamDates;
+        const isFresh = Date.now() - parsed.ts < EXAM_DATES_TTL_MS;
+        if (isFresh && Array.isArray(parsed.data)) {
+          applyExamDates(parsed.data);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from('exam_config')
         .select('exam_name, exam_date');
 
       if (error) throw error;
 
-      const jee = data?.find((e: ExamConfig) => e.exam_name === 'JEE');
-      const neet = data?.find((e: ExamConfig) => e.exam_name === 'NEET');
-      const scholarship = data?.find((e: ExamConfig) => e.exam_name === 'Scholarship');
-      const foundation = data?.find((e: ExamConfig) => e.exam_name === 'Foundation');
-
-      if (jee) setJeeDate(jee.exam_date);
-      if (neet) setNeetDate(neet.exam_date);
-      if (scholarship) setScholarshipDate(scholarship.exam_date);
-      if (foundation) setFoundationDate(foundation.exam_date);
+      if (Array.isArray(data)) {
+        applyExamDates(data);
+        localStorage.setItem(EXAM_DATES_CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data,
+        } as CachedExamDates));
+      }
     } catch (error) {
       logger.error('Error loading exam dates:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyExamDates = (data: ExamConfig[]) => {
+    const jee = data.find((e) => e.exam_name === 'JEE');
+    const neet = data.find((e) => e.exam_name === 'NEET');
+    const scholarship = data.find((e) => e.exam_name === 'Scholarship');
+    const foundation = data.find((e) => e.exam_name === 'Foundation');
+
+    if (jee) setJeeDate(jee.exam_date);
+    if (neet) setNeetDate(neet.exam_date);
+    if (scholarship) setScholarshipDate(scholarship.exam_date);
+    if (foundation) setFoundationDate(foundation.exam_date);
   };
 
   const getExamDate = (examType: ExamType): string => {

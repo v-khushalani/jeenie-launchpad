@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ['favicon.ico', 'logo.png', 'og-image.jpg'],
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}'],
+        globIgnores: ['**/pdf.worker.min-*.js', '**/pdf.worker.min-*.mjs', '**/mixpanel.module-*.js'],
       },
       manifest: {
         name: 'JEEnie AI - AI-Powered JEE Preparation',
@@ -62,9 +63,20 @@ export default defineConfig(({ mode }) => ({
     // Enable minification using esbuild (faster than terser, saves memory)
     minify: true,
     // Chunk size warnings
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 900,
     // Source maps only in development
     sourcemap: mode === 'development',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'supabase-vendor': ['@supabase/supabase-js', '@tanstack/react-query'],
+          'charts-vendor': ['recharts'],
+          'pdf-vendor': ['pdfjs-dist', 'jspdf', 'html2canvas'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+        },
+      },
+    },
   },
   esbuild: {
     drop: mode === 'production' ? ['console', 'debugger'] : [],

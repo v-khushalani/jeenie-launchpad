@@ -17,8 +17,31 @@ import { generateTestCode, generateQRCodeSVG } from "@/utils/qrCode";
 import { logger } from "@/utils/logger";
 import { parseGrade, isFoundationGrade } from "@/utils/gradeParser";
 import { getBatchForStudent, getAllowedSubjects, getFilteredSubjects } from "@/utils/batchConfig";
+import { getExamPattern } from "@/config/examPatterns";
 
 const APP_URL = window.location.origin;
+
+type GroupTestType = "custom" | "jee_mains_full" | "mht_cet_full";
+
+const GROUP_TEST_PRESETS: Record<Exclude<GroupTestType, "custom">, {
+  label: string;
+  description: string;
+  patternName: string;
+  examAliases: string[];
+}> = {
+  jee_mains_full: {
+    label: "JEE Mains Full Syllabus",
+    description: "75 questions, 180 min, real JEE Mains split",
+    patternName: "JEE Mains",
+    examAliases: ["JEE"],
+  },
+  mht_cet_full: {
+    label: "MHT-CET Full Syllabus",
+    description: "150 questions, 180 min, real CET split",
+    patternName: "MHT-CET",
+    examAliases: ["MHT-CET", "MH-CET", "MH_CET"],
+  },
+};
 
 const CreateGroupTestPage = () => {
   const navigate = useNavigate();
@@ -30,6 +53,7 @@ const CreateGroupTestPage = () => {
   const [chapters, setChapters] = useState<Record<string, string[]>>({});
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [selectedChapters, setSelectedChapters] = useState<{ subject: string; chapter: string }[]>([]);
+  const [groupTestType, setGroupTestType] = useState<GroupTestType>("custom");
   const [questionCount, setQuestionCount] = useState(25);
   const [duration, setDuration] = useState(60);
   const [title, setTitle] = useState("");
@@ -51,6 +75,17 @@ const CreateGroupTestPage = () => {
   useEffect(() => {
     if (profile) fetchSubjectsAndChapters();
   }, [profile?.target_exam, profile?.grade]);
+
+  useEffect(() => {
+    if (groupTestType === "custom") return;
+
+    const preset = GROUP_TEST_PRESETS[groupTestType];
+    const pattern = getExamPattern(preset.patternName);
+    setQuestionCount(pattern.totalQuestions);
+    setDuration(pattern.duration);
+    setSelectedSubjects([]);
+    setSelectedChapters([]);
+  }, [groupTestType]);
 
   const loadProfile = async () => {
     if (!user) return;
@@ -112,47 +147,85 @@ const CreateGroupTestPage = () => {
 
   const handleCreate = async () => {
     if (!user) return;
-    if (selectedChapters.length === 0 && selectedSubjects.length === 0) {
+    if (groupTestType === "custom" && selectedChapters.length === 0 && selectedSubjects.length === 0) {
       toast.error("Please select at least one subject or chapter");
       return;
     }
 
     setLoading(true);
     try {
-      // Fetch questions
       const targetExam = profile?.target_exam || "JEE";
       const userGrade = parseGrade(profile?.grade || 12);
       const batch = await getBatchForStudent(user.id, userGrade, targetExam);
 
-      let query = supabase.from("questions").select("id");
-      if (batch?.id) query = query.eq("batch_id", batch.id);
+      let questionIds: string[] = [];
 
-      if (selectedChapters.length > 0) {
-        query = query.in("chapter", selectedChapters.map((ch) => ch.chapter));
-      } else if (selectedSubjects.length > 0) {
-        query = query.in("subject", selectedSubjects);
+      if (groupTestType === "custom") {
+        let query = supabase.from("questions").select("id");
+        if (batch?.id) query = query.eq("batch_id", batch.id);
+
+        if (selectedChapters.length > 0) {
+          query = query.in("chapter", selectedChapters.map((ch) => ch.chapter));
+        } else if (selectedSubjects.length > 0) {
+          query = query.in("subject", selectedSubjects);
+        }
+
+        const { data: questions, error } = await query.limit(300);
+        if (error) throw error;
+
+        if (!questions || questions.length === 0) {
+          toast.error("No questions available for the selected chapters");
+          setLoading(false);
+          return;
+        }
+
+        const shuffled = questions.sort(() => Math.random() - 0.5);
+        questionIds = shuffled
+          .slice(0, Math.min(questionCount, questions.length))
+          .map((q) => q.id);
+      } else {
+        const preset = GROUP_TEST_PRESETS[groupTestType];
+        const pattern = getExamPattern(preset.patternName);
+        const selectedBySubject: string[] = [];
+
+        for (const subject of pattern.subjects) {
+          const perSubjectConfig = pattern.subjectConfig[subject];
+
+          const { data: subjectQuestions, error: subjectError } = await supabase
+            .from("questions")
+            .select("id")
+            .in("exam", preset.examAliases)
+            .eq("subject", subject)
+            .limit(perSubjectConfig.questionsPerSubject * 3);
+
+          if (subjectError) throw subjectError;
+
+          const shuffledSubject = (subjectQuestions || []).sort(() => Math.random() - 0.5);
+          const picked = shuffledSubject.slice(0, perSubjectConfig.questionsPerSubject).map((q) => q.id);
+          selectedBySubject.push(...picked);
+        }
+
+        if (selectedBySubject.length === 0) {
+          toast.error("No questions available for selected full syllabus pattern");
+          setLoading(false);
+          return;
+        }
+
+        questionIds = selectedBySubject;
+
+        if (questionIds.length < pattern.totalQuestions) {
+          toast.info(`Only ${questionIds.length} questions available for ${pattern.name}. Test will start with available questions.`);
+        }
       }
-
-      const { data: questions, error } = await query.limit(200);
-      if (error) throw error;
-
-      if (!questions || questions.length === 0) {
-        toast.error("No questions available for the selected chapters");
-        setLoading(false);
-        return;
-      }
-
-      // Shuffle and pick
-      const shuffled = questions.sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, Math.min(questionCount, questions.length));
-      const questionIds = selected.map((q) => q.id);
 
       const code = generateTestCode();
       const testTitle =
         title.trim() ||
-        (selectedChapters.length > 0
-          ? `${selectedChapters.map((ch) => ch.chapter).join(", ")} - Group Test`
-          : `${selectedSubjects.join(", ")} - Group Test`);
+        (groupTestType === "custom"
+          ? (selectedChapters.length > 0
+              ? `${selectedChapters.map((ch) => ch.chapter).join(", ")} - Group Test`
+              : `${selectedSubjects.join(", ")} - Group Test`)
+          : `${GROUP_TEST_PRESETS[groupTestType].label} - Group Test`);
 
       const expiresAt = expiryHours ? new Date(Date.now() + expiryHours * 60 * 60 * 1000).toISOString() : null;
 
@@ -369,6 +442,43 @@ const CreateGroupTestPage = () => {
                 />
               </div>
 
+              {/* Group test type */}
+              <div>
+                <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-white text-xs font-bold">1</div>
+                  Select Group Test Type
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div
+                    className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                      groupTestType === "custom" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                    onClick={() => setGroupTestType("custom")}
+                  >
+                    <div className="font-semibold text-sm">Custom (Subject/Chapter)</div>
+                    <div className="text-xs text-muted-foreground mt-1">Your own mix of chapters and duration</div>
+                  </div>
+                  <div
+                    className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                      groupTestType === "jee_mains_full" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                    onClick={() => setGroupTestType("jee_mains_full")}
+                  >
+                    <div className="font-semibold text-sm">JEE Mains Full Syllabus</div>
+                    <div className="text-xs text-muted-foreground mt-1">Actual pattern, full paper simulation</div>
+                  </div>
+                  <div
+                    className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                      groupTestType === "mht_cet_full" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                    onClick={() => setGroupTestType("mht_cet_full")}
+                  >
+                    <div className="font-semibold text-sm">MHT-CET Full Syllabus</div>
+                    <div className="text-xs text-muted-foreground mt-1">Actual CET pattern, full paper simulation</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Settings */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div>
@@ -377,6 +487,7 @@ const CreateGroupTestPage = () => {
                     className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={questionCount}
                     onChange={(e) => setQuestionCount(Number(e.target.value))}
+                    disabled={groupTestType !== "custom"}
                   >
                     <option value={10}>10 Questions</option>
                     <option value={15}>15 Questions</option>
@@ -390,6 +501,7 @@ const CreateGroupTestPage = () => {
                     className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value))}
+                    disabled={groupTestType !== "custom"}
                   >
                     <option value={15}>15 min</option>
                     <option value={30}>30 min</option>
@@ -416,10 +528,22 @@ const CreateGroupTestPage = () => {
                 </div>
               </div>
 
+              {groupTestType !== "custom" && (
+                <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+                  <p className="text-sm font-medium text-primary">
+                    {GROUP_TEST_PRESETS[groupTestType].description}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Questions and duration are auto-set to match actual exam pattern.
+                  </p>
+                </div>
+              )}
+
               {/* Subject Selection */}
+              {groupTestType === "custom" && (
               <div>
                 <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-white text-xs font-bold">1</div>
+                  <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-white text-xs font-bold">2</div>
                   Select Subjects
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -446,12 +570,13 @@ const CreateGroupTestPage = () => {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* Chapter Selection */}
-              {availableChapters.length > 0 && (
+              {groupTestType === "custom" && availableChapters.length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-purple-600 flex items-center justify-center text-white text-xs font-bold">2</div>
+                    <div className="w-6 h-6 rounded-lg bg-purple-600 flex items-center justify-center text-white text-xs font-bold">3</div>
                     Select Chapters
                     <Badge variant="secondary" className="ml-auto text-xs">
                       {selectedChapters.length} selected
@@ -491,7 +616,7 @@ const CreateGroupTestPage = () => {
               <Button
                 className="w-full bg-gradient-to-r from-primary to-blue-600 text-white font-semibold py-3 rounded-xl"
                 onClick={handleCreate}
-                disabled={loading || (selectedSubjects.length === 0 && selectedChapters.length === 0)}
+                disabled={loading || (groupTestType === "custom" && selectedSubjects.length === 0 && selectedChapters.length === 0)}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
