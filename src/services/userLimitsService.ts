@@ -71,7 +71,7 @@ export class UserLimitsService {
       .select('id')
       .eq('user_id', userId)
       .eq('status', 'completed')
-      .gte('completed_at', monthStart)
+      .gte('created_at', monthStart)
       .limit(FREE_LIMITS.testsPerMonth + 1);
 
     if (error) {

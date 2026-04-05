@@ -185,7 +185,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border/50 max-h-[calc(100dvh-var(--app-header-height))] overflow-y-auto">
+          <div className="md:hidden py-4 border-t border-border/50 max-h-[calc(100vh-4rem)] overflow-y-auto">
             <nav className="flex flex-col gap-1">
               {navItems.map((item) => (
                 <button

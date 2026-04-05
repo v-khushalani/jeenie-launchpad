@@ -78,10 +78,10 @@ const WhyUsPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="mobile-app-shell-header-only bg-background">
+    <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="px-4 sm:px-6 py-4 sm:py-6 overflow-y-auto h-[calc(100dvh-var(--app-header-height))]">
+      <div className="pt-20 pb-16 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto space-y-10">
           <section className="relative overflow-hidden rounded-3xl gradient-primary p-7 sm:p-10 text-primary-foreground">
             <div className="absolute -top-16 -right-16 w-52 h-52 rounded-full bg-white/10 blur-2xl" />

@@ -74,7 +74,7 @@ const AIDoubtSolver: React.FC<AIDoubtSolverProps> = ({
       const interval = setInterval(() => {
         const stats = aiQueue.getStats();
         setQueuePosition(stats.queueLength > 0 ? stats.queueLength : null);
-      }, 2000);
+      }, 500);
       return () => clearInterval(interval);
     } else {
       setQueuePosition(null);

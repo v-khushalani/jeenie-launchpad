@@ -48,7 +48,7 @@ export const useUserStats = () => {
       // Fetch Profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, current_streak, daily_goal, total_points, total_questions_solved, overall_accuracy")
+        .select("*")
         .eq("id", user.id)
         .single();
 
@@ -63,9 +63,7 @@ export const useUserStats = () => {
         .from("question_attempts")
         .select("is_correct, created_at, question_id, mode")
         .eq("user_id", user.id)
-        .eq("mode", "practice")
-        .order("created_at", { ascending: false })
-        .limit(3000);
+        .eq("mode", "practice");
 
       if (attemptsError) {
         logger.error("Attempts fetch error:", attemptsError);
@@ -109,14 +107,9 @@ export const useUserStats = () => {
         })
         .filter(Boolean) as any[];
 
-      const fallbackTotalQuestions = attemptsWithDate.length;
-      const totalQuestions = Number(profileData.total_questions_solved) || fallbackTotalQuestions;
-      const accuracy = Number(profileData.overall_accuracy)
-        ? Math.round(Number(profileData.overall_accuracy))
-        : (fallbackTotalQuestions > 0
-          ? Math.round((attemptsWithDate.filter(a => a.is_correct).length / fallbackTotalQuestions) * 100)
-          : 0);
-      const correctAnswers = Math.round((totalQuestions * accuracy) / 100);
+      const totalQuestions = attemptsWithDate.length;
+      const correctAnswers = attemptsWithDate.filter(a => a.is_correct).length;
+      const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
 
       // Today's stats — use daily_progress table for accurate count
       let todayTotal = 0;

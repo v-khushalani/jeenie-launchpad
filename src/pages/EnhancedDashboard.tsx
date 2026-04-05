@@ -1,5 +1,5 @@
 // src/pages/EnhancedDashboard.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,9 +22,10 @@ import Header from "@/components/Header";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingTutorial from "@/components/OnboardingTutorial";
+import ExamCountdown from "@/components/ExamCountdown";
+import PeerComparison from "@/components/PeerComparison";
 import { useUserStats } from "@/hooks/useUserStats";
 import { useStreakData } from "@/hooks/useStreakData";
-import { useExamDates } from "@/hooks/useExamDates";
 import PointsService from "@/services/pointsService";
 import { logger } from "@/utils/logger";
 
@@ -33,7 +34,6 @@ const EnhancedDashboard = () => {
   const navigate = useNavigate();
   const { stats, profile, loading: isLoading, refresh: refreshStats } = useUserStats();
   const { streak } = useStreakData();
-  const { getExamDate } = useExamDates();
   const [showBanner, setShowBanner] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => {
     const lastShown = localStorage.getItem("welcomeLastShown");
@@ -43,8 +43,6 @@ const EnhancedDashboard = () => {
   const [currentTime, setCurrentTime] = useState<number | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [leaderboardKey, setLeaderboardKey] = useState(0);
-  const [mobilePanel, setMobilePanel] = useState<"overview" | "leaderboard">("overview");
-  const mobileSwipeRef = useRef<HTMLDivElement | null>(null);
   const [pointsLevel, setPointsLevel] = useState({ name: 'BEGINNER', pointsToNext: 0, nextLevel: 'LEARNER' });
 
   useEffect(() => {
@@ -56,12 +54,6 @@ const EnhancedDashboard = () => {
   useEffect(() => {
     if (stats) setLeaderboardKey((prev) => prev + 1);
   }, [stats]);
-
-  useEffect(() => {
-    if (!mobileSwipeRef.current) return;
-    mobileSwipeRef.current.scrollTo({ left: 0, behavior: "auto" });
-    setMobilePanel("overview");
-  }, []);
 
   useEffect(() => {
     if (user?.id) {
@@ -77,21 +69,8 @@ const EnhancedDashboard = () => {
     }
   }, [user?.id, stats?.totalPoints]);
 
-  const displayName = (() => {
-    const fullName = profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name;
-    if (fullName) return fullName.split(/\s+/)[0];
-
-    const emailName = user?.email?.split("@")[0];
-    if (emailName) {
-      return emailName
-        .split(/[._-]+/)
-        .filter(Boolean)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ");
-    }
-
-    return "Student";
-  })();
+  const displayName =
+    profile?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "Student";
 
   // Calculate subscription days remaining
   const getDaysRemaining = () => {
@@ -103,22 +82,6 @@ const EnhancedDashboard = () => {
   };
 
   const daysRemaining = getDaysRemaining();
-  const examDate = getExamDate(profile?.target_exam || 'JEE');
-  const examDaysLeft = (() => {
-    if (!examDate) return null;
-    const parsed = new Date(examDate);
-    if (Number.isNaN(parsed.getTime())) return null;
-    const diff = Math.ceil((parsed.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : null;
-  })();
-
-  const scrollMobilePanel = (panel: "overview" | "leaderboard") => {
-    setMobilePanel(panel);
-    const container = mobileSwipeRef.current;
-    if (!container) return;
-    const index = panel === "overview" ? 0 : 1;
-    container.scrollTo({ left: container.clientWidth * index, behavior: "smooth" });
-  };
 
   const getTimeBasedMessage = () => {
     if (currentTime === null) return { greeting: "Hello", message: "Loading...", icon: "👋", action: "Start" };
@@ -198,7 +161,7 @@ const EnhancedDashboard = () => {
   const streakColors = getStreakColor(stats?.streak ?? 0);
 
   return (
-    <div className="mobile-app-shell bg-background overflow-hidden">
+    <div className="min-h-screen h-screen overflow-hidden bg-background">
       <OnboardingTutorial />
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -207,7 +170,7 @@ const EnhancedDashboard = () => {
       </div>
       <Header />
 
-      <div className="relative z-10 h-full min-h-0 overflow-hidden">
+      <div className="fixed left-0 right-0 bottom-0 top-[64px] overflow-hidden pb-16 md:pb-0">
         <div className="h-full flex flex-col">
           <div className="container mx-auto px-2 sm:px-4 lg:px-6 max-w-7xl py-2 sm:py-3 h-full flex flex-col">
             
@@ -266,19 +229,16 @@ const EnhancedDashboard = () => {
                           <h2 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1 truncate">
                             {timeMessage.greeting}, {displayName}! {timeMessage.icon}
                           </h2>
-                          <p className="text-xs sm:text-base text-slate-200">
-                            {timeMessage.message}
-                            {daysRemaining ? ` • Pro active for ${daysRemaining} more days` : ""}
-                          </p>
+                          <p className="text-xs sm:text-base text-slate-200">{timeMessage.message}</p>
                           <div className="flex items-center gap-2 mt-0.5 sm:mt-1 flex-wrap">
                             <p className="text-xs text-slate-400">
                               {stats?.questionsToday && stats.questionsToday > 0
                                 ? `${stats.questionsToday} questions today!`
                                 : "Let's make today count!"}
                             </p>
-                            {examDaysLeft && (
+                            {daysRemaining && (
                               <Badge className="text-[10px] bg-white/15 text-white border-white/20">
-                                {profile?.target_exam || 'JEE'}: {examDaysLeft} days left
+                                Pro: {daysRemaining}d left
                               </Badge>
                             )}
                             {!profile?.is_premium && (
@@ -323,184 +283,14 @@ const EnhancedDashboard = () => {
                 </div>
               )}
 
-              <div className="lg:hidden flex-shrink-0">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Dashboard</p>
-                    <p className="text-sm font-bold text-foreground">
-                      {mobilePanel === "overview" ? "Swipe left for leaderboard" : "Swipe right for overview"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 rounded-full bg-muted p-1 text-xs font-semibold">
-                    <button
-                      type="button"
-                      onClick={() => scrollMobilePanel("overview")}
-                      className={`px-3 py-1.5 rounded-full transition-all ${mobilePanel === "overview" ? "bg-background shadow text-foreground" : "text-muted-foreground"}`}
-                    >
-                      Overview
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => scrollMobilePanel("leaderboard")}
-                      className={`px-3 py-1.5 rounded-full transition-all ${mobilePanel === "leaderboard" ? "bg-background shadow text-foreground" : "text-muted-foreground"}`}
-                    >
-                      Leaderboard
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  ref={mobileSwipeRef}
-                  className="flex w-full items-start overflow-x-scroll overscroll-x-contain scroll-smooth snap-x snap-mandatory no-scrollbar rounded-2xl touch-pan-x"
-                  onScroll={(e) => {
-                    const target = e.currentTarget;
-                    const nextPanel = target.scrollLeft > target.clientWidth / 2 ? "leaderboard" : "overview";
-                    if (nextPanel !== mobilePanel) setMobilePanel(nextPanel);
-                  }}
-                >
-                  <div className="w-full flex-none self-start snap-start px-1">
-                    <div className="space-y-2 pb-1">
-                      <div className="grid grid-cols-2 gap-2 auto-rows-fr">
-                        <Card className={`rounded-xl shadow-sm border-l-4 ${streakColors.border} ${streakColors.bg}`}> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-2 mb-1.5">
-                              <div className={`p-1.5 ${streakColors.iconBg} rounded-lg flex-shrink-0`}>
-                                <Flame className="h-3 w-3 text-white" />
-                              </div>
-                              <p className="text-[11px] font-medium text-muted-foreground">Day Streak</p>
-                            </div>
-                            <h3 className={`text-2xl font-bold ${streakColors.text}`}>{streak ?? 0}</h3>
-                            <p className="text-[11px] text-muted-foreground mt-1">{streak > 0 ? 'Keep going!' : 'Start your streak today!'}</p>
-                          </CardContent>
-                        </Card>
-
-                        <Card className={`rounded-xl shadow-sm border-l-4 ${accuracyColors.border} ${accuracyColors.bg}`}> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-2 mb-1.5">
-                              <div className={`p-1.5 ${accuracyColors.iconBg} rounded-lg flex-shrink-0`}>
-                                <Target className="h-3 w-3 text-white" />
-                              </div>
-                              <p className="text-[11px] font-medium text-muted-foreground">Today's Accuracy</p>
-                            </div>
-                            <h3 className={`text-2xl font-bold ${accuracyColors.text}`}>{stats?.todayAccuracy ?? 0}%</h3>
-                            <p className="text-[11px] text-muted-foreground mt-1">Overall: {stats?.accuracy ?? 0}%</p>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 auto-rows-fr">
-                        <Card className={`rounded-xl shadow-sm border-l-4 ${goalColors.border} ${goalColors.bg}`}> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex items-start gap-2 min-w-0">
-                                <div className={`p-1.5 ${goalColors.iconBg} rounded-lg flex-shrink-0`}>
-                                  <Calendar className="h-3 w-3 text-white" />
-                                </div>
-                                <p className="text-[11px] font-medium text-muted-foreground">Today's Goal</p>
-                              </div>
-                              <Badge className="text-[10px] px-2 py-0.5 bg-white/70 text-foreground border-0">
-                                {(stats?.todayProgress ?? 0) >= (stats?.todayGoal ?? 30) ? 'Done' : 'Go'}
-                              </Badge>
-                            </div>
-                            <h3 className={`text-2xl font-bold ${goalColors.text}`}>{stats?.todayProgress ?? 0}/{stats?.todayGoal ?? 30}</h3>
-                            <div className="w-full bg-muted rounded-full h-2 mt-2 mb-1.5">
-                              <div className={`h-2 rounded-full ${(stats?.todayProgress ?? 0) >= (stats?.todayGoal ?? 30) ? 'bg-emerald-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(100, ((stats?.todayProgress ?? 0) / (stats?.todayGoal ?? 30)) * 100)}%` }} />
-                            </div>
-                            <p className="text-[11px] text-muted-foreground">
-                              {(stats?.todayGoal ?? 30) - (stats?.todayProgress ?? 0) > 0
-                                ? `${(stats?.todayGoal ?? 30) - (stats?.todayProgress ?? 0)} questions left`
-                                : 'Goal achieved!'}
-                            </p>
-                          </CardContent>
-                        </Card>
-
-                        <Card className="rounded-xl shadow-sm border-l-4 border-purple-500 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-indigo-50/80"> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-2 mb-1.5">
-                              <div className="p-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex-shrink-0">
-                                <Trophy className="h-3 w-3 text-white" />
-                              </div>
-                              <p className="text-[11px] font-medium text-muted-foreground">JEEnie Points</p>
-                            </div>
-                            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{stats?.totalPoints ?? 0}</h3>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <Badge className="text-[10px] font-bold px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white">{pointsLevel.name}</Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <Card className="rounded-xl shadow-sm border border-border bg-card/95 overflow-hidden">
-                        <CardHeader className="p-3 pb-2 border-b border-border/60">
-                          <CardTitle className="flex items-center gap-2 text-sm">
-                            <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-                              <TrendingUp className="h-3 w-3" />
-                            </div>
-                            <span className="font-bold text-foreground">Your Progress</span>
-                            <Badge className="ml-auto text-[10px] bg-primary/10 text-primary border-0">This Week</Badge>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-3">
-                          {stats?.subjectStats ? (
-                            <div className="grid grid-cols-3 gap-2">
-                              {Object.entries(stats.subjectStats).slice(0, 3).map(([subject, data]: any) => {
-                                const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
-                                const circumference = 2 * Math.PI * 32;
-                                const strokeDashoffset = circumference - (accuracy / 100) * circumference;
-                                const strokeColor = accuracy >= 80 ? '#10b981' : accuracy >= 60 ? '#f59e0b' : '#ef4444';
-                                const bgColor = accuracy >= 80 ? '#d1fae5' : accuracy >= 60 ? '#fef3c7' : '#fee2e2';
-
-                                return (
-                                  <div key={subject} className="flex flex-col items-center gap-1">
-                                    <div className="relative w-20 h-20">
-                                      <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-                                        <circle cx="40" cy="40" r="32" fill="none" stroke={bgColor} strokeWidth="6" />
-                                        <circle
-                                          cx="40"
-                                          cy="40"
-                                          r="32"
-                                          fill="none"
-                                          stroke={strokeColor}
-                                          strokeWidth="6"
-                                          strokeLinecap="round"
-                                          strokeDasharray={circumference}
-                                          strokeDashoffset={strokeDashoffset}
-                                          className="transition-all duration-700"
-                                        />
-                                      </svg>
-                                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-sm font-bold" style={{ color: strokeColor }}>{accuracy}%</span>
-                                        <span className="text-[8px] text-muted-foreground">{data.correct}/{data.total}</span>
-                                      </div>
-                                    </div>
-                                    <span className="text-[10px] font-semibold text-muted-foreground text-center leading-tight">
-                                      {subject}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="text-center py-4 text-muted-foreground">
-                              <BookOpen className="h-6 w-6 mx-auto mb-2 opacity-40" />
-                              <p className="text-xs font-medium">Start practicing to see progress</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-
-                  <div className="w-full flex-none self-start snap-start px-1">
-                    <div className="rounded-2xl border border-border bg-card shadow-md overflow-hidden h-full">
-                      <Leaderboard key={leaderboardKey} compact />
-                    </div>
-                  </div>
-                </div>
+              {/* Exam Countdown + Peer Comparison */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 flex-shrink-0">
+                <ExamCountdown targetExam={profile?.target_exam || 'JEE'} />
+                <PeerComparison />
               </div>
 
               {/* 4 Dynamic Stats Cards */}
-              <div className="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
                 
                 {/* 1st Card: Day Streak */}
                 <Card className={`rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 ${streakColors.border} ${streakColors.bg} backdrop-blur-sm`}> 
@@ -626,7 +416,7 @@ const EnhancedDashboard = () => {
               </div>
 
               {/* Main Content Area */}
-              <div className="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
 
                 {/* Progress Section */}
                 <div className="lg:col-span-2 min-h-0 flex flex-col">
@@ -729,7 +519,7 @@ const EnhancedDashboard = () => {
                 </div>
 
                 {/* Leaderboard */}
-                <div className="hidden lg:flex min-h-0 flex-col">
+                <div className="min-h-0 flex flex-col">
                   <Leaderboard key={leaderboardKey} />
                 </div>
 

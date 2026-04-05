@@ -287,7 +287,7 @@ const GoalSelectionPage = () => {
 
   return (
     <>
-      <div className="mobile-app-shell-header-only bg-background overflow-hidden">
+      <div className="h-[100dvh] bg-background overflow-hidden">
         {/* Decorative background */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />

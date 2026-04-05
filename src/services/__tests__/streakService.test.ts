@@ -19,7 +19,6 @@ function createMockChain(resolveWith: any = { data: null, error: null }) {
   chain.gte = vi.fn().mockReturnValue(chain);
   chain.lte = vi.fn().mockReturnValue(chain);
   chain.order = vi.fn().mockReturnValue(chain);
-  chain.limit = vi.fn().mockReturnValue(chain);
   chain.single = vi.fn().mockResolvedValue(resolveWith);
   chain.maybeSingle = vi.fn().mockResolvedValue(resolveWith);
   return chain;
@@ -130,23 +129,27 @@ describe('StreakService', () => {
         questions_completed: 5,
         target_met: false,
       };
-      // daily_progress query returns a list and service takes the first row
-      fromChains[0] = createMockChain({ data: [progress], error: null });
+      // daily_progress query → .maybeSingle() resolves with progress
+      const chain = createMockChain({ data: progress, error: null });
+      chain.maybeSingle = vi.fn().mockResolvedValue({ data: progress, error: null });
+      fromChains[0] = chain;
 
       const result = await StreakService.getTodayProgress('user1');
       expect(result).toEqual(progress);
     });
 
     it('creates new progress record if none exists', async () => {
-      // First query: daily_progress returns no rows
-      fromChains[0] = createMockChain({ data: [], error: null });
+      // First query: daily_progress returns nothing
+      const chain0 = createMockChain({ data: null, error: null });
+      chain0.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+      fromChains[0] = chain0;
 
       // calculateDailyTarget: question_attempts → empty (returns 15 early, no profiles query)
       fromChains[1] = createMockChain({ data: [], error: null });
 
-      // profiles query for daily_goal (from Promise.all)
-      const profileChain = createMockChain({ data: { daily_goal: 15 }, error: null });
-      profileChain.single = vi.fn().mockResolvedValue({ data: { daily_goal: 15 }, error: null });
+      // profiles query for daily_goal & smart_goal_enabled (from Promise.all)
+      const profileChain = createMockChain({ data: { daily_goal: 15, smart_goal_enabled: true }, error: null });
+      profileChain.single = vi.fn().mockResolvedValue({ data: { daily_goal: 15, smart_goal_enabled: true }, error: null });
       fromChains[2] = profileChain;
 
       // Insert new daily_progress → .insert().select().single()

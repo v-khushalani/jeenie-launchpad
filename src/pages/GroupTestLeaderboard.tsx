@@ -162,9 +162,9 @@ const GroupTestLeaderboard = () => {
   };
 
   return (
-    <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-background">
       <Header />
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+      <div className="pt-20 pb-24 px-4">
         <div className="max-w-2xl mx-auto">
           <Button variant="outline" className="mb-4" onClick={() => navigate("/tests")}>
             <ArrowLeft className="w-4 h-4 mr-2" />

@@ -22,9 +22,6 @@ const JEE_SUBJECTS = ['Physics', 'Chemistry', 'Mathematics'];
 const NEET_SUBJECTS = ['Physics', 'Chemistry', 'Biology'];
 
 export const getSubjectsForExam = (examType: string): string[] => {
-  if (examType?.includes('MH_CET') || examType?.includes('MH-CET') || examType?.includes('MHT-CET')) {
-    return JEE_SUBJECTS;
-  }
   if (examType?.includes('NEET')) return NEET_SUBJECTS;
   if (examType?.includes('JEE')) return JEE_SUBJECTS;
   return FOUNDATION_SUBJECTS; // Default for Foundation

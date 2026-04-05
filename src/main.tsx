@@ -5,7 +5,6 @@ import App from './App.tsx';
 import './index.css';
 import { initSentry } from '@/lib/sentry';
 import { initMixpanel } from '@/integrations/analytics';
-import { registerSW } from 'virtual:pwa-register';
 
 // Initialize error tracking and analytics before rendering
 initSentry();
@@ -29,14 +28,3 @@ root.render(
     <App />
   </React.StrictMode>
 );
-
-// Ensure users pick up the latest dashboard/mobile UI build quickly in production.
-registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    window.location.reload();
-  },
-  onOfflineReady() {
-    // No-op: app can work offline after initial load.
-  },
-});

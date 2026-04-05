@@ -263,7 +263,7 @@ const TestPage = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('status', 'completed')
-        .gte('completed_at', startOfMonth.toISOString())
+        .gte('created_at', startOfMonth.toISOString())
         .limit(MONTHLY_LIMIT_FREE + 1);
       
       if (error) {
@@ -654,7 +654,7 @@ const TestPage = () => {
   if (showUpgradeModal) {
     return (
       <>
-        <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
           <Header />
         </div>
         <PricingModal 
@@ -675,13 +675,13 @@ const TestPage = () => {
 
   if (!testMode) {
     return (
-      <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
+      <div className="min-h-screen bg-background flex flex-col">
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-secondary rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
           <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-secondary rounded-full translate-y-1/2 -translate-x-1/3 opacity-30" />
         </div>
         <Header />
-        <div className="flex-1 min-h-0 overflow-y-auto relative z-10">
+        <div className="flex-1 overflow-y-auto pt-16 sm:pt-20 pb-20 md:pb-4 relative z-10">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl">
             {!isPremium && (
               <div className="mb-4 p-3 sm:p-4 rounded-2xl bg-secondary border border-primary/10 shadow-sm">
@@ -1069,9 +1069,9 @@ const TestPage = () => {
     const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
 
     return (
-      <div className="mobile-app-shell bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 flex flex-col overflow-hidden">
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 flex flex-col">
         <Header />
-        <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
+        <div className="flex-1 overflow-y-auto pt-16 sm:pt-20 pb-4">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-3xl">
             <Button 
               variant="outline"
@@ -1151,9 +1151,9 @@ const TestPage = () => {
 
   if (testMode === "chapter") {
     return (
-      <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col">
         <Header />
-        <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
+        <div className="flex-1 overflow-y-auto pt-16 sm:pt-20 pb-4">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-6xl">
             
             <Button 
@@ -1274,9 +1274,9 @@ const TestPage = () => {
 
   if (testMode === "subject") {
     return (
-      <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
+      <div className="h-screen overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col">
         <Header />
-        <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
+        <div className="flex-1 overflow-y-auto pt-16 sm:pt-20 pb-4">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-6xl">
             
             <Button 
