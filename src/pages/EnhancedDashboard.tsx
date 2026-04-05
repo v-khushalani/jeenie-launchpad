@@ -58,6 +58,12 @@ const EnhancedDashboard = () => {
   }, [stats]);
 
   useEffect(() => {
+    if (!mobileSwipeRef.current) return;
+    mobileSwipeRef.current.scrollTo({ left: 0, behavior: "auto" });
+    setMobilePanel("overview");
+  }, []);
+
+  useEffect(() => {
     if (user?.id) {
       PointsService.getUserPoints(user.id).then((data) => {
         setPointsLevel({
