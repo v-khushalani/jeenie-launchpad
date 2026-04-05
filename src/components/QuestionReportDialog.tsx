@@ -35,12 +35,19 @@ export const QuestionReportDialog: React.FC<QuestionReportDialogProps> = ({
     if (!selectedReason || !user?.id) return;
     setSubmitting(true);
     try {
+      const isDiagramIssue = selectedReason === 'missing_diagram';
+      const dbReason = isDiagramIssue ? 'other' : selectedReason;
+      const normalizedDescription = [
+        isDiagramIssue ? 'Missing diagram/image.' : null,
+        description.trim() || null,
+      ].filter(Boolean).join(' ');
+
       const { error } = await supabase.from('question_reports').insert({
         question_id: questionId,
         user_id: user.id,
-        reason: selectedReason,
+        reason: dbReason,
         status: 'pending',
-        description: description.trim() || null,
+        description: normalizedDescription || null,
       });
       if (error) throw error;
       toast.success('Report submitted! We\'ll review it soon.');
