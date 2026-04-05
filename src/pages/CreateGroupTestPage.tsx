@@ -315,9 +315,9 @@ const CreateGroupTestPage = () => {
 
   if (step === "share") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
         <Header />
-        <div className="pt-20 pb-24 px-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
           <div className="max-w-lg mx-auto">
             <Card className="border-2 border-primary/20 shadow-xl">
               <CardHeader className="text-center bg-gradient-to-br from-primary/5 to-secondary pb-6">
@@ -414,9 +414,9 @@ const CreateGroupTestPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+      <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
       <Header />
-      <div className="pt-20 pb-24 px-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
         <div className="max-w-3xl mx-auto">
           <Button variant="outline" className="mb-4" onClick={() => navigate("/tests")}>
             <ArrowLeft className="w-4 h-4 mr-2" />

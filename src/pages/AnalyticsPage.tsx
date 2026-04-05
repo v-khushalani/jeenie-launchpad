@@ -340,9 +340,9 @@ const AnalyticsPage = () => {
   // ─── Loading ─────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
         <Header />
-        <div className="flex-1 pt-20 pb-6 container mx-auto px-3">
+        <div className="flex-1 min-h-0 overflow-y-auto container mx-auto px-3 py-4">
           <Skeleton className="h-10 w-64 mb-6" />
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
@@ -355,9 +355,9 @@ const AnalyticsPage = () => {
 
   if (!analytics) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
         <Header />
-        <div className="flex-1 pt-24 flex items-center justify-center">
+        <div className="flex-1 min-h-0 flex items-center justify-center">
           <div className="text-center space-y-3">
             <Brain className="h-16 w-16 text-muted-foreground/40 mx-auto" />
             <h2 className="text-xl font-semibold text-foreground">No Data Yet</h2>
@@ -378,10 +378,10 @@ const AnalyticsPage = () => {
 
   // ─── Render ──────────────────────────────────────────────────────
   return (
-    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+    <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
       <Header />
 
-      <div className="flex-1 pt-20 sm:pt-24 pb-20 sm:pb-12 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 max-w-6xl">
 
           {/* Tabs */}

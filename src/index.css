@@ -71,6 +71,10 @@
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* App shell measurements */
+    --app-header-height: 4rem;
+    --app-mobile-nav-height: 0px;
   }
 
   .dark {
@@ -189,6 +193,28 @@
   /* Smooth transitions */
   .transition-apple {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-app-shell {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding-top: var(--app-header-height);
+    padding-bottom: var(--app-mobile-nav-height);
+    box-sizing: border-box;
+  }
+
+  .mobile-app-shell-header-only {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding-top: var(--app-header-height);
+    box-sizing: border-box;
+  }
+
+  .mobile-app-shell-bottom-nav {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding-bottom: var(--app-mobile-nav-height);
+    box-sizing: border-box;
   }
 }
 
@@ -312,6 +338,10 @@ html {
 
 /* Mobile-specific overrides */
 @media (max-width: 640px) {
+  :root {
+    --app-mobile-nav-height: 4.75rem;
+  }
+
   html,
   body,
   #root {

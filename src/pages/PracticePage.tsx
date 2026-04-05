@@ -461,7 +461,7 @@ const PracticePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-[100dvh] bg-background flex items-center justify-center">
+      <div className="mobile-app-shell-bottom-nav bg-background flex items-center justify-center overflow-hidden">
         <div className="text-center space-y-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
           <p className="text-muted-foreground">Loading questions...</p>
@@ -473,7 +473,7 @@ const PracticePage: React.FC = () => {
   // Daily limit reached — show upgrade screen
   if (dailyLimitReached && questions.length > 0 && currentIndex < questions.length && !isCurrentAnswered) {
     return (
-      <div className="h-[100dvh] bg-background flex items-center justify-center p-4">
+      <div className="mobile-app-shell-bottom-nav bg-background flex items-center justify-center p-4 overflow-hidden">
         <Card className="max-w-md w-full text-center p-8">
           <Lock className="w-16 h-16 text-primary mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">Daily Limit Reached!</h2>
@@ -498,7 +498,7 @@ const PracticePage: React.FC = () => {
 
   if (questions.length === 0) {
     return (
-      <div className="h-[100dvh] bg-background flex items-center justify-center p-4">
+      <div className="mobile-app-shell-bottom-nav bg-background flex items-center justify-center p-4 overflow-hidden">
         <Card className="max-w-md w-full text-center p-8">
           <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-2">No Questions Available</h2>
@@ -513,7 +513,7 @@ const PracticePage: React.FC = () => {
 
   if (currentIndex >= questions.length) {
     return (
-      <div className="h-[100dvh] bg-background flex items-center justify-center p-4">
+      <div className="mobile-app-shell-bottom-nav bg-background flex items-center justify-center p-4 overflow-hidden">
         <Card className="max-w-md w-full text-center p-8">
           <Trophy className="w-16 h-16 text-primary mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Practice Complete!</h2>
@@ -552,7 +552,7 @@ const PracticePage: React.FC = () => {
   }
 
   return (
-    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+    <div className="mobile-app-shell-bottom-nav bg-background flex flex-col overflow-hidden">
       {/* Top Bar */}
       <div className="shrink-0 z-20 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3">
         <div className="container mx-auto max-w-3xl flex items-center justify-between">

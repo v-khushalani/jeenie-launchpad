@@ -192,7 +192,7 @@ const EnhancedDashboard = () => {
   const streakColors = getStreakColor(stats?.streak ?? 0);
 
   return (
-    <div className="min-h-screen h-screen overflow-hidden bg-background">
+    <div className="mobile-app-shell bg-background overflow-hidden">
       <OnboardingTutorial />
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -201,7 +201,7 @@ const EnhancedDashboard = () => {
       </div>
       <Header />
 
-      <div className="fixed left-0 right-0 bottom-0 top-[64px] overflow-hidden pb-16 md:pb-0">
+      <div className="relative z-10 h-full min-h-0 overflow-hidden">
         <div className="h-full flex flex-col">
           <div className="container mx-auto px-2 sm:px-4 lg:px-6 max-w-7xl py-2 sm:py-3 h-full flex flex-col">
             
