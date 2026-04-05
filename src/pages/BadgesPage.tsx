@@ -7,9 +7,9 @@ import BadgesShowcase from '@/components/gamification/BadgesShowcase';
 
 const BadgesPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="mobile-app-shell bg-gradient-to-b from-slate-50 to-white flex flex-col overflow-hidden">
       <Header />
-      <div className="container mx-auto px-4 pt-20 pb-8 max-w-4xl">
+      <div className="flex-1 min-h-0 overflow-y-auto container mx-auto px-4 py-4 max-w-4xl">
         <BadgesShowcase />
       </div>
     </div>

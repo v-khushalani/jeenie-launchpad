@@ -107,11 +107,11 @@ const Signup = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="mobile-app-shell-header-only flex flex-col bg-background">
       <Header />
       
-      <div className="flex-1 flex items-center justify-center pt-16 px-4">
-        <Card className="w-full max-w-md border-border shadow-xl">
+      <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-y-auto">
+        <Card className="w-full max-w-md border-border shadow-xl my-4">
           <CardHeader className="text-center space-y-1 pb-3 pt-4">
             <CardTitle className="text-2xl sm:text-3xl font-bold text-primary">
               Create Account

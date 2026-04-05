@@ -27,7 +27,11 @@ interface LeaderboardUser {
   level?: string;
 }
 
-const Leaderboard: React.FC = () => {
+interface LeaderboardProps {
+  compact?: boolean;
+}
+
+const Leaderboard: React.FC<LeaderboardProps> = ({ compact = false }) => {
   const { user } = useAuth();
   const [topUsers, setTopUsers] = useState<LeaderboardUser[]>([]);
   const [currentUser, setCurrentUser] = useState<LeaderboardUser | null>(null);
@@ -144,11 +148,11 @@ const Leaderboard: React.FC = () => {
           };
         });
 
-      // Re-sort by period question count when filtering by time
+      // Re-sort by period question count when filtering by time, but keep users with zero activity
       if (sinceDate) {
-        userStats = userStats
-          .filter(u => (periodQuestionCounts[u.id] || 0) > 0)
-          .sort((a, b) => (periodQuestionCounts[b.id] || 0) - (periodQuestionCounts[a.id] || 0));
+        userStats = userStats.sort(
+          (a, b) => (periodQuestionCounts[b.id] || 0) - (periodQuestionCounts[a.id] || 0)
+        );
       }
 
       // Assign ranks after sorting
@@ -179,52 +183,28 @@ const Leaderboard: React.FC = () => {
 
   useEffect(() => {
     fetchLeaderboard(true);
-    
-    // Set up real-time subscription for leaderboard updates
-    const channel = supabase
-      .channel('leaderboard-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        () => {
-          logger.info('Profile changed, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'question_attempts'
-        },
-        () => {
-          logger.info('New question attempt, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'points_log'
-        },
-        () => {
-          logger.info('Points changed, updating leaderboard');
-          fetchLeaderboard(false);
-        }
-      )
-      .subscribe();
+  }, [fetchLeaderboard]);
+
+  useEffect(() => {
+    // Polling is intentionally preferred here over broad realtime table listeners,
+    // which can trigger request storms for every connected client at scale.
+    const interval = setInterval(() => {
+      fetchLeaderboard(false);
+    }, 45000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLeaderboard(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [timeFilter, user, fetchLeaderboard]);
+  }, [fetchLeaderboard]);
 
   const getRankIcon = (rank: number) => {
     if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;
@@ -329,8 +309,8 @@ const Leaderboard: React.FC = () => {
         )}
 
         
-        {/* Current User Card - Only show if we have leaderboard data */}
-        {topUsers.length > 0 && currentUser && currentUser.rank > 10 && (
+        {/* Current User Card - hide in compact mobile mode */}
+        {!compact && topUsers.length > 0 && currentUser && currentUser.rank > 10 && (
           <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -439,7 +419,7 @@ const Leaderboard: React.FC = () => {
         )}
 
         {/* Footer */}
-        {currentUser && topUsers.length > 0 && (
+        {!compact && currentUser && topUsers.length > 0 && (
           <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="h-4 w-4 text-purple-600" />

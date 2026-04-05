@@ -152,11 +152,12 @@ const StudyNowPage: React.FC = () => {
   };
 
   const isLoading = profileLoading || loading;
+  const isSubjectsView = level === 'subjects';
 
   return (
-    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+    <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
       <Header />
-      <div className="flex-1 overflow-y-auto pt-16 sm:pt-20 pb-20 md:pb-4 relative z-10">
+      <div className={`flex-1 min-h-0 ${isSubjectsView ? 'overflow-hidden' : 'overflow-y-auto'} relative z-10`}>
         <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-7xl">
 
           {/* Navigation */}
@@ -175,18 +176,18 @@ const StudyNowPage: React.FC = () => {
               {isLoading ? (
                 <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-6">
                   {availableSubjects.map(subName => {
                     const meta = SUBJECT_META[subName] || { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />, gradient: 'from-slate-500 to-slate-600', border: 'border-slate-200 hover:border-slate-400', bg: 'bg-slate-100' };
                     return (
-                      <div key={subName} className={`group relative overflow-hidden rounded-2xl bg-card border-2 ${meta.border} hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl`} onClick={() => handleSubjectClick(subName)}>
-                        <div className="p-4 sm:p-6 text-center">
-                          <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${meta.gradient} rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                      <div key={subName} className={`group relative overflow-hidden rounded-2xl bg-card border-2 ${meta.border} sm:hover:scale-105 transition-all duration-300 cursor-pointer shadow-md sm:shadow-lg sm:hover:shadow-xl`} onClick={() => handleSubjectClick(subName)}>
+                        <div className="p-2.5 sm:p-6 text-center">
+                          <div className={`w-9 h-9 sm:w-16 sm:h-16 bg-gradient-to-br ${meta.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-1.5 sm:mb-4 sm:group-hover:scale-110 transition-transform duration-300`}>
                             {meta.icon}
                           </div>
-                          <h3 className="text-lg sm:text-2xl font-bold mb-2 text-foreground">{subName}</h3>
-                          <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">Practice {subName} chapter by chapter</p>
-                          <div className="flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                          <h3 className="text-[1.05rem] sm:text-2xl font-bold mb-1 sm:mb-2 text-foreground">{subName}</h3>
+                          <p className="hidden sm:block text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">Practice {subName} chapter by chapter</p>
+                          <div className="hidden sm:flex items-center justify-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                             <div className="flex items-center gap-2">
                               <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg ${meta.bg} flex items-center justify-center`}>
                                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
@@ -197,9 +198,10 @@ const StudyNowPage: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <Button className={`w-full bg-gradient-to-r ${meta.gradient} text-white font-semibold py-2 sm:py-3 rounded-xl shadow-md transition-all duration-300 text-sm sm:text-base`}>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Start Practicing
+                          <Button className={`w-full bg-gradient-to-r ${meta.gradient} text-white font-semibold py-1.5 sm:py-3 rounded-xl shadow-md transition-all duration-300 text-xs sm:text-base`}>
+                            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                            <span className="sm:hidden">Start</span>
+                            <span className="hidden sm:inline">Start Practicing</span>
                           </Button>
                         </div>
                       </div>
@@ -233,7 +235,7 @@ const StudyNowPage: React.FC = () => {
                 ) : chapters.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">No chapters found for {selectedSubject}.</div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 max-h-[60vh] overflow-y-auto pr-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 max-h-[calc(100dvh-220px)] md:max-h-[60vh] overflow-y-auto pr-2">
                     {chapters.map((ch, i) => (
                       <div key={ch.id} className="p-3 sm:p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] border-border bg-card hover:border-primary/50 hover:shadow-md" onClick={() => handleChapterClick(ch)}>
                         <div className="flex items-center space-x-3">
@@ -297,7 +299,7 @@ const StudyNowPage: React.FC = () => {
                     {topics.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">No topics found. Try practicing the full chapter instead.</div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 max-h-[50vh] overflow-y-auto pr-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 max-h-[calc(100dvh-300px)] md:max-h-[50vh] overflow-y-auto pr-2">
                         {topics.map(topic => (
                           <div key={topic.id} className="p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.02] border-border bg-card hover:border-purple-400 hover:shadow-md" onClick={() => handleTopicClick(topic)}>
                             <div className="flex items-center space-x-3">

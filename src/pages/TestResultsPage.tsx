@@ -146,9 +146,9 @@ _Powered by JEEnie_`;
 
   if (!testResult) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
         <Header />
-        <div className="pt-32 pb-8 flex items-center justify-center">
+        <div className="flex-1 min-h-0 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-muted-foreground">Loading results...</p>
@@ -162,9 +162,9 @@ _Powered by JEEnie_`;
   const performance = getPerformanceLevel(parseFloat(stats?.scorePercentage || "0"));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
       <Header />
-      <div className="pt-20 sm:pt-24 pb-4 sm:pb-8">
+      <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 lg:px-8">
           {/* Header */}
           <div className="mb-4 sm:mb-6 md:mb-8">

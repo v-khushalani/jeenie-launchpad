@@ -48,7 +48,7 @@ const LandingHero = () => {
       </div>
 
       {/* Top Right Navigation */}
-      <div className="absolute top-8 right-8 flex gap-3 z-50 pointer-events-auto">
+      <nav aria-label="Primary" className="absolute top-8 right-8 flex gap-3 z-50 pointer-events-auto">
         <button
           onClick={() => navigate('/why-us')}
           className="px-6 py-2.5 text-base font-medium text-primary hover:text-primary hover:bg-primary-light/30 transition-all duration-300 rounded-full backdrop-blur-sm border border-transparent hover:border-primary/20"
@@ -61,7 +61,7 @@ const LandingHero = () => {
         >
           Sign In
         </button>
-      </div>
+      </nav>
 
       <div className="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8 space-y-6 pt-16 pb-16 flex flex-col items-center justify-center h-full">
         {/* Badge */}

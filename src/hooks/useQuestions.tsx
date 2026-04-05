@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { logger } from '@/utils/logger';
-import { fetchAllPaginated } from '@/utils/supabasePagination';
 
 /** Mapped question shape for the UI (fields renamed from DB columns) */
 export interface Question {
@@ -114,19 +113,28 @@ const getRandomQuestions = async (
     // For adaptive learning, only exclude questions attempted at THIS difficulty level
     if (isAuthenticated && user) {
       // Parallel: profile + attempted IDs
-      const [profileResult, attemptedAtLevel, testAttempted] = await Promise.all([
+        const [profileResult, attemptedAtLevelResult, testAttemptedResult] = await Promise.all([
         supabase
           .from('profiles')
           .select('target_exam')
           .eq('id', user.id)
           .single(),
-        fetchAllPaginated(() =>
-          supabase.from('question_attempts').select('question_id').eq('user_id', user.id)
-        ),
-        fetchAllPaginated(() =>
-          supabase.from('test_attempts').select('question_id').eq('user_id', user.id)
-        )
+          // Cap historical scan to keep per-request payload bounded at scale.
+          supabase
+            .from('question_attempts')
+            .select('question_id')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(2000),
+          supabase
+            .from('test_attempts')
+            .select('question_id')
+            .eq('user_id', user.id)
+            .limit(2000)
       ]);
+
+        const attemptedAtLevel = attemptedAtLevelResult.data || [];
+        const testAttempted = testAttemptedResult.data || [];
       
       const targetExam = profileResult.data?.target_exam || 'JEE';
 

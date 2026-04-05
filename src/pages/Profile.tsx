@@ -142,12 +142,12 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="mobile-app-shell bg-background">
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-secondary rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
         </div>
         <Header />
-        <div className="pt-24 pb-8 relative z-10">
+        <div className="relative z-10 h-full min-h-0 overflow-y-auto py-4 sm:py-6">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -176,13 +176,13 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="mobile-app-shell bg-background">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-secondary rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-secondary rounded-full translate-y-1/2 -translate-x-1/3 opacity-30" />
       </div>
       <Header />
-      <div className="pt-20 pb-20 md:pt-24 md:pb-8 relative z-10">
+      <div className="relative z-10 h-full min-h-0 overflow-y-auto py-4 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-4xl">
           
           {/* Profile Header */}
