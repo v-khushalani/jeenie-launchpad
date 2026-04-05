@@ -39,13 +39,18 @@ export const QuestionReportDialog: React.FC<QuestionReportDialogProps> = ({
         question_id: questionId,
         user_id: user.id,
         reason: selectedReason,
+        status: 'pending',
         description: description.trim() || null,
       });
       if (error) throw error;
       toast.success('Report submitted! We\'ll review it soon.');
       onClose();
-    } catch {
-      toast.error('Failed to submit report');
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message?: unknown }).message || 'Failed to submit report')
+          : 'Failed to submit report';
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

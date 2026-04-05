@@ -263,7 +263,7 @@ const TestPage = () => {
         .select('id')
         .eq('user_id', user.id)
         .eq('status', 'completed')
-        .gte('created_at', startOfMonth.toISOString())
+        .gte('completed_at', startOfMonth.toISOString())
         .limit(MONTHLY_LIMIT_FREE + 1);
       
       if (error) {

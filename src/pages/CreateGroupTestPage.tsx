@@ -21,7 +21,7 @@ import { getExamPattern } from "@/config/examPatterns";
 
 const APP_URL = window.location.origin;
 
-type GroupTestType = "custom" | "jee_mains_full" | "mht_cet_full";
+type GroupTestType = "custom" | "jee_mains_full" | "neet_full" | "mht_cet_full";
 
 const GROUP_TEST_PRESETS: Record<Exclude<GroupTestType, "custom">, {
   label: string;
@@ -34,6 +34,12 @@ const GROUP_TEST_PRESETS: Record<Exclude<GroupTestType, "custom">, {
     description: "75 questions, 180 min, real JEE Mains split",
     patternName: "JEE Mains",
     examAliases: ["JEE"],
+  },
+  neet_full: {
+    label: "NEET Full Syllabus",
+    description: "200 questions, 200 min, real NEET split",
+    patternName: "NEET",
+    examAliases: ["NEET"],
   },
   mht_cet_full: {
     label: "MHT-CET Full Syllabus",
@@ -448,7 +454,7 @@ const CreateGroupTestPage = () => {
                   <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center text-white text-xs font-bold">1</div>
                   Select Group Test Type
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div
                     className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
                       groupTestType === "custom" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
@@ -465,6 +471,15 @@ const CreateGroupTestPage = () => {
                     onClick={() => setGroupTestType("jee_mains_full")}
                   >
                     <div className="font-semibold text-sm">JEE Mains Full Syllabus</div>
+                    <div className="text-xs text-muted-foreground mt-1">Actual pattern, full paper simulation</div>
+                  </div>
+                  <div
+                    className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                      groupTestType === "neet_full" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                    }`}
+                    onClick={() => setGroupTestType("neet_full")}
+                  >
+                    <div className="font-semibold text-sm">NEET Full Syllabus</div>
                     <div className="text-xs text-muted-foreground mt-1">Actual pattern, full paper simulation</div>
                   </div>
                   <div
