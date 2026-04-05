@@ -351,14 +351,14 @@ const EnhancedDashboard = () => {
 
                 <div
                   ref={mobileSwipeRef}
-                  className="flex items-start overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar rounded-2xl"
+                  className="flex w-full items-start overflow-x-scroll overscroll-x-contain scroll-smooth snap-x snap-mandatory no-scrollbar rounded-2xl touch-pan-x"
                   onScroll={(e) => {
                     const target = e.currentTarget;
                     const nextPanel = target.scrollLeft > target.clientWidth / 2 ? "leaderboard" : "overview";
                     if (nextPanel !== mobilePanel) setMobilePanel(nextPanel);
                   }}
                 >
-                  <div className="min-w-full self-start snap-center pr-2">
+                  <div className="w-full flex-none self-start snap-start px-1">
                     <div className="space-y-2 pb-1">
                       <div className="grid grid-cols-2 gap-2 auto-rows-fr">
                         <Card className={`rounded-xl shadow-sm border-l-4 ${streakColors.border} ${streakColors.bg}`}> 
@@ -491,7 +491,7 @@ const EnhancedDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="min-w-full self-start snap-center pl-2">
+                  <div className="w-full flex-none self-start snap-start px-1">
                     <div className="rounded-2xl border border-border bg-card shadow-md overflow-hidden h-full">
                       <Leaderboard key={leaderboardKey} compact />
                     </div>
