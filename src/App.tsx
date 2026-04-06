@@ -182,10 +182,14 @@ function App() {
                 <Route path="/test-results" element={
                   <ProtectedRoute><TestResultsPage /></ProtectedRoute>
                 } />
+                <Route path="/test-results/:sessionId" element={
+                  <ProtectedRoute><TestResultsPage /></ProtectedRoute>
+                } />
                 <Route path="/analytics" element={
                   <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
                 } />
                 <Route path="/subscription-plans" element={<FeatureGate flagKey="pricing_plans"><SubscriptionPlans /></FeatureGate>} />
+                <Route path="/subscription" element={<Navigate to="/subscription-plans" replace />} />
 
               
                 {/* AI Study Planner */}

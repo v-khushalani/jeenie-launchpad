@@ -38,6 +38,13 @@ export function calculateTimeAllocation(daysToExam: number): TimeAllocation {
   }
 }
 
+const normalizeDate = (value: string) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth(), parsed.getUTCDate());
+};
+
 // ============================================
 // TOPIC CATEGORIZATION - Accuracy Based
 // ============================================
@@ -54,13 +61,10 @@ export function categorizeTopics(topicMasteryData: any[]): {
   topicMasteryData.forEach((topic) => {
     const accuracy = topic.accuracy || 0;
     const questionsAttempted = topic.questions_attempted || 0;
-    const lastPracticed = topic.last_practiced
-      ? new Date(topic.last_practiced)
-      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-    const daysSincePractice = Math.floor(
-      (Date.now() - lastPracticed.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const normalizedLastPracticed = normalizeDate(topic.last_practiced);
+    const daysSincePractice = normalizedLastPracticed
+      ? Math.max(0, Math.floor((Date.now() - normalizedLastPracticed) / (1000 * 60 * 60 * 24)))
+      : 30;
 
     // Priority Score: Higher = More urgent
     const priorityScore = calculatePriorityScore(accuracy, daysSincePractice, questionsAttempted);
@@ -120,7 +124,8 @@ export function allocateStudyTime(
   timeAllocation: TimeAllocation,
   categorizedTopics: { weak: TopicPriority[]; medium: TopicPriority[]; strong: TopicPriority[] }
 ): { weak: TopicPriority[]; medium: TopicPriority[]; strong: TopicPriority[] } {
-  const totalMinutes = dailyStudyHours * 60;
+  const boundedStudyHours = Math.max(1, Math.min(12, dailyStudyHours));
+  const totalMinutes = boundedStudyHours * 60;
   const studyMinutes = totalMinutes * timeAllocation.studyTime;
 
   // Accuracy-based distribution: 60% weak, 30% medium, 10% strong
@@ -153,6 +158,9 @@ export function generateWeeklyPlan(
   const plans: DailyPlan[] = [];
   const today = new Date();
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const safeWeakLength = Math.max(1, categorizedTopics.weak.length);
+  const safeMediumLength = Math.max(1, categorizedTopics.medium.length);
+  const safeStrongLength = Math.max(1, categorizedTopics.strong.length);
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(today);
@@ -208,7 +216,7 @@ export function generateWeeklyPlan(
     } else {
       // Weekdays: Focused Study
       // Morning: Weak topics (high priority)
-      const morningTopics = categorizedTopics.weak.slice(i % categorizedTopics.weak.length, (i % categorizedTopics.weak.length) + 2);
+      const morningTopics = categorizedTopics.weak.slice(i % safeWeakLength, (i % safeWeakLength) + 2);
       morningTopics.forEach(topic => {
         const duration = Math.max(30, Math.min(60, topic.allocatedMinutes || 45));
         tasks.push({
@@ -224,7 +232,7 @@ export function generateWeeklyPlan(
       });
 
       // Afternoon: Medium topics
-      const afternoonTopics = categorizedTopics.medium.slice(i % Math.max(1, categorizedTopics.medium.length), (i % Math.max(1, categorizedTopics.medium.length)) + 1);
+      const afternoonTopics = categorizedTopics.medium.slice(i % safeMediumLength, (i % safeMediumLength) + 1);
       afternoonTopics.forEach(topic => {
         tasks.push({
           topic: topic.topic,
@@ -239,7 +247,7 @@ export function generateWeeklyPlan(
       });
 
       // Evening: Revision of strong topics
-      const eveningTopics = categorizedTopics.strong.slice(i % Math.max(1, categorizedTopics.strong.length), (i % Math.max(1, categorizedTopics.strong.length)) + 1);
+      const eveningTopics = categorizedTopics.strong.slice(i % safeStrongLength, (i % safeStrongLength) + 1);
       eveningTopics.forEach(topic => {
         tasks.push({
           topic: topic.topic,

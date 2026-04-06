@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, LogOut, ChevronDown, Shield, Trophy, Award } from 'lucide-react';
+import { Menu, X, LogOut, ChevronDown, Shield, Trophy, Award, LayoutDashboard, BookOpen, Brain, BarChart3, Home, HelpCircle, FileText, Settings, User as UserIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -61,6 +61,30 @@ const Header = () => {
       window.location.href = '/';
     }
   };
+
+  const mobileNavIcons: Record<string, React.ReactNode> = {
+    Home: <Home className="w-4 h-4" />,
+    'Why Us': <HelpCircle className="w-4 h-4" />,
+    Dashboard: <LayoutDashboard className="w-4 h-4" />,
+    Study: <BookOpen className="w-4 h-4" />,
+    'Study Now': <BookOpen className="w-4 h-4" />,
+    'AI Planner': <Brain className="w-4 h-4" />,
+    Tests: <FileText className="w-4 h-4" />,
+    Analytics: <BarChart3 className="w-4 h-4" />,
+    Profile: <UserIcon className="w-4 h-4" />,
+    Badges: <Award className="w-4 h-4" />,
+    Settings: <Settings className="w-4 h-4" />,
+    Admin: <Shield className="w-4 h-4" />,
+  };
+
+  const mobilePrimaryNavItems = isAuthenticated && !isAdmin && !isEducator
+    ? [
+        { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Study', path: '/study-now' },
+        { name: 'Tests', path: '/tests' },
+        { name: 'Profile', path: '/profile' },
+      ]
+    : navItems;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
@@ -187,17 +211,22 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border/50 max-h-[calc(100dvh-var(--app-header-height))] overflow-y-auto">
             <nav className="flex flex-col gap-1">
-              {navItems.map((item) => (
+              {mobilePrimaryNavItems.map((item) => (
                 <button
                   key={item.name}
                   onClick={() => handleNavigation(item.path)}
-                  className={`text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+                  className={`text-left px-4 py-3 rounded-xl font-medium transition-all border-l-4 ${
                     location.pathname === item.path
-                      ? 'bg-primary text-white'
-                      : 'text-foreground hover:bg-muted'
+                      ? 'bg-[#013062]/10 text-[#013062] border-l-[#013062] shadow-sm'
+                      : 'text-foreground border-l-transparent hover:bg-[#e6eeff]/30 hover:border-l-[#e6eeff]'
                   }`}
                 >
-                  {item.name}
+                  <div className="flex items-center gap-3">
+                    <span className={location.pathname === item.path ? 'text-[#013062]' : 'text-muted-foreground'}>
+                      {mobileNavIcons[item.name] || <LayoutDashboard className="w-4 h-4" />}
+                    </span>
+                    <span>{item.name}</span>
+                  </div>
                 </button>
               ))}
               
@@ -206,41 +235,31 @@ const Header = () => {
                   <>
                     <Button 
                       variant="ghost"
-                      className="w-full justify-start h-12 rounded-lg"
-                      onClick={() => handleNavigation('/profile')}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <span>Profile</span>
-                      </div>
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      className="w-full justify-start h-12 rounded-lg"
+                      className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
                       onClick={() => handleNavigation('/badges')}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <Award className="w-4 h-4 text-amber-500" />
                         <span>Badges</span>
                       </div>
                     </Button>
                     <Button 
                       variant="ghost"
-                      className="w-full justify-start h-12 rounded-lg"
+                      className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
                       onClick={() => handleNavigation('/settings')}
                     >
-                      <div className="flex items-center gap-2">
-                        <span>⚙️</span>
+                      <div className="flex items-center gap-3">
+                        <Settings className="w-4 h-4 text-[#013062]" />
                         <span>Settings</span>
                       </div>
                     </Button>
                     {isAdmin && (
                       <Button 
                         variant="ghost"
-                        className="w-full justify-start h-12 rounded-lg"
+                        className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
                         onClick={() => handleNavigation('/admin')}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           <Shield className="w-4 h-4 text-purple-600" />
                           <span className="text-purple-600 font-medium">Admin</span>
                         </div>
@@ -249,9 +268,9 @@ const Header = () => {
                     <Button 
                       variant="ghost"
                       onClick={handleLogout}
-                      className="w-full justify-start h-12 rounded-lg text-red-600 hover:text-red-600"
+                      className="w-full justify-start h-12 rounded-xl border border-red-200 bg-red-50/70 text-red-700 hover:bg-red-100/70 hover:text-red-700"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <LogOut className="w-4 h-4" />
                         <span>Logout</span>
                       </div>
@@ -259,7 +278,7 @@ const Header = () => {
                   </>
                 ) : (
                   <Button 
-                    className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-lg"
+                    className="w-full bg-primary hover:bg-primary/90 text-white h-12 rounded-xl shadow-apple"
                     onClick={() => handleNavigation('/login')}
                   >
                     Sign In

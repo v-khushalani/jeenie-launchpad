@@ -487,7 +487,7 @@ const PracticePage: React.FC = () => {
             <Button variant="outline" className="flex-1" onClick={() => navigate('/dashboard')}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Dashboard
             </Button>
-            <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90" onClick={() => navigate('/subscription')}>
+            <Button className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90" onClick={() => navigate('/subscription-plans')}>
               <Zap className="w-4 h-4 mr-2" /> Go Pro
             </Button>
           </div>
@@ -577,7 +577,7 @@ const PracticePage: React.FC = () => {
       {/* Daily limit warning banner */}
       {dailyRemaining <= 3 && dailyRemaining > 0 && !dailyLimitReached && (
         <div className="shrink-0 bg-amber-500/90 text-white text-center py-1.5 text-xs font-medium">
-          ⚠️ Only {dailyRemaining} questions left today! <button onClick={() => navigate('/subscription')} className="underline font-bold">Go Pro →</button>
+          ⚠️ Only {dailyRemaining} questions left today! <button onClick={() => navigate('/subscription-plans')} className="underline font-bold">Go Pro →</button>
         </div>
       )}
 

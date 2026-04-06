@@ -26,6 +26,13 @@ import {
 
 const MIN_QUESTIONS_REQUIRED = 10;
 
+const normalizeDateString = (value: string) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, '0')}-${String(parsed.getUTCDate()).padStart(2, '0')}`;
+};
+
 export function useStudyPlanner() {
   const { user } = useAuth();
   const { getExamDate } = useExamDates();
@@ -57,9 +64,13 @@ export function useStudyPlanner() {
   // Calculate days to exam
   const calculateDaysToExam = useCallback((examDate: string) => {
     if (!examDate) return 365; // Default 1 year if no exam date
-    const exam = new Date(examDate);
+    const normalized = normalizeDateString(examDate);
+    if (!normalized) return 365;
+    const [year, month, day] = normalized.split('-').map(Number);
+    const exam = Date.UTC(year, month - 1, day);
     const today = new Date();
-    const days = Math.ceil((exam.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const current = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+    const days = Math.ceil((exam - current) / (1000 * 60 * 60 * 24));
     return days > 0 ? days : 0;
   }, []);
 
@@ -70,12 +81,12 @@ export function useStudyPlanner() {
     questionsCount: number
   ): StudyPlannerData => {
     // daily_study_hours column doesn't exist, derive from daily_goal (15 questions ~= 2 hours)
-    const dailyStudyHours = Math.ceil((profile?.daily_goal || 15) / 7.5) || 4;
+    const dailyStudyHours = Math.max(1, Math.min(12, Math.ceil((profile?.daily_goal || 15) / 7.5) || 4));
     const targetExam = (profile?.target_exam || 'JEE') as TargetExamType;
 
     // Prefer the user's stored target exam date; if missing, derive from
     // the current target exam using the global exam dates helper.
-    const derivedExamDate = profile?.target_exam_date || getExamDate(targetExam);
+    const derivedExamDate = normalizeDateString(profile?.target_exam_date || getExamDate(targetExam));
     const examDate = derivedExamDate;
     const daysToExam = calculateDaysToExam(examDate);
     const avgAccuracy = profile?.overall_accuracy || 0;
@@ -138,9 +149,9 @@ export function useStudyPlanner() {
           totalQuestions: questionsCount,
           isLoading: false,
           hasEnoughData: false,
-          dailyStudyHours: Math.ceil((profile?.daily_goal || 15) / 7.5) || 4,
+          dailyStudyHours: Math.max(1, Math.min(12, Math.ceil((profile?.daily_goal || 15) / 7.5) || 4)),
           targetExam: (profile?.target_exam || 'JEE') as TargetExamType,
-          examDate: profile?.target_exam_date || getExamDate((profile?.target_exam || 'JEE') as TargetExamType),
+          examDate: normalizeDateString(profile?.target_exam_date || getExamDate((profile?.target_exam || 'JEE') as TargetExamType)),
           daysToExam: calculateDaysToExam(profile?.target_exam_date || getExamDate((profile?.target_exam || 'JEE') as TargetExamType)),
           streak: profile?.current_streak || 0,
           avgAccuracy: profile?.overall_accuracy || 0

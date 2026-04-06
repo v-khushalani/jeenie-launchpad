@@ -19,8 +19,8 @@ const MobileNavigation = () => {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border px-2 py-1 safe-area-pb z-50">
-      <div className="flex items-center justify-around max-w-md mx-auto">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-md border-t border-border px-2 z-50 h-[var(--app-mobile-nav-height)]">
+      <div className="flex h-full items-center justify-around max-w-md mx-auto pb-[env(safe-area-inset-bottom,0px)]">
         {baseItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (

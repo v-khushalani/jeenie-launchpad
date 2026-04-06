@@ -52,6 +52,7 @@ interface TestSession {
   groupTestId?: string;
   groupTestCode?: string;
   examPattern?: string;
+  sessionId?: string;
 }
 
 interface UserAnswer {
@@ -253,6 +254,7 @@ const TestAttemptPage = () => {
 
       try {
         // Save test session
+        const currentSessionId = testSession.sessionId || null;
         const sessionResult = await testsAPI.saveTestSessionLegacy(
           user.id,
           testSession.subject || 'General',
@@ -260,7 +262,8 @@ const TestAttemptPage = () => {
           correctAnswers,
           totalTimeSpent,
           totalAnswered,
-          testSession.groupTestId || undefined
+          testSession.groupTestId || undefined,
+          currentSessionId || undefined
         );
 
         // Save individual test_attempts so questions aren't repeated
@@ -301,6 +304,7 @@ const TestAttemptPage = () => {
           completedAt: new Date().toISOString(),
           groupTestCode: testSession.groupTestCode || null,
           examPattern: testSession.examPattern || null,
+          sessionId: testSession.sessionId || null,
         })
       );
 

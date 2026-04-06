@@ -140,6 +140,15 @@ describe('categorizeTopics', () => {
     const refractionPriority = result.weak.find((t) => t.topic === 'Refraction')?.priorityScore || 0;
     expect(refractionPriority).toBeGreaterThan(0);
   });
+
+  it('handles invalid last_practiced values without NaN daysSincePractice', () => {
+    const result = categorizeTopics([
+      { subject: 'Physics', chapter: 'Mechanics', topic: 'Newton Laws', accuracy: 40, questions_attempted: 20, last_practiced: 'not-a-date' },
+    ]);
+
+    expect(result.weak[0].daysSincePractice).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(result.weak[0].daysSincePractice)).toBe(true);
+  });
 });
 
 // ─── allocateStudyTime ──────────────────────────────────────
@@ -187,6 +196,14 @@ describe('allocateStudyTime', () => {
     expect(result.weak).toEqual([]);
     expect(result.medium).toEqual([]);
     expect(result.strong).toEqual([]);
+  });
+
+  it('clamps very low study hours to a usable minimum', () => {
+    const categorized = categorizeTopics(mockTopicData);
+    const allocation = calculateTimeAllocation(100);
+    const result = allocateStudyTime(0, allocation, categorized);
+
+    expect(result.weak[0].allocatedMinutes).toBeGreaterThan(0);
   });
 });
 

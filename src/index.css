@@ -77,6 +77,12 @@
     --app-mobile-nav-height: 0px;
   }
 
+  @media (max-width: 767px) {
+    :root {
+      --app-mobile-nav-height: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
   .dark {
     --background: 213 100% 3%;
     --foreground: 0 0% 98%;
@@ -198,23 +204,52 @@
   .mobile-app-shell {
     height: 100dvh;
     min-height: 100dvh;
+    width: 100%;
     padding-top: var(--app-header-height);
     padding-bottom: var(--app-mobile-nav-height);
     box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .mobile-app-shell-header-only {
     height: 100dvh;
     min-height: 100dvh;
+    width: 100%;
     padding-top: var(--app-header-height);
     box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   .mobile-app-shell-bottom-nav {
     height: 100dvh;
     min-height: 100dvh;
+    width: 100%;
     padding-bottom: var(--app-mobile-nav-height);
     box-sizing: border-box;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Canonical content wrappers for pages with fixed header/bottom tabs. */
+  .mobile-app-shell-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-app-shell-content-fit {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 }
 

@@ -34,6 +34,71 @@ export interface TestResult {
 
 export const testsAPI = {
   /**
+   * Reserve a test session when the user starts a test.
+   * This creates the canonical row that monthly limits and history should count.
+   */
+  async reserveTestSessionLegacy(
+    userId: string,
+    subject: string,
+    totalQuestions: number,
+    title: string,
+    questionIds: string[],
+    groupTestId?: string
+  ): Promise<ApiResponse<{ id: string }>> {
+    try {
+      const startedAt = new Date().toISOString();
+      const { data, error } = await apiClient.rawClient
+        .from('test_sessions')
+        .insert([{
+          user_id: userId,
+          subject,
+          title,
+          total_questions: totalQuestions,
+          attempted_questions: 0,
+          correct_answers: 0,
+          time_taken: 0,
+          score: 0,
+          accuracy: 0,
+          status: 'in_progress',
+          started_at: startedAt,
+          group_test_id: groupTestId || null,
+          question_ids: questionIds,
+        }])
+        .select('id')
+        .single();
+
+      if (error) {
+        return { data: null, error: { message: error.message, code: error.code } };
+      }
+
+      if (questionIds.length > 0) {
+        await (apiClient.rawClient as unknown as {
+          from: (table: string) => {
+            insert: (rows: unknown) => Promise<unknown>
+          }
+        })
+          .from('test_session_questions')
+          .insert(
+            questionIds.map((questionId, index) => ({
+              session_id: data.id,
+              question_id: questionId,
+              question_order: index + 1,
+            }))
+          );
+      }
+
+      cache.invalidateByTag(CACHE_TAGS.TESTS);
+
+      return { data: { id: data.id }, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: { message: (error as Error).message, code: 'ERROR' },
+      };
+    }
+  },
+
+  /**
    * Create a new test session
    */
   async createTest(
@@ -447,11 +512,42 @@ export const testsAPI = {
     correctAnswers: number,
     totalTime: number,
     attemptedQuestions?: number,
-    groupTestId?: string
+    groupTestId?: string,
+    sessionId?: string
   ): Promise<ApiResponse<{ id: string }>> {
     try {
       const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
       const accuracyVal = attemptedQuestions && attemptedQuestions > 0 ? Math.round((correctAnswers / attemptedQuestions) * 100) : 0;
+
+      if (sessionId) {
+        const { data, error } = await apiClient.rawClient
+          .from('test_sessions')
+          .update({
+            user_id: userId,
+            subject,
+            total_questions: totalQuestions,
+            correct_answers: correctAnswers,
+            attempted_questions: attemptedQuestions ?? correctAnswers,
+            time_taken: totalTime,
+            score,
+            accuracy: accuracyVal,
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            group_test_id: groupTestId || null,
+          })
+          .eq('id', sessionId)
+          .select('id')
+          .single();
+
+        if (error) {
+          return { data: null, error: { message: error.message, code: error.code } };
+        }
+
+        cache.invalidateByTag(CACHE_TAGS.TESTS);
+
+        return { data: { id: data.id }, error: null };
+      }
+
       const { data, error } = await apiClient.rawClient
         .from('test_sessions')
         .insert([{

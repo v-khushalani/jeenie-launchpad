@@ -19,6 +19,7 @@ import { logger } from '@/utils/logger';
 import { parseGrade, isFoundationGrade, extractGradeFromExamType } from '@/utils/gradeParser';
 import { FilterPills, MultiFilterPills } from '@/components/ui/FilterPills';
 import { SUBSCRIPTION_CONFIG } from '@/constants/unified';
+import { testsAPI } from '@/services/api';
 import { 
   getBatchForStudent, 
   getBatchSubjectsFromDB, 
@@ -262,8 +263,7 @@ const TestPage = () => {
         .from('test_sessions')
         .select('id')
         .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .gte('completed_at', startOfMonth.toISOString())
+        .gte('created_at', startOfMonth.toISOString())
         .limit(MONTHLY_LIMIT_FREE + 1);
       
       if (error) {
@@ -290,9 +290,8 @@ const TestPage = () => {
         .from('test_sessions')
         .select('*')
         .eq('user_id', user.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(20);
+        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
+        .order('created_at', { ascending: false });
 
       if (error) {
         logger.error('Error loading test history:', error);
@@ -398,6 +397,18 @@ const TestPage = () => {
           toast.info(`Only ${allSelected.length} PYQ questions available (${pattern.totalQuestions} needed for full paper).`);
         }
 
+        const sessionReservation = await testsAPI.reserveTestSessionLegacy(
+          user.id,
+          pyqExam,
+          allSelected.length,
+          `${pyqExam} ${pyqYear} - PYQ Mock Test`,
+          allSelected.map(question => question.id),
+        );
+
+        if (sessionReservation.error || !sessionReservation.data?.id) {
+          throw new Error(sessionReservation.error?.message || 'Failed to reserve test session');
+        }
+
         const testSession = {
           id: Date.now().toString(),
           title: `${pyqExam} ${pyqYear} - PYQ Mock Test`,
@@ -405,6 +416,7 @@ const TestPage = () => {
           duration: pattern.duration,
           startTime: new Date().toISOString(),
           examPattern: pyqExam,
+          sessionId: sessionReservation.data.id,
         };
 
         localStorage.setItem('currentTest', JSON.stringify(testSession));
@@ -491,6 +503,18 @@ const TestPage = () => {
           toast.info(`Only ${allSelected.length} new questions available (${pattern.totalQuestions} needed for full paper). Starting with available questions.`);
         }
 
+        const sessionReservation = await testsAPI.reserveTestSessionLegacy(
+          user.id,
+          targetExam,
+          allSelected.length,
+          `Full Syllabus Mock Test - ${pattern.name} Pattern`,
+          allSelected.map(question => question.id),
+        );
+
+        if (sessionReservation.error || !sessionReservation.data?.id) {
+          throw new Error(sessionReservation.error?.message || 'Failed to reserve test session');
+        }
+
         const testSession = {
           id: Date.now().toString(),
           title: `Full Syllabus Mock Test - ${pattern.name} Pattern`,
@@ -498,6 +522,7 @@ const TestPage = () => {
           duration: pattern.duration,
           startTime: new Date().toISOString(),
           examPattern: pattern.name,
+          sessionId: sessionReservation.data.id,
         };
 
         localStorage.setItem('currentTest', JSON.stringify(testSession));
@@ -624,6 +649,20 @@ const TestPage = () => {
       const shuffled = questions.sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, Math.min(questionLimit, questions.length));
 
+      const sessionReservation = await testsAPI.reserveTestSessionLegacy(
+        user.id,
+        mode === "chapter" ? (selectedChapters.map(ch => ch.chapter).join(', ') || 'General') : (selectedSubjects.join(', ') || 'General'),
+        selected.length,
+        mode === "chapter"
+          ? `${selectedChapters.map(ch => ch.chapter).join(', ')} - Chapter Test`
+          : `${selectedSubjects.join(', ')} - Subject Test`,
+        selected.map(question => question.id),
+      );
+
+      if (sessionReservation.error || !sessionReservation.data?.id) {
+        throw new Error(sessionReservation.error?.message || 'Failed to reserve test session');
+      }
+
       const testSession = {
         id: Date.now().toString(),
         title: mode === "chapter" 
@@ -633,6 +672,7 @@ const TestPage = () => {
         duration: testDuration,
         startTime: new Date().toISOString(),
         examPattern: pattern.name,
+        sessionId: sessionReservation.data.id,
       };
 
       localStorage.setItem('currentTest', JSON.stringify(testSession));
@@ -759,7 +799,8 @@ const TestPage = () => {
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {testHistory.map((session) => {
                       const isGroup = !!session.group_test_id;
-                      const completedDate = session.completed_at ? new Date(session.completed_at) : new Date(session.created_at);
+                      const completedDate = session.completed_at ? new Date(session.completed_at) : session.started_at ? new Date(session.started_at) : new Date(session.created_at);
+                      const statusLabel = session.status || (session.completed_at ? 'completed' : 'in_progress');
                       return (
                         <div
                           key={session.id}
@@ -775,6 +816,7 @@ const TestPage = () => {
                               </p>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <span>{completedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize">{statusLabel}</Badge>
                                 {isGroup && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-emerald-300 text-emerald-700">Group</Badge>}
                               </div>
                             </div>

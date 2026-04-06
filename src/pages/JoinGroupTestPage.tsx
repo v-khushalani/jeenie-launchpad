@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, ArrowLeft, Play, Clock, FileText, Loader2, AlertTriangle, QrCode, X } from "lucide-react";
 import { logger } from "@/utils/logger";
 import { UserLimitsService } from "@/services/userLimitsService";
+import { testsAPI } from "@/services/api";
 
 interface GroupTest {
   id: string;
@@ -213,6 +214,19 @@ const JoinGroupTestPage = () => {
         .map((id) => questions.find((q) => q.id === id))
         .filter(Boolean);
 
+      const reservation = await testsAPI.reserveTestSessionLegacy(
+        user.id,
+        groupTest.subject || 'General',
+        orderedQuestions.length,
+        groupTest.title,
+        questionIds,
+        groupTest.id,
+      );
+
+      if (reservation.error || !reservation.data?.id) {
+        throw new Error(reservation.error?.message || 'Failed to reserve test session');
+      }
+
       const testSession = {
         id: Date.now().toString(),
         title: groupTest.title,
@@ -221,6 +235,7 @@ const JoinGroupTestPage = () => {
         startTime: new Date().toISOString(),
         groupTestId: groupTest.id,
         groupTestCode: groupTest.test_code,
+        sessionId: reservation.data.id,
       };
 
       localStorage.setItem("currentTest", JSON.stringify(testSession));

@@ -57,11 +57,13 @@ const EnhancedDashboard = () => {
     if (stats) setLeaderboardKey((prev) => prev + 1);
   }, [stats]);
 
-  useEffect(() => {
-    if (!mobileSwipeRef.current) return;
-    mobileSwipeRef.current.scrollTo({ left: 0, behavior: "auto" });
-    setMobilePanel("overview");
-  }, []);
+  const switchMobilePanel = (panel: "overview" | "leaderboard") => {
+    setMobilePanel(panel);
+    const container = mobileSwipeRef.current;
+    if (!container) return;
+    const index = panel === "overview" ? 0 : 1;
+    container.scrollTo({ left: container.clientWidth * index, behavior: "smooth" });
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -111,14 +113,6 @@ const EnhancedDashboard = () => {
     const diff = Math.ceil((parsed.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : null;
   })();
-
-  const scrollMobilePanel = (panel: "overview" | "leaderboard") => {
-    setMobilePanel(panel);
-    const container = mobileSwipeRef.current;
-    if (!container) return;
-    const index = panel === "overview" ? 0 : 1;
-    container.scrollTo({ left: container.clientWidth * index, behavior: "smooth" });
-  };
 
   const getTimeBasedMessage = () => {
     if (currentTime === null) return { greeting: "Hello", message: "Loading...", icon: "👋", action: "Start" };
@@ -198,7 +192,7 @@ const EnhancedDashboard = () => {
   const streakColors = getStreakColor(stats?.streak ?? 0);
 
   return (
-    <div className="mobile-app-shell bg-background overflow-hidden">
+    <div className="mobile-app-shell bg-background">
       <OnboardingTutorial />
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -207,15 +201,15 @@ const EnhancedDashboard = () => {
       </div>
       <Header />
 
-      <div className="relative z-10 h-full min-h-0 overflow-hidden">
-        <div className="h-full flex flex-col">
-          <div className="container mx-auto px-2 sm:px-4 lg:px-6 max-w-7xl py-2 sm:py-3 h-full flex flex-col">
+      <div className="relative z-10 flex-1 min-h-0 overflow-hidden lg:overflow-y-auto">
+        <div className="flex min-h-full flex-col">
+          <div className="container mx-auto px-2 sm:px-4 lg:px-6 max-w-7xl py-2 sm:py-3 min-h-full flex flex-col">
             
             <div className="flex flex-col gap-2 sm:gap-3 h-full min-h-0">
               
               {/* Notification Banner */}
               {showBanner && notification && (
-                <div className={`rounded-xl p-3 sm:p-3.5 shadow-lg transition-all duration-300 ${
+                <div className={`hidden lg:block rounded-xl p-3 sm:p-3.5 shadow-lg transition-all duration-300 ${
                   notification.color === "green" ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white" :
                   notification.color === "orange" ? "bg-gradient-to-r from-orange-500 to-red-600 text-white" :
                   "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
@@ -242,7 +236,7 @@ const EnhancedDashboard = () => {
 
               {/* Welcome Banner — NO share button, days remaining integrated */}
               {showWelcome && (
-                <div className="rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white shadow-2xl relative overflow-hidden">
+                <div className="rounded-xl sm:rounded-2xl p-3 sm:p-6 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white shadow-2xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-40 h-40 sm:w-64 sm:h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
                   <div className="absolute bottom-0 left-0 w-32 h-32 sm:w-48 sm:h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
                   
@@ -251,7 +245,7 @@ const EnhancedDashboard = () => {
                       localStorage.setItem("welcomeLastShown", new Date().toDateString());
                       setShowWelcome(false);
                     }}
-                    className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white/60 hover:text-white transition-colors z-10"
+                    className="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 text-white/60 hover:text-white transition-colors z-10"
                   >
                     <X className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
@@ -259,14 +253,14 @@ const EnhancedDashboard = () => {
                   <div className="relative z-10">
                     <div className="flex flex-col gap-3 sm:gap-4">
                       <div className="flex items-start gap-3 sm:gap-4">
-                        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg flex-shrink-0">
+                        <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center shadow-lg flex-shrink-0">
                           <Brain className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h2 className="text-lg sm:text-2xl font-bold mb-0.5 sm:mb-1 truncate">
+                          <h2 className="text-base sm:text-2xl font-bold mb-0.5 sm:mb-1 line-clamp-2">
                             {timeMessage.greeting}, {displayName}! {timeMessage.icon}
                           </h2>
-                          <p className="text-xs sm:text-base text-slate-200">
+                          <p className="text-[11px] sm:text-base text-slate-200">
                             {timeMessage.message}
                             {daysRemaining ? ` • Pro active for ${daysRemaining} more days` : ""}
                           </p>
@@ -290,7 +284,7 @@ const EnhancedDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="hidden sm:flex flex-wrap gap-2">
                         <Button 
                           size="sm"
                           onClick={() => navigate("/study-now")} 
@@ -323,25 +317,22 @@ const EnhancedDashboard = () => {
                 </div>
               )}
 
-              <div className="lg:hidden flex-shrink-0">
-                <div className="flex items-center justify-between mb-2">
+              <div className="lg:hidden flex-1 min-h-0 flex flex-col gap-2 pb-2">
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Dashboard</p>
-                    <p className="text-sm font-bold text-foreground">
-                      {mobilePanel === "overview" ? "Swipe left for leaderboard" : "Swipe right for overview"}
-                    </p>
                   </div>
                   <div className="flex items-center gap-1 rounded-full bg-muted p-1 text-xs font-semibold">
                     <button
                       type="button"
-                      onClick={() => scrollMobilePanel("overview")}
+                      onClick={() => switchMobilePanel("overview")}
                       className={`px-3 py-1.5 rounded-full transition-all ${mobilePanel === "overview" ? "bg-background shadow text-foreground" : "text-muted-foreground"}`}
                     >
                       Overview
                     </button>
                     <button
                       type="button"
-                      onClick={() => scrollMobilePanel("leaderboard")}
+                      onClick={() => switchMobilePanel("leaderboard")}
                       className={`px-3 py-1.5 rounded-full transition-all ${mobilePanel === "leaderboard" ? "bg-background shadow text-foreground" : "text-muted-foreground"}`}
                     >
                       Leaderboard
@@ -351,46 +342,46 @@ const EnhancedDashboard = () => {
 
                 <div
                   ref={mobileSwipeRef}
-                  className="flex w-full items-start overflow-x-scroll overscroll-x-contain scroll-smooth snap-x snap-mandatory no-scrollbar rounded-2xl touch-pan-x"
+                  className="flex flex-1 min-h-0 overflow-x-scroll overscroll-x-contain scroll-smooth snap-x snap-mandatory no-scrollbar rounded-2xl border border-border bg-card/50"
                   onScroll={(e) => {
                     const target = e.currentTarget;
                     const nextPanel = target.scrollLeft > target.clientWidth / 2 ? "leaderboard" : "overview";
                     if (nextPanel !== mobilePanel) setMobilePanel(nextPanel);
                   }}
                 >
-                  <div className="w-full flex-none self-start snap-start px-1">
-                    <div className="space-y-2 pb-1">
-                      <div className="grid grid-cols-2 gap-2 auto-rows-fr">
-                        <Card className={`rounded-xl shadow-sm border-l-4 ${streakColors.border} ${streakColors.bg}`}> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-2 mb-1.5">
+                  <div className="w-full flex-none snap-start p-1 min-h-0">
+                    <div className="h-full space-y-2 overflow-y-auto p-1">
+                      <div className="grid grid-cols-2 gap-2 auto-rows-[1fr]">
+                        <Card className={`h-full rounded-xl shadow-sm border-l-4 ${streakColors.border} ${streakColors.bg}`}> 
+                          <CardContent className="p-2.5 h-full flex flex-col justify-between">
+                            <div className="flex items-start gap-2 mb-1">
                               <div className={`p-1.5 ${streakColors.iconBg} rounded-lg flex-shrink-0`}>
                                 <Flame className="h-3 w-3 text-white" />
                               </div>
                               <p className="text-[11px] font-medium text-muted-foreground">Day Streak</p>
                             </div>
-                            <h3 className={`text-2xl font-bold ${streakColors.text}`}>{streak ?? 0}</h3>
-                            <p className="text-[11px] text-muted-foreground mt-1">{streak > 0 ? 'Keep going!' : 'Start your streak today!'}</p>
+                            <h3 className={`text-xl font-bold ${streakColors.text}`}>{streak ?? 0}</h3>
+                            <p className="text-[10px] text-muted-foreground mt-1">{streak > 0 ? 'Keep going!' : 'Start streak today'}</p>
                           </CardContent>
                         </Card>
 
-                        <Card className={`rounded-xl shadow-sm border-l-4 ${accuracyColors.border} ${accuracyColors.bg}`}> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-2 mb-1.5">
+                        <Card className={`h-full rounded-xl shadow-sm border-l-4 ${accuracyColors.border} ${accuracyColors.bg}`}> 
+                          <CardContent className="p-2.5 h-full flex flex-col justify-between">
+                            <div className="flex items-start gap-2 mb-1">
                               <div className={`p-1.5 ${accuracyColors.iconBg} rounded-lg flex-shrink-0`}>
                                 <Target className="h-3 w-3 text-white" />
                               </div>
                               <p className="text-[11px] font-medium text-muted-foreground">Today's Accuracy</p>
                             </div>
-                            <h3 className={`text-2xl font-bold ${accuracyColors.text}`}>{stats?.todayAccuracy ?? 0}%</h3>
-                            <p className="text-[11px] text-muted-foreground mt-1">Overall: {stats?.accuracy ?? 0}%</p>
+                            <h3 className={`text-xl font-bold ${accuracyColors.text}`}>{stats?.todayAccuracy ?? 0}%</h3>
+                            <p className="text-[10px] text-muted-foreground mt-1">Overall: {stats?.accuracy ?? 0}%</p>
                           </CardContent>
                         </Card>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 auto-rows-fr">
-                        <Card className={`rounded-xl shadow-sm border-l-4 ${goalColors.border} ${goalColors.bg}`}> 
-                          <CardContent className="p-3">
+                      <div className="grid grid-cols-2 gap-2 auto-rows-[1fr]">
+                        <Card className={`h-full rounded-xl shadow-sm border-l-4 ${goalColors.border} ${goalColors.bg}`}> 
+                          <CardContent className="p-2.5 h-full flex flex-col justify-between">
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div className="flex items-start gap-2 min-w-0">
                                 <div className={`p-1.5 ${goalColors.iconBg} rounded-lg flex-shrink-0`}>
@@ -402,11 +393,11 @@ const EnhancedDashboard = () => {
                                 {(stats?.todayProgress ?? 0) >= (stats?.todayGoal ?? 30) ? 'Done' : 'Go'}
                               </Badge>
                             </div>
-                            <h3 className={`text-2xl font-bold ${goalColors.text}`}>{stats?.todayProgress ?? 0}/{stats?.todayGoal ?? 30}</h3>
+                            <h3 className={`text-xl font-bold ${goalColors.text}`}>{stats?.todayProgress ?? 0}/{stats?.todayGoal ?? 30}</h3>
                             <div className="w-full bg-muted rounded-full h-2 mt-2 mb-1.5">
                               <div className={`h-2 rounded-full ${(stats?.todayProgress ?? 0) >= (stats?.todayGoal ?? 30) ? 'bg-emerald-500' : 'bg-orange-500'}`} style={{ width: `${Math.min(100, ((stats?.todayProgress ?? 0) / (stats?.todayGoal ?? 30)) * 100)}%` }} />
                             </div>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-[10px] text-muted-foreground">
                               {(stats?.todayGoal ?? 30) - (stats?.todayProgress ?? 0) > 0
                                 ? `${(stats?.todayGoal ?? 30) - (stats?.todayProgress ?? 0)} questions left`
                                 : 'Goal achieved!'}
@@ -414,15 +405,15 @@ const EnhancedDashboard = () => {
                           </CardContent>
                         </Card>
 
-                        <Card className="rounded-xl shadow-sm border-l-4 border-purple-500 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-indigo-50/80"> 
-                          <CardContent className="p-3">
-                            <div className="flex items-start gap-2 mb-1.5">
+                        <Card className="h-full rounded-xl shadow-sm border-l-4 border-purple-500 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-indigo-50/80"> 
+                          <CardContent className="p-2.5 h-full flex flex-col justify-between">
+                            <div className="flex items-start gap-2 mb-1">
                               <div className="p-1.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg flex-shrink-0">
                                 <Trophy className="h-3 w-3 text-white" />
                               </div>
                               <p className="text-[11px] font-medium text-muted-foreground">JEEnie Points</p>
                             </div>
-                            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{stats?.totalPoints ?? 0}</h3>
+                            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{stats?.totalPoints ?? 0}</h3>
                             <div className="flex items-center gap-2 mt-1.5">
                               <Badge className="text-[10px] font-bold px-2 py-0.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white">{pointsLevel.name}</Badge>
                             </div>
@@ -491,8 +482,8 @@ const EnhancedDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="w-full flex-none self-start snap-start px-1">
-                    <div className="rounded-2xl border border-border bg-card shadow-md overflow-hidden h-full">
+                  <div className="w-full flex-none snap-start p-1 min-h-0">
+                    <div className="h-full rounded-2xl border border-border bg-card shadow-md overflow-hidden">
                       <Leaderboard key={leaderboardKey} compact />
                     </div>
                   </div>

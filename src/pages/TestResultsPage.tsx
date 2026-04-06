@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { downloadQuestionPaperPdf } from "@/lib/questionPaperPdf";
+import { MathDisplay } from "@/components/admin/MathDisplay";
+import { testsAPI } from "@/services/api";
 import {
   Trophy, Target, Clock, CheckCircle, XCircle, BarChart3,
   TrendingUp, BookOpen, ArrowLeft, Eye, FileText,
@@ -49,16 +51,70 @@ interface TestResult {
 const TestResultsPage = () => {
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { sessionId } = useParams();
   const navigate = useNavigate();
 
+  const buildSessionResult = (sessionData: NonNullable<Awaited<ReturnType<typeof testsAPI.getTestSession>>['data']>) => {
+    if (!sessionData) return;
+
+    const answerMap = sessionData.answers || {};
+    const questions = sessionData.questions || [];
+    const results = questions.map((question) => {
+      const answer = answerMap[question.id];
+      return {
+        questionId: question.id,
+        selectedOption: answer?.selectedOption || "",
+        correctOption: question.correct_option || "",
+        isCorrect: answer?.isCorrect || false,
+        timeSpent: answer?.timeSpent || 0,
+        isMarkedForReview: false,
+      };
+    });
+
+    setTestResult({
+      testTitle: sessionData.session.title || 'Test',
+      totalQuestions: sessionData.session.total_questions || questions.length,
+      answeredQuestions: sessionData.session.attempted_questions || results.filter(r => r.selectedOption).length,
+      correctAnswers: sessionData.session.correct_answers || results.filter(r => r.isCorrect).length,
+      percentage: String(sessionData.session.score ?? 0),
+      timeSpent: sessionData.session.time_taken || 0,
+      completedAt: sessionData.session.completed_at || sessionData.session.started_at || sessionData.session.created_at,
+      questions,
+      results,
+    });
+  };
+
   useEffect(() => {
-    const savedResults = localStorage.getItem("testResults");
-    if (savedResults) {
-      setTestResult(JSON.parse(savedResults));
-    } else {
-      navigate("/tests");
-    }
-  }, [navigate]);
+    const loadResults = async () => {
+      try {
+        if (sessionId) {
+          const { data, error } = await testsAPI.getTestSession(sessionId);
+          if (data && !error) {
+            buildSessionResult(data);
+            return;
+          }
+        }
+
+        const savedResults = localStorage.getItem("testResults");
+        if (savedResults) {
+          const parsed = JSON.parse(savedResults) as TestResult & { sessionId?: string };
+          if (!sessionId || parsed.sessionId === sessionId) {
+            setTestResult(parsed);
+            return;
+          }
+        }
+
+        navigate("/tests");
+      } catch {
+        navigate("/tests");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadResults();
+  }, [navigate, sessionId]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -144,7 +200,7 @@ _Powered by JEEnie_`;
     }
   };
 
-  if (!testResult) {
+  if (isLoading || !testResult) {
     return (
       <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
         <Header />
@@ -300,11 +356,58 @@ _Powered by JEEnie_`;
                               {result.isMarkedForReview && <Badge variant="outline">Marked</Badge>}
                             </div>
                           </div>
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div><span className="text-muted-foreground">Your Answer: </span><span className="font-medium">{result.selectedOption || "Not Attempted"}</span></div>
-                            <div><span className="text-muted-foreground">Correct Answer: </span><span className="font-medium text-green-600">{result.correctOption}</span></div>
-                            <div><span className="text-muted-foreground">Time: </span><span className="font-medium">{result.timeSpent}s</span></div>
-                          </div>
+                          {(() => {
+                            const question = testResult.questions?.find(q => q.id === result.questionId);
+                            const options = question ? [
+                              ['A', question.option_a],
+                              ['B', question.option_b],
+                              ['C', question.option_c],
+                              ['D', question.option_d],
+                            ] as const : [];
+
+                            return (
+                              <>
+                                <div className="text-sm leading-relaxed mb-3 text-foreground">
+                                  <MathDisplay text={question?.question || `Question ${index + 1}`} />
+                                </div>
+
+                                <div className="grid gap-2 mb-3">
+                                  {options.map(([optionKey, optionValue]) => {
+                                    const isSelected = result.selectedOption === optionKey;
+                                    const isCorrect = question?.correct_option === optionKey;
+                                    return (
+                                      <div
+                                        key={optionKey}
+                                        className={`rounded-lg border p-3 ${isCorrect ? 'border-green-400 bg-green-50' : isSelected ? 'border-blue-400 bg-blue-50' : 'border-border bg-background'}`}
+                                      >
+                                        <div className="flex items-start gap-2">
+                                          <Badge variant="outline" className={`text-[10px] ${isCorrect ? 'border-green-500 text-green-700' : isSelected ? 'border-blue-500 text-blue-700' : ''}`}>
+                                            {optionKey}
+                                          </Badge>
+                                          <div className="text-sm flex-1">
+                                            <MathDisplay text={optionValue || ''} />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                  <div><span className="text-muted-foreground">Your Answer: </span><span className="font-medium">{result.selectedOption || "Not Attempted"}</span></div>
+                                  <div><span className="text-muted-foreground">Correct Answer: </span><span className="font-medium text-green-600">{result.correctOption}</span></div>
+                                  <div><span className="text-muted-foreground">Time: </span><span className="font-medium">{result.timeSpent}s</span></div>
+                                </div>
+
+                                {question?.explanation && (
+                                  <div className="mt-3 rounded-lg bg-muted/40 border border-border p-3 text-sm">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Explanation</p>
+                                    <MathDisplay text={question.explanation} />
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>

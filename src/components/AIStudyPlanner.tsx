@@ -55,6 +55,26 @@ interface PlannerData {
   isLoading: boolean;
 }
 
+const MIN_QUESTIONS_REQUIRED = 10;
+
+const normalizeDateString = (value: string) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return `${parsed.getUTCFullYear()}-${String(parsed.getUTCMonth() + 1).padStart(2, '0')}-${String(parsed.getUTCDate()).padStart(2, '0')}`;
+};
+
+const calculateDaysToExam = (examDate: string) => {
+  if (!examDate) return 365;
+  const normalized = normalizeDateString(examDate);
+  if (!normalized) return 365;
+  const [year, month, day] = normalized.split('-').map(Number);
+  const today = new Date();
+  const current = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const exam = Date.UTC(year, month - 1, day);
+  return Math.max(0, Math.ceil((exam - current) / 86400000));
+};
+
 const TIME_SLOT_ICONS = {
   morning: <Sun className="w-3.5 h-3.5 text-amber-500" />,
   afternoon: <Sunset className="w-3.5 h-3.5 text-orange-500" />,
@@ -257,15 +277,19 @@ function generatePlanFromData(
 export default function AIStudyPlanner() {
   const { user } = useAuth();
   const { getExamDate } = useExamDates();
+  const loadRequestRef = React.useRef(0);
   const [data, setData] = useState<PlannerData>({
     todayTasks: [],
     weeklyPlan: [],
     stats: { totalQuestions: 0, avgAccuracy: 0, streak: 0, daysToExam: 365, targetExam: 'JEE', weakCount: 0, strongCount: 0, totalTopics: 0 },
     isLoading: true,
   });
+  const [isFallbackPlan, setIsFallbackPlan] = useState(false);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user?.id) return;
+    const requestId = ++loadRequestRef.current;
     try {
       setData(prev => ({ ...prev, isLoading: true }));
 
@@ -276,13 +300,23 @@ export default function AIStudyPlanner() {
       ]);
 
       const targetExam = profile?.target_exam || 'JEE';
-      const examDate = profile?.target_exam_date || getExamDate(targetExam as any);
-      const daysToExam = examDate ? Math.max(0, Math.ceil((new Date(examDate).getTime() - Date.now()) / 86400000)) : 365;
+      const examDate = normalizeDateString(profile?.target_exam_date || getExamDate(targetExam as any));
+      const daysToExam = calculateDaysToExam(examDate);
       const totalQuestions = qCount || 0;
+      const hasEnoughData = totalQuestions >= MIN_QUESTIONS_REQUIRED && (topicMastery || []).length >= 3;
+
+      if (requestId !== loadRequestRef.current) return;
 
       const { todayTasks, weeklyPlan, weakCount, strongCount, totalTopics } = generatePlanFromData(
-        topicMastery || [], profile, totalQuestions, daysToExam, targetExam
+        hasEnoughData ? (topicMastery || []) : [], profile, totalQuestions, daysToExam, targetExam
       );
+
+      setIsFallbackPlan(!hasEnoughData);
+      setFallbackReason(!hasEnoughData
+        ? totalQuestions === 0 && (topicMastery || []).length === 0
+          ? 'Using a starter plan until your first practice data arrives.'
+          : `Using a starter plan because only ${totalQuestions} questions and ${(topicMastery || []).length} topics are available.`
+        : null);
 
       setData({
         todayTasks,
@@ -300,6 +334,7 @@ export default function AIStudyPlanner() {
         isLoading: false,
       });
     } catch (error) {
+      if (requestId !== loadRequestRef.current) return;
       logger.error('Error loading planner data:', error);
       setData(prev => ({ ...prev, isLoading: false }));
       toast.error('Failed to load study plan');
@@ -323,6 +358,16 @@ export default function AIStudyPlanner() {
 
   return (
     <div className="space-y-4">
+      {isFallbackPlan && fallbackReason && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900">
+          <div className="flex items-center gap-2 font-semibold">
+            <AlertTriangle className="w-4 h-4" />
+            Starter plan
+          </div>
+          <p className="mt-1">{fallbackReason}</p>
+        </div>
+      )}
+
       {/* Header Stats */}
       <div className="flex items-center justify-between">
         <div>
@@ -366,7 +411,7 @@ export default function AIStudyPlanner() {
         </CardHeader>
         <CardContent className="px-4 pb-4 space-y-2">
           {todayTasks.map((task, i) => (
-            <div key={i} className={`p-3 rounded-xl border ${PRIORITY_COLORS[task.priority]} transition-all`}>
+            <div key={`${task.subject}-${task.topic}-${task.timeSlot}-${i}`} className={`p-3 rounded-xl border ${PRIORITY_COLORS[task.priority]} transition-all`}>
               <div className="flex items-center gap-3">
                 {TIME_SLOT_ICONS[task.timeSlot]}
                 <div className="flex-1 min-w-0">
@@ -404,7 +449,7 @@ export default function AIStudyPlanner() {
         <CardContent className="px-4 pb-4">
           <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {weeklyPlan.map((day, i) => (
-              <div key={i} className={`text-center p-2 rounded-xl border transition-all ${day.isToday ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : day.isRestDay ? 'border-border/50 bg-muted/30' : 'border-border/50'}`}>
+              <div key={`${day.date}-${day.dayName}-${i}`} className={`text-center p-2 rounded-xl border transition-all ${day.isToday ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : day.isRestDay ? 'border-border/50 bg-muted/30' : 'border-border/50'}`}>
                 <p className={`text-[10px] font-bold ${day.isToday ? 'text-primary' : 'text-muted-foreground'}`}>
                   {day.dayName}
                 </p>
