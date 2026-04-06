@@ -2,7 +2,7 @@
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
 import { registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
+import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 
@@ -20,6 +20,19 @@ cleanupOutdatedCaches();
 registerRoute(
   ({ url }) => url.pathname.startsWith('/~oauth'),
   new class { handle({ request }: any) { return fetch(request); } }
+);
+
+// Keep app shell fresh: prefer network for document navigations and fall back to cache.
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkFirst({
+    cacheName: 'page-cache',
+    networkTimeoutSeconds: 3,
+    plugins: [
+      new ExpirationPlugin({ maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 7 }),
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+    ],
+  })
 );
 
 // Cache Google Fonts
