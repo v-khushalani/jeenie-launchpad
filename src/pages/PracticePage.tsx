@@ -86,6 +86,8 @@ const PracticePage: React.FC = () => {
   const [dailyRemaining, setDailyRemaining] = useState<number>(Infinity);
   const [dailyUsed, setDailyUsed] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(15);
+  const [dailyGoalForStreak, setDailyGoalForStreak] = useState(15);
+  const [todayPracticeCount, setTodayPracticeCount] = useState(0);
 
   // Per-question answer storage
   const [answeredQuestions, setAnsweredQuestions] = useState<Map<number, AnswerRecord>>(new Map());
@@ -117,6 +119,42 @@ const PracticePage: React.FC = () => {
   }, [user?.id]);
 
   useEffect(() => { checkDailyLimit(); }, [checkDailyLimit]);
+
+  const getISTDateString = () => {
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    return new Date(now.getTime() + istOffset).toISOString().split('T')[0];
+  };
+
+  const refreshStreakProgress = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const today = getISTDateString();
+      const [{ data: progressRows }, { data: profileData }] = await Promise.all([
+        supabase
+          .from('daily_progress')
+          .select('questions_completed')
+          .eq('user_id', user.id)
+          .eq('date', today)
+          .order('updated_at', { ascending: false })
+          .limit(1),
+        supabase
+          .from('profiles')
+          .select('daily_goal')
+          .eq('id', user.id)
+          .single(),
+      ]);
+
+      setDailyGoalForStreak(profileData?.daily_goal || 15);
+      setTodayPracticeCount(progressRows?.[0]?.questions_completed || 0);
+    } catch (e) {
+      logger.error('Error loading streak progress:', e);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    refreshStreakProgress();
+  }, [refreshStreakProgress]);
 
   const fetchQuestions = useCallback(async (difficulty?: string) => {
     setLoading(true);
@@ -236,9 +274,7 @@ const PracticePage: React.FC = () => {
     if (!user?.id) return;
     try {
       // Use IST date to align with Indian students' day boundary
-      const now = new Date();
-      const istOffset = 5.5 * 60 * 60 * 1000;
-      const today = new Date(now.getTime() + istOffset).toISOString().split('T')[0];
+      const today = getISTDateString();
       
       // Use a list query and pick first row to avoid 406 object errors on 0/multi-row states
       const { data: progressRows } = await supabase
@@ -257,6 +293,7 @@ const PracticePage: React.FC = () => {
         .single();
 
       const dailyGoal = profileData?.daily_goal || 15;
+      setDailyGoalForStreak(dailyGoal);
 
       if (existing) {
         const newCompleted = (existing.questions_completed || 0) + 1;
@@ -276,6 +313,7 @@ const PracticePage: React.FC = () => {
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id);
+        setTodayPracticeCount(newCompleted);
       } else {
         await supabase
           .from('daily_progress')
@@ -289,6 +327,7 @@ const PracticePage: React.FC = () => {
             daily_target: dailyGoal,
             target_met: 1 >= dailyGoal,
           });
+        setTodayPracticeCount(1);
       }
     } catch (e) {
       logger.error('Error syncing daily progress:', e);
@@ -355,7 +394,7 @@ const PracticePage: React.FC = () => {
         }
 
         // Insert attempt
-        await supabase.from('question_attempts').insert({
+        const { error: attemptInsertError } = await supabase.from('question_attempts').insert({
           user_id: user.id,
           question_id: currentQuestion.id,
           selected_option: option,
@@ -363,10 +402,13 @@ const PracticePage: React.FC = () => {
           mode: 'practice',
           time_spent: 0,
         });
+        if (attemptInsertError) {
+          throw attemptInsertError;
+        }
 
-        // Fire-and-forget: update points, streak, topic mastery, daily progress
+        // Update stats after attempt insert has succeeded
         const pointsDelta = getPointsDelta(currentQuestion.difficulty, result.is_correct);
-        Promise.all([
+        const [practiceStatsRes, streakRes, topicMasteryRes] = await Promise.all([
           supabase.rpc('update_practice_stats', {
             p_user_id: user.id,
             p_points_delta: pointsDelta,
@@ -382,11 +424,23 @@ const PracticePage: React.FC = () => {
                 p_topic: currentQuestion.topic || topicName || '',
                 p_is_correct: result.is_correct,
               })
-            : Promise.resolve(),
-          syncDailyProgress(result.is_correct, pointsDelta),
-        ]).catch(e => {
-          logger.error('Background stats update error:', e);
-        });
+            : Promise.resolve({ error: null }),
+        ]);
+
+        await syncDailyProgress(result.is_correct, pointsDelta);
+
+        if (practiceStatsRes.error) {
+          logger.error('Failed to update practice stats:', practiceStatsRes.error);
+        }
+
+        if (topicMasteryRes && 'error' in topicMasteryRes && topicMasteryRes.error) {
+          logger.error('Failed to update topic mastery:', topicMasteryRes.error);
+        }
+
+        if (streakRes.error) {
+          logger.error('Failed to update streak stats:', streakRes.error);
+          toast.error('Streak update failed. Please try again.');
+        }
 
         // Re-check daily limit after answering
         checkDailyLimit();
@@ -562,6 +616,9 @@ const PracticePage: React.FC = () => {
           <div className="text-center">
             <h1 className="text-sm font-bold text-primary truncate max-w-[200px]">{title}</h1>
             <p className="text-xs text-muted-foreground">Q {currentIndex + 1}/{questions.length}</p>
+            <p className="text-[10px] text-muted-foreground">
+              Streak updates after {dailyGoalForStreak} practice questions/day ({todayPracticeCount}/{dailyGoalForStreak} today)
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={`text-[10px] ${getDifficultyColor(currentDifficulty)}`}>

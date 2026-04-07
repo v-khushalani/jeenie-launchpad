@@ -251,6 +251,7 @@ const TestAttemptPage = () => {
       }
 
       const percentage = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
+      let persistedSessionId: string | null = null;
 
       try {
         // Save test session
@@ -266,6 +267,12 @@ const TestAttemptPage = () => {
           currentSessionId || undefined
         );
 
+        if (sessionResult.error || !sessionResult.data?.id) {
+          throw new Error(sessionResult.error?.message || 'Failed to save test session');
+        }
+
+        persistedSessionId = sessionResult.data.id;
+
         // Save individual test_attempts so questions aren't repeated
         const attemptInserts = results
           .filter(r => r.selectedOption)
@@ -275,17 +282,20 @@ const TestAttemptPage = () => {
             selected_option: r.selectedOption,
             is_correct: r.isCorrect,
             time_spent: r.timeSpent,
-            session_id: sessionResult?.data?.id || null,
+            session_id: persistedSessionId,
           }));
 
         if (attemptInserts.length > 0) {
-          await supabase.from('test_attempts').insert(attemptInserts);
+          const { error: attemptsError } = await supabase.from('test_attempts').insert(attemptInserts);
+          if (attemptsError) {
+            throw attemptsError;
+          }
         }
 
         logger.info('Test results saved to database');
       } catch (dbError) {
         logger.error("Database save error:", dbError);
-        toast.error("Results saved locally. May sync later.");
+        toast.error("Test save failed on cloud. Please retry from tests history.");
       }
 
       localStorage.removeItem("currentTest");
@@ -304,12 +314,12 @@ const TestAttemptPage = () => {
           completedAt: new Date().toISOString(),
           groupTestCode: testSession.groupTestCode || null,
           examPattern: testSession.examPattern || null,
-          sessionId: testSession.sessionId || null,
+          sessionId: persistedSessionId || testSession.sessionId || null,
         })
       );
 
       toast.success("Test submitted successfully!");
-      navigate("/test-results");
+      navigate(persistedSessionId ? `/test-results/${persistedSessionId}` : "/test-results");
 
     } catch (error) {
       logger.error("Test submission failed:", error);

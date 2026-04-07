@@ -175,12 +175,13 @@ const StudyNowPage: React.FC = () => {
               {isLoading ? (
                 <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-4 auto-rows-fr flex-1 min-h-0">
-                  {availableSubjects.map((subName) => {
-                    const meta = SUBJECT_META[subName] || { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />, gradient: 'from-slate-500 to-slate-600', border: 'border-slate-200 hover:border-slate-400', bg: 'bg-slate-100' };
-                    return (
-                      <div key={subName} className={`group relative overflow-hidden rounded-2xl bg-card border-2 border-l-4 border-l-[#e6eeff] ${meta.border} sm:hover:scale-105 transition-all duration-300 cursor-pointer shadow-md sm:shadow-lg sm:hover:shadow-xl min-h-[8.5rem] sm:min-h-[12rem] h-full`} onClick={() => handleSubjectClick(subName)}>
-                        <div className="p-3 sm:p-5 text-center h-full flex flex-col justify-between">
+                <div className="flex-1 min-h-0 overflow-y-auto md:flex md:items-center md:justify-center">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 w-full py-1 sm:py-4 md:py-6">
+                    {availableSubjects.map((subName) => {
+                      const meta = SUBJECT_META[subName] || { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />, gradient: 'from-slate-500 to-slate-600', border: 'border-slate-200 hover:border-slate-400', bg: 'bg-slate-100' };
+                      return (
+                        <div key={subName} className={`group relative overflow-hidden rounded-2xl bg-card border-2 border-l-4 border-l-[#e6eeff] ${meta.border} sm:hover:scale-105 transition-all duration-300 cursor-pointer shadow-md sm:shadow-lg sm:hover:shadow-xl min-h-[9.5rem] sm:min-h-[13.5rem]`} onClick={() => handleSubjectClick(subName)}>
+                          <div className="p-3 sm:p-5 text-center h-full flex flex-col gap-2 sm:gap-0 sm:justify-between">
                           <div>
                             <div className={`w-9 h-9 sm:w-14 sm:h-14 bg-gradient-to-br ${meta.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-2 sm:mb-4 sm:group-hover:scale-110 sm:group-hover:-translate-y-1 transition-transform duration-300 shadow-md sm:shadow-lg`}>
                               {meta.icon}
@@ -199,15 +200,16 @@ const StudyNowPage: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <Button className="w-full bg-[#013062] hover:bg-[#0b4a8f] text-white font-semibold py-1.5 sm:py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-xs sm:text-base mt-2 sm:mt-0">
+                          <Button className="w-full bg-[#013062] hover:bg-[#0b4a8f] text-white font-semibold py-1.5 sm:py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-xs sm:text-base mt-1 sm:mt-0">
                             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                             <span className="sm:hidden">Open</span>
                             <span className="hidden sm:inline">Start Practicing</span>
                           </Button>
                         </div>
-                      </div>
-                    );
-                  })}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </>

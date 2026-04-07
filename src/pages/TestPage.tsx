@@ -40,6 +40,21 @@ interface ChapterOption {
   chapter: string;
 }
 
+interface TestHistorySession {
+  id: string;
+  title: string | null;
+  status: string | null;
+  score: number | null;
+  accuracy: number | null;
+  correct_answers: number | null;
+  total_questions: number | null;
+  time_taken: number | null;
+  group_test_id: string | null;
+  completed_at: string | null;
+  started_at: string | null;
+  created_at: string | null;
+}
+
 const TestPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -57,7 +72,7 @@ const TestPage = () => {
   const { isPremium } = useAuth();
   const [monthlyTestsUsed, setMonthlyTestsUsed] = useState(0);
   const MONTHLY_LIMIT_FREE = SUBSCRIPTION_CONFIG.FREE.monthlyTestLimit;
-  const [testHistory, setTestHistory] = useState<any[]>([]);
+  const [testHistory, setTestHistory] = useState<TestHistorySession[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
@@ -288,7 +303,7 @@ const TestPage = () => {
 
       const { data, error } = await supabase
         .from('test_sessions')
-        .select('*')
+        .select('id, title, status, score, accuracy, correct_answers, total_questions, time_taken, group_test_id, completed_at, started_at, created_at')
         .eq('user_id', user.id)
         .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
         .order('created_at', { ascending: false });
