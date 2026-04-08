@@ -81,6 +81,35 @@ const TestAttemptPage = () => {
   // Keep submitRef updated so the timer always calls the latest version
   submitRef.current = () => handleSubmitTest();
 
+  // ── Test Strictness: prevent back navigation & tab close ──
+  useEffect(() => {
+    if (testSubmitted) return;
+
+    // Warn on tab close / refresh
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    // Intercept browser back button
+    const handlePopState = () => {
+      // Push state back so the user stays on the page
+      window.history.pushState(null, '', window.location.href);
+      setShowExitDialog(true);
+    };
+
+    // Push an extra history entry so "back" fires popstate instead of leaving
+    window.history.pushState(null, '', window.location.href);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [testSubmitted]);
+
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error("Please login to attempt tests");
