@@ -28,6 +28,7 @@ const StudyNowPage = lazy(() => import("./pages/StudyNowPage"));
 const PracticePage = lazy(() => import("./pages/PracticePage"));
 const TestPage = lazy(() => import("./pages/TestPage"));
 const TestAttemptPage = lazy(() => import("./pages/TestAttemptPage"));
+const TestHistoryPage = lazy(() => import("./pages/TestHistoryPage"));
 const TestResultsPage = lazy(() => import("./pages/TestResultsPage"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -105,7 +106,7 @@ const MobileBottomNav = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
-  const hiddenPaths = ['/admin', '/educator', '/test-attempt', '/goal-selection', '/diagnostic', '/auth/callback'];
+  const hiddenPaths = ['/admin', '/educator', '/test-attempt', '/goal-selection', '/diagnostic', '/auth/callback', '/test-history'];
   const shouldHide = hiddenPaths.some(p => location.pathname.startsWith(p));
 
   if (!isMobile || shouldHide || !isAuthenticated) return null;
