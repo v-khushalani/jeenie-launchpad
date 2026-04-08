@@ -81,6 +81,35 @@ const TestAttemptPage = () => {
   // Keep submitRef updated so the timer always calls the latest version
   submitRef.current = () => handleSubmitTest();
 
+  // ── Test Strictness: prevent back navigation & tab close ──
+  useEffect(() => {
+    if (testSubmitted) return;
+
+    // Warn on tab close / refresh
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    // Intercept browser back button
+    const handlePopState = () => {
+      // Push state back so the user stays on the page
+      window.history.pushState(null, '', window.location.href);
+      setShowExitDialog(true);
+    };
+
+    // Push an extra history entry so "back" fires popstate instead of leaving
+    window.history.pushState(null, '', window.location.href);
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [testSubmitted]);
+
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error("Please login to attempt tests");
@@ -772,8 +801,11 @@ const TestAttemptPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Are you sure you want to exit? Your progress will be lost.
+              <p className="text-sm text-muted-foreground mb-2">
+                Are you sure you want to exit? Your test will be <strong>auto-submitted</strong> with your current answers.
+              </p>
+              <p className="text-xs text-muted-foreground mb-4">
+                Answered: {Object.values(userAnswers).filter(a => a.selectedOption).length} / {testSession?.questions.length || 0}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -786,12 +818,12 @@ const TestAttemptPage = () => {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    localStorage.removeItem("currentTest");
-                    navigate("/tests");
+                    setShowExitDialog(false);
+                    handleSubmitTest();
                   }}
                   className="flex-1 text-sm"
                 >
-                  Exit Test
+                  Submit & Exit
                 </Button>
               </div>
             </CardContent>
