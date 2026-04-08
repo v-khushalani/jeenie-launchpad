@@ -801,8 +801,11 @@ const TestAttemptPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Are you sure you want to exit? Your progress will be lost.
+              <p className="text-sm text-muted-foreground mb-2">
+                Are you sure you want to exit? Your test will be <strong>auto-submitted</strong> with your current answers.
+              </p>
+              <p className="text-xs text-muted-foreground mb-4">
+                Answered: {Object.values(userAnswers).filter(a => a.selectedOption).length} / {testSession?.questions.length || 0}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -815,12 +818,14 @@ const TestAttemptPage = () => {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    localStorage.removeItem("currentTest");
-                    navigate("/tests");
+                    setShowExitDialog(false);
+                    handleSubmitTest();
                   }}
                   className="flex-1 text-sm"
                 >
-                  Exit Test
+                  Submit & Exit
+                </Button>
+              </div>
                 </Button>
               </div>
             </CardContent>
