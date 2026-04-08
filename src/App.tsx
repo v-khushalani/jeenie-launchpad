@@ -186,6 +186,9 @@ function App() {
                 <Route path="/test-results/:sessionId" element={
                   <ProtectedRoute><TestResultsPage /></ProtectedRoute>
                 } />
+                <Route path="/test-history" element={
+                  <ProtectedRoute><TestHistoryPage /></ProtectedRoute>
+                } />
                 <Route path="/analytics" element={
                   <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
                 } />
