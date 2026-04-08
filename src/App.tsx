@@ -106,7 +106,7 @@ const MobileBottomNav = () => {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
 
-  const hiddenPaths = ['/admin', '/educator', '/test-attempt', '/goal-selection', '/diagnostic', '/auth/callback', '/test-history'];
+  const hiddenPaths = ['/admin', '/educator', '/test-attempt', '/goal-selection', '/diagnostic', '/auth/callback'];
   const shouldHide = hiddenPaths.some(p => location.pathname.startsWith(p));
 
   if (!isMobile || shouldHide || !isAuthenticated) return null;
