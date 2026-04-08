@@ -826,8 +826,6 @@ const TestAttemptPage = () => {
                   Submit & Exit
                 </Button>
               </div>
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
