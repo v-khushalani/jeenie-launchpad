@@ -152,6 +152,7 @@ const StudyNowPage: React.FC = () => {
   };
 
   const isLoading = profileLoading || loading;
+  const subjectGridColumns = availableSubjects.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-3';
 
   return (
     <div className="mobile-app-shell bg-background">
@@ -175,8 +176,8 @@ const StudyNowPage: React.FC = () => {
               {isLoading ? (
                 <div className="flex justify-center py-20"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
               ) : (
-                <div className="flex-1 min-h-0 overflow-y-auto md:flex md:items-center md:justify-center">
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-4 w-full py-1 sm:py-4 md:py-6">
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                  <div className={`grid grid-cols-1 ${subjectGridColumns} gap-2 sm:gap-4 w-full py-1 sm:py-4 md:py-6 content-start`}>
                     {availableSubjects.map((subName) => {
                       const meta = SUBJECT_META[subName] || { icon: <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />, gradient: 'from-slate-500 to-slate-600', border: 'border-slate-200 hover:border-slate-400', bg: 'bg-slate-100' };
                       return (

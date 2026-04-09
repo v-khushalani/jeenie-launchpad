@@ -87,9 +87,9 @@ const Header = () => {
     : navItems;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border shadow-sm">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-10 xl:px-12 2xl:px-16">
+        <div className="flex items-center justify-between h-[var(--app-header-height)]">
           {/* Logo */}
           <div 
             className="flex items-center gap-3 cursor-pointer group"
@@ -98,20 +98,20 @@ const Header = () => {
             <img 
               src="/logo.png" 
               alt="JEEnie" 
-              className="w-9 h-9 rounded-lg object-contain transition-transform duration-300 group-hover:scale-110"
+              className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg object-contain transition-transform duration-300 group-hover:scale-110"
             />
-            <span className="font-bold text-xl text-primary">
+            <span className="font-bold text-xl lg:text-2xl text-primary leading-none">
               JEEnie
             </span>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 lg:gap-1.5">
             {navItems.map((item) => (
               <button
                 key={item.name}
                 onClick={() => handleNavigation(item.path)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 lg:px-5 py-2 lg:py-2.5 rounded-lg text-sm lg:text-[15px] font-medium transition-all duration-200 ${
                   location.pathname === item.path
                     ? 'bg-primary text-white'
                     : 'text-foreground hover:bg-muted'
@@ -123,17 +123,17 @@ const Header = () => {
           </nav>
 
           {/* Right Side */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2 lg:gap-3">
             {isAuthenticated ? (
               <>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2 h-9 rounded-lg">
-                    <div className="w-7 h-7 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-medium">
+                  <Button variant="ghost" size="sm" className="gap-2 h-10 lg:h-11 rounded-lg px-2 lg:px-3">
+                    <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-gradient-primary flex items-center justify-center text-white text-xs font-medium">
                       {user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                     <div className="hidden sm:flex flex-col items-start leading-tight">
-                      <span className="text-sm font-semibold text-foreground max-w-[120px] truncate">
+                      <span className="text-sm lg:text-[15px] font-semibold text-foreground max-w-[140px] truncate">
                         {user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}
                       </span>
                       {isPremium && (
@@ -186,7 +186,7 @@ const Header = () => {
               </>
             ) : (
               <Button 
-                className="bg-primary hover:bg-primary/90 text-white px-6 h-9 rounded-lg font-semibold shadow-apple transition-all duration-200 hover:shadow-apple-lg"
+                className="bg-primary hover:bg-primary/90 text-white px-6 lg:px-7 h-10 lg:h-11 rounded-lg font-semibold shadow-apple transition-all duration-200 hover:shadow-apple-lg"
                 onClick={() => navigate('/login')}
               >
                 Sign In
@@ -233,6 +233,30 @@ const Header = () => {
               <div className="pt-3 mt-3 border-t border-border/50 space-y-1">
                 {isAuthenticated ? (
                   <>
+                    {!isAdmin && !isEducator && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                          onClick={() => handleNavigation('/ai-planner')}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Brain className="w-4 h-4 text-[#013062]" />
+                            <span>AI Planner</span>
+                          </div>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                          onClick={() => handleNavigation('/analytics')}
+                        >
+                          <div className="flex items-center gap-3">
+                            <BarChart3 className="w-4 h-4 text-[#013062]" />
+                            <span>Analytics</span>
+                          </div>
+                        </Button>
+                      </>
+                    )}
                     <Button 
                       variant="ghost"
                       className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"

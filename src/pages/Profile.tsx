@@ -176,17 +176,20 @@ const Profile = () => {
   };
 
   return (
-    <div className="mobile-app-shell bg-background">
+    <div className="mobile-app-shell bg-gradient-to-b from-blue-50 via-background to-indigo-50/70">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-secondary rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-secondary rounded-full translate-y-1/2 -translate-x-1/3 opacity-30" />
+        <div className="absolute top-0 right-0 w-[420px] h-[420px] bg-blue-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-35" />
+        <div className="absolute bottom-0 left-0 w-[320px] h-[320px] bg-indigo-200 rounded-full translate-y-1/2 -translate-x-1/3 opacity-35" />
       </div>
       <Header />
       <div className="relative z-10 h-full min-h-0 overflow-y-auto py-4 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-4xl">
+          <div className="mb-3 md:mb-4">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-primary/70 font-semibold">Learner Profile</p>
+          </div>
           
           {/* Profile Header */}
-          <Card className="mb-4 md:mb-6 border-0 shadow-lg">
+          <Card className="mb-4 md:mb-6 border border-primary/20 shadow-xl bg-gradient-to-r from-white via-blue-50/70 to-indigo-50/70 backdrop-blur">
             <CardContent className="pt-4 md:pt-6 px-3 md:px-6">
               <div className="flex flex-col items-center gap-4 md:gap-6">
                 {/* Avatar */}
@@ -260,7 +263,7 @@ const Profile = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             {/* Personal Information */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
               <CardHeader className="pb-2 md:pb-4 px-3 md:px-6">
                 <CardTitle className="flex items-center gap-2 text-sm md:text-base text-primary">
                   <User className="w-4 h-4 md:w-5 md:h-5" />
@@ -299,7 +302,7 @@ const Profile = () => {
             </Card>
 
             {/* Academic Information with Daily Goal */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <BookOpen className="w-5 h-5" />
@@ -387,7 +390,7 @@ const Profile = () => {
             </Card>
 
             {/* JEEnie Points & Level */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <Star className="w-5 h-5" />
@@ -413,7 +416,7 @@ const Profile = () => {
             </Card>
 
             {/* Streak Info */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <Flame className="w-5 h-5" />
@@ -436,7 +439,7 @@ const Profile = () => {
 
             {/* Performance Stats */}
             {stats && (
-              <Card className="md:col-span-2 border-0 shadow-lg">
+              <Card className="md:col-span-2 border border-primary/15 shadow-md bg-white/90 backdrop-blur">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-primary">
                     <Trophy className="w-5 h-5" />

@@ -1,20 +1,134 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Bot, Sparkles } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AIDoubtSolver from './AIDoubtSolver';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeatureFlag } from '@/contexts/FeatureFlagContext';
 
+const DRAG_STORAGE_KEY = 'jeenie_ai_button_position';
+const BUTTON_SIZE = 64;
+const EDGE_MARGIN = 16;
+const START_OFFSET_X = 24;
+const START_OFFSET_Y = 112;
+
+const getDefaultButtonPosition = () => {
+  if (typeof window === 'undefined') {
+    return { x: START_OFFSET_X, y: START_OFFSET_Y };
+  }
+
+  return {
+    x: window.innerWidth - BUTTON_SIZE - START_OFFSET_X,
+    y: window.innerHeight - BUTTON_SIZE - START_OFFSET_Y,
+  };
+};
+
 const FloatingAIButton = () => {
   const [showAI, setShowAI] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [position, setPosition] = useState(() => getDefaultButtonPosition());
+  const [isDragging, setIsDragging] = useState(false);
+  const suppressNextClickRef = useRef(false);
+  const dragStateRef = useRef<{ startX: number; startY: number; pointerOffsetX: number; pointerOffsetY: number; moved: boolean } | null>(null);
+  const { isAuthenticated, isPremium } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const aiEnabled = useFeatureFlag('ai_doubt_solver');
 
-  const isTestPage = location.pathname.includes('/test') || location.pathname.includes('/tests');
-  
-  if (!isAuthenticated || isTestPage || !aiEnabled) return null;
+  const hiddenPaths = ['/test-attempt', '/admin', '/educator', '/auth/callback'];
+  const shouldHide = hiddenPaths.some((path) => location.pathname.startsWith(path));
+
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const saved = localStorage.getItem(DRAG_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { x: number; y: number };
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          setPosition({
+            x: clamp(parsed.x, EDGE_MARGIN, window.innerWidth - BUTTON_SIZE - EDGE_MARGIN),
+            y: clamp(parsed.y, EDGE_MARGIN, window.innerHeight - BUTTON_SIZE - EDGE_MARGIN),
+          });
+          return;
+        }
+      }
+    } catch {
+      // fall through to default position
+    }
+
+    setPosition(getDefaultButtonPosition());
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => {
+      setPosition((current) => ({
+        x: clamp(current.x || getDefaultButtonPosition().x, EDGE_MARGIN, window.innerWidth - BUTTON_SIZE - EDGE_MARGIN),
+        y: clamp(current.y || getDefaultButtonPosition().y, EDGE_MARGIN, window.innerHeight - BUTTON_SIZE - EDGE_MARGIN),
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const savePosition = (nextPosition: { x: number; y: number }) => {
+    setPosition(nextPosition);
+    try {
+      localStorage.setItem(DRAG_STORAGE_KEY, JSON.stringify(nextPosition));
+    } catch {
+      // Ignore storage failures.
+    }
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStateRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      pointerOffsetX: event.clientX - position.x,
+      pointerOffsetY: event.clientY - position.y,
+      moved: false,
+    };
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState) return;
+
+    const nextX = clamp(event.clientX - dragState.pointerOffsetX, EDGE_MARGIN, window.innerWidth - BUTTON_SIZE - EDGE_MARGIN);
+    const nextY = clamp(event.clientY - dragState.pointerOffsetY, EDGE_MARGIN, window.innerHeight - BUTTON_SIZE - EDGE_MARGIN);
+
+    if (Math.abs(event.clientX - dragState.startX) > 4 || Math.abs(event.clientY - dragState.startY) > 4) {
+      dragState.moved = true;
+      setIsDragging(true);
+    }
+
+    savePosition({ x: nextX, y: nextY });
+  };
+
+  const handlePointerUp = () => {
+    const dragState = dragStateRef.current;
+    const moved = !!dragState?.moved;
+    dragStateRef.current = null;
+    suppressNextClickRef.current = moved;
+    setIsDragging(false);
+  };
+
+  if (shouldHide || (!aiEnabled && !isPremium)) return null;
+
+  const handleOpenAI = () => {
+    if (!isAuthenticated) {
+      const redirectTo = encodeURIComponent(location.pathname + location.search);
+      navigate(`/login?redirect=${redirectTo}`);
+      return;
+    }
+
+    setShowAI(true);
+  };
 
   const generalQuestion = {
     question: "I have a doubt...",
@@ -25,10 +139,21 @@ const FloatingAIButton = () => {
   return (
     <>
       <button
-        onClick={() => setShowAI(true)}
+        onClick={(event) => {
+          if (isDragging || suppressNextClickRef.current) {
+            event.preventDefault();
+            suppressNextClickRef.current = false;
+            return;
+          }
+          handleOpenAI();
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className="fixed bottom-24 right-6 z-[9999] group"
+        className={`fixed z-[9999] group select-none touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{ left: `${position.x}px`, top: `${position.y}px` }}
         aria-label="AI Doubt Solver"
       >
         <div className="absolute inset-0">

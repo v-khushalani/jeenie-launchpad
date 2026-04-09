@@ -55,6 +55,9 @@ interface TestHistorySession {
   created_at: string | null;
 }
 
+const LOCAL_TEST_HISTORY_KEY = 'testHistoryLocal';
+const LOCAL_MONTHLY_TEST_USAGE_KEY = 'testMonthlyUsageLocal';
+
 const TestPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -74,6 +77,103 @@ const TestPage = () => {
   const MONTHLY_LIMIT_FREE = SUBSCRIPTION_CONFIG.FREE.monthlyTestLimit;
   const [testHistory, setTestHistory] = useState<TestHistorySession[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
+
+  const getCurrentMonthKey = () => {
+    const now = new Date();
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    return `${now.getFullYear()}-${month}`;
+  };
+
+  const getLocalMonthlyUsage = (userId: string) => {
+    try {
+      const raw = localStorage.getItem(LOCAL_MONTHLY_TEST_USAGE_KEY);
+      if (!raw) return 0;
+
+      const parsed = JSON.parse(raw) as Record<string, number>;
+      const key = `${userId}:${getCurrentMonthKey()}`;
+      const value = parsed?.[key];
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const setLocalMonthlyUsage = (userId: string, nextValue: number) => {
+    try {
+      const raw = localStorage.getItem(LOCAL_MONTHLY_TEST_USAGE_KEY);
+      const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+      const key = `${userId}:${getCurrentMonthKey()}`;
+      parsed[key] = Math.max(0, nextValue);
+      localStorage.setItem(LOCAL_MONTHLY_TEST_USAGE_KEY, JSON.stringify(parsed));
+    } catch {
+      // Ignore local storage failures and rely on cloud-only count.
+    }
+  };
+
+  const incrementLocalMonthlyUsage = (userId: string) => {
+    const nextValue = getLocalMonthlyUsage(userId) + 1;
+    setLocalMonthlyUsage(userId, nextValue);
+    return nextValue;
+  };
+
+  const checkMonthlyUsage = async () => {
+    // Skip check for premium users
+    if (isPremium) {
+      setMonthlyTestsUsed(0);
+      return 0;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setMonthlyTestsUsed(0);
+        return 0;
+      }
+
+      const localMonthlyCount = getLocalMonthlyUsage(user.id);
+
+      // Get start of current month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // Count completed/reserved test sessions this month using safe row fetch (avoid HEAD/count edge-case errors)
+      const { data, error } = await supabase
+        .from('test_sessions')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', startOfMonth.toISOString())
+        .limit(MONTHLY_LIMIT_FREE + 5);
+      
+      if (error) {
+        logger.error('Error counting test sessions:', error);
+        setMonthlyTestsUsed(localMonthlyCount);
+        return localMonthlyCount;
+      }
+      
+      const cloudMonthlyCount = data?.length || 0;
+      const effectiveMonthlyCount = Math.max(cloudMonthlyCount, localMonthlyCount);
+      setMonthlyTestsUsed(effectiveMonthlyCount);
+      logger.info('Monthly test usage:', {
+        cloudCount: cloudMonthlyCount,
+        localCount: localMonthlyCount,
+        effectiveCount: effectiveMonthlyCount,
+        limit: MONTHLY_LIMIT_FREE,
+      });
+      return effectiveMonthlyCount;
+    } catch (error) {
+      logger.error('Error checking monthly usage:', error);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const fallbackCount = user ? getLocalMonthlyUsage(user.id) : 0;
+        setMonthlyTestsUsed(fallbackCount);
+        return fallbackCount;
+      } catch {
+        setMonthlyTestsUsed(0);
+        return 0;
+      }
+    }
+  };
 
   useEffect(() => {
     loadProfile();
@@ -258,48 +358,33 @@ const TestPage = () => {
     }
   };
 
-  const checkMonthlyUsage = async () => {
-    // Skip check for premium users
-    if (isPremium) {
-      setMonthlyTestsUsed(0);
-      return;
-    }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get start of current month
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      
-      // Count completed test sessions this month using safe row fetch (avoid HEAD/count edge-case errors)
-      const { data, error } = await supabase
-        .from('test_sessions')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('created_at', startOfMonth.toISOString())
-        .limit(MONTHLY_LIMIT_FREE + 1);
-      
-      if (error) {
-        logger.error('Error counting test sessions:', error);
-        setMonthlyTestsUsed(0);
-        return;
-      }
-      
-      const monthlyCount = data?.length || 0;
-      setMonthlyTestsUsed(monthlyCount);
-      logger.info('Monthly test usage:', { count: monthlyCount, limit: MONTHLY_LIMIT_FREE });
-    } catch (error) {
-      logger.error('Error checking monthly usage:', error);
-      setMonthlyTestsUsed(0);
-    }
-  };
-
   const loadTestHistory = async () => {
+    const getLocalHistory = (): TestHistorySession[] => {
+      try {
+        const raw = localStorage.getItem(LOCAL_TEST_HISTORY_KEY);
+        if (!raw) return [];
+
+        const parsed = JSON.parse(raw) as TestHistorySession[];
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed
+          .filter((item) => item && typeof item.id === 'string')
+          .sort((a, b) => {
+            const aDate = new Date(a.completed_at || a.started_at || a.created_at || 0).getTime();
+            const bDate = new Date(b.completed_at || b.started_at || b.created_at || 0).getTime();
+            return bDate - aDate;
+          });
+      } catch (err) {
+        logger.warn('Invalid local test history format, ignoring.', err);
+        return [];
+      }
+    };
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      setHistoryLoadError(null);
 
       const { data, error } = await supabase
         .from('test_sessions')
@@ -309,13 +394,53 @@ const TestPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        logger.error('Error loading test history:', error);
-        return;
+        throw error;
       }
-      setTestHistory(data || []);
+
+      const localHistory = getLocalHistory();
+      const merged = [...(data || []), ...localHistory].filter(
+        (session, index, arr) => arr.findIndex((s) => s.id === session.id) === index
+      );
+      merged.sort((a, b) => {
+        const aDate = new Date(a.completed_at || a.started_at || a.created_at || 0).getTime();
+        const bDate = new Date(b.completed_at || b.started_at || b.created_at || 0).getTime();
+        return bDate - aDate;
+      });
+      setTestHistory(merged);
     } catch (error) {
       logger.error('Error loading test history:', error);
+      setHistoryLoadError('Cloud history unavailable right now. Showing local history only.');
+      setTestHistory(getLocalHistory());
     }
+  };
+
+  const reserveSessionOrProceedLocally = async (
+    userId: string,
+    subject: string,
+    totalQuestions: number,
+    title: string,
+    questionIds: string[],
+    groupTestId?: string
+  ): Promise<string | null> => {
+    const reservation = await testsAPI.reserveTestSessionLegacy(
+      userId,
+      subject,
+      totalQuestions,
+      title,
+      questionIds,
+      groupTestId,
+    );
+
+    if (reservation.error || !reservation.data?.id) {
+      logger.warn('Unable to reserve test session, continuing in local mode.', {
+        code: reservation.error?.code,
+        message: reservation.error?.message,
+      });
+      toast.warning('Cloud sync issue detected. Test started in local mode; history sync may be delayed.');
+      return null;
+    }
+
+    return reservation.data.id;
   };
 
   const handleSubjectToggle = (subject) => {
@@ -342,8 +467,11 @@ const TestPage = () => {
   };
 
   const startTest = async (mode = testMode) => {
+    // Re-check usage at click-time so free limit cannot be bypassed on stale UI state.
+    const latestMonthlyUsage = await checkMonthlyUsage();
+
     // Early exit for free users who exceeded limit
-    if (!isPremium && monthlyTestsUsed >= MONTHLY_LIMIT_FREE) {
+    if (!isPremium && latestMonthlyUsage >= MONTHLY_LIMIT_FREE) {
       setShowUpgradeModal(true);
       toast.error(`You've used all ${MONTHLY_LIMIT_FREE} free tests this month!`);
       return;
@@ -412,17 +540,13 @@ const TestPage = () => {
           toast.info(`Only ${allSelected.length} PYQ questions available (${pattern.totalQuestions} needed for full paper).`);
         }
 
-        const sessionReservation = await testsAPI.reserveTestSessionLegacy(
+        const reservedSessionId = await reserveSessionOrProceedLocally(
           user.id,
           pyqExam,
           allSelected.length,
           `${pyqExam} ${pyqYear} - PYQ Mock Test`,
           allSelected.map(question => question.id),
         );
-
-        if (sessionReservation.error || !sessionReservation.data?.id) {
-          throw new Error(sessionReservation.error?.message || 'Failed to reserve test session');
-        }
 
         const testSession = {
           id: Date.now().toString(),
@@ -431,11 +555,12 @@ const TestPage = () => {
           duration: pattern.duration,
           startTime: new Date().toISOString(),
           examPattern: pyqExam,
-          sessionId: sessionReservation.data.id,
+          sessionId: reservedSessionId || undefined,
         };
 
         localStorage.setItem('currentTest', JSON.stringify(testSession));
-        setMonthlyTestsUsed(prev => prev + 1);
+        const nextMonthlyUsage = incrementLocalMonthlyUsage(user.id);
+        setMonthlyTestsUsed(prev => Math.max(prev + 1, nextMonthlyUsage));
         toast.dismiss();
         toast.success(`PYQ Mock Test started with ${allSelected.length} questions!`);
         navigate('/test-attempt');
@@ -518,17 +643,13 @@ const TestPage = () => {
           toast.info(`Only ${allSelected.length} new questions available (${pattern.totalQuestions} needed for full paper). Starting with available questions.`);
         }
 
-        const sessionReservation = await testsAPI.reserveTestSessionLegacy(
+        const reservedSessionId = await reserveSessionOrProceedLocally(
           user.id,
           targetExam,
           allSelected.length,
           `Full Syllabus Mock Test - ${pattern.name} Pattern`,
           allSelected.map(question => question.id),
         );
-
-        if (sessionReservation.error || !sessionReservation.data?.id) {
-          throw new Error(sessionReservation.error?.message || 'Failed to reserve test session');
-        }
 
         const testSession = {
           id: Date.now().toString(),
@@ -537,11 +658,12 @@ const TestPage = () => {
           duration: pattern.duration,
           startTime: new Date().toISOString(),
           examPattern: pattern.name,
-          sessionId: sessionReservation.data.id,
+          sessionId: reservedSessionId || undefined,
         };
 
         localStorage.setItem('currentTest', JSON.stringify(testSession));
-        setMonthlyTestsUsed(prev => prev + 1);
+        const nextMonthlyUsage = incrementLocalMonthlyUsage(user.id);
+        setMonthlyTestsUsed(prev => Math.max(prev + 1, nextMonthlyUsage));
             
         toast.dismiss();
         toast.success(`Full mock test started with ${allSelected.length} questions!`);
@@ -664,7 +786,7 @@ const TestPage = () => {
       const shuffled = questions.sort(() => Math.random() - 0.5);
       const selected = shuffled.slice(0, Math.min(questionLimit, questions.length));
 
-      const sessionReservation = await testsAPI.reserveTestSessionLegacy(
+      const reservedSessionId = await reserveSessionOrProceedLocally(
         user.id,
         mode === "chapter" ? (selectedChapters.map(ch => ch.chapter).join(', ') || 'General') : (selectedSubjects.join(', ') || 'General'),
         selected.length,
@@ -673,10 +795,6 @@ const TestPage = () => {
           : `${selectedSubjects.join(', ')} - Subject Test`,
         selected.map(question => question.id),
       );
-
-      if (sessionReservation.error || !sessionReservation.data?.id) {
-        throw new Error(sessionReservation.error?.message || 'Failed to reserve test session');
-      }
 
       const testSession = {
         id: Date.now().toString(),
@@ -687,13 +805,14 @@ const TestPage = () => {
         duration: testDuration,
         startTime: new Date().toISOString(),
         examPattern: pattern.name,
-        sessionId: sessionReservation.data.id,
+        sessionId: reservedSessionId || undefined,
       };
 
       localStorage.setItem('currentTest', JSON.stringify(testSession));
 
       // Increment monthly usage count immediately for UI feedback
-      setMonthlyTestsUsed(prev => prev + 1);
+      const nextMonthlyUsage = incrementLocalMonthlyUsage(user.id);
+      setMonthlyTestsUsed(prev => Math.max(prev + 1, nextMonthlyUsage));
           
       toast.dismiss();
       toast.success(`Test started with ${selected.length} fresh questions!`);
@@ -800,77 +919,96 @@ const TestPage = () => {
             </div>
             
             {/* Test History */}
-            {testHistory.length > 0 && (
-              <div className="mb-6">
-                <button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-2 mb-3 text-sm font-semibold text-foreground hover:text-primary transition-colors"
-                >
+            <div className="mb-6 p-4 rounded-2xl border border-border bg-card/60 shadow-sm">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="w-full flex items-center justify-between gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                <span className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   Test History ({testHistory.length})
-                  <span className="text-xs text-muted-foreground">{showHistory ? '▲ Hide' : '▼ Show'}</span>
-                </button>
-                {showHistory && (
-                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {testHistory.map((session) => {
-                      const isGroup = !!session.group_test_id;
-                      const completedDate = session.completed_at ? new Date(session.completed_at) : session.started_at ? new Date(session.started_at) : new Date(session.created_at);
-                      const statusLabel = session.status || (session.completed_at ? 'completed' : 'in_progress');
-                      return (
-                        <div
-                          key={session.id}
-                          className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-xl bg-card border border-border hover:border-primary/20 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isGroup ? 'bg-emerald-100 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
-                              {isGroup ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">
-                                {session.title || 'Mock Test'}
-                              </p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span>{completedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize">{statusLabel}</Badge>
-                                {isGroup && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-emerald-300 text-emerald-700">Group</Badge>}
+                </span>
+                <span className="text-xs text-muted-foreground">{showHistory ? '▲ Hide' : '▼ Show'}</span>
+              </button>
+
+              {historyLoadError && (
+                <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                  {historyLoadError}
+                </p>
+              )}
+
+              {showHistory && (
+                <div className="mt-3">
+                  {testHistory.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                      No tests yet. Start one now and your history will appear here.
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                      {testHistory.map((session) => {
+                        const isGroup = !!session.group_test_id;
+                        const isLocalOnly = session.id.startsWith('local-');
+                        const completedDate = session.completed_at ? new Date(session.completed_at) : session.started_at ? new Date(session.started_at) : new Date(session.created_at);
+                        const statusLabel = session.status || (session.completed_at ? 'completed' : 'in_progress');
+                        return (
+                          <div
+                            key={session.id}
+                            className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/20 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isGroup ? 'bg-emerald-100 text-emerald-600' : 'bg-primary/10 text-primary'}`}>
+                                {isGroup ? <Users className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-foreground truncate">
+                                  {session.title || 'Mock Test'}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{completedDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 capitalize">{statusLabel}</Badge>
+                                  {isGroup && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-emerald-300 text-emerald-700">Group</Badge>}
+                                  {isLocalOnly && <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-amber-300 text-amber-700">Local</Badge>}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs shrink-0">
-                            <div className="text-center">
-                              <div className="font-bold text-foreground">{session.score ?? 0}</div>
-                              <div className="text-muted-foreground">Score</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="font-bold text-foreground">{Math.round(session.accuracy ?? 0)}%</div>
-                              <div className="text-muted-foreground">Accuracy</div>
-                            </div>
-                            <div className="text-center">
-                              <div className="font-bold text-foreground">{session.correct_answers ?? 0}/{session.total_questions ?? 0}</div>
-                              <div className="text-muted-foreground">Correct</div>
-                            </div>
-                            {session.time_taken && (
+
+                            <div className="flex items-center gap-4 text-xs shrink-0 w-full lg:w-auto justify-between lg:justify-start">
                               <div className="text-center">
-                                <div className="font-bold text-foreground">{Math.round(session.time_taken / 60)}m</div>
-                                <div className="text-muted-foreground">Time</div>
+                                <div className="font-bold text-foreground">{session.score ?? 0}</div>
+                                <div className="text-muted-foreground">Score</div>
                               </div>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-xs h-7 px-2"
-                              onClick={() => navigate(`/test-results/${session.id}`)}
-                            >
-                              View
-                            </Button>
+                              <div className="text-center">
+                                <div className="font-bold text-foreground">{Math.round(session.accuracy ?? 0)}%</div>
+                                <div className="text-muted-foreground">Accuracy</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="font-bold text-foreground">{session.correct_answers ?? 0}/{session.total_questions ?? 0}</div>
+                                <div className="text-muted-foreground">Correct</div>
+                              </div>
+                              {session.time_taken && (
+                                <div className="text-center">
+                                  <div className="font-bold text-foreground">{Math.round(session.time_taken / 60)}m</div>
+                                  <div className="text-muted-foreground">Time</div>
+                                </div>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={isLocalOnly}
+                                className="text-xs h-7 px-2"
+                                onClick={() => navigate(`/test-results/${session.id}`)}
+                              >
+                                {isLocalOnly ? 'Sync Pending' : 'View'}
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
               <div 

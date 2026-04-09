@@ -83,6 +83,12 @@
     }
   }
 
+  @media (min-width: 1024px) {
+    :root {
+      --app-header-height: 4.5rem;
+    }
+  }
+
   .dark {
     --background: 213 100% 3%;
     --foreground: 0 0% 98%;

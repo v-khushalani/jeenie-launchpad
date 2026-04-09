@@ -13,6 +13,7 @@ import MobileNavigation from "@/components/mobile/MobileNavigation";
 import { LiveNotificationBanner } from "@/components/LiveNotificationBanner";
 import { useAutoSubscribePush } from "@/hooks/useAutoSubscribePush";
 import { OfflineBanner } from "@/components/ui/StatusStates";
+import { testsAPI } from "@/services/api";
 
 // Eagerly loaded pages (critical for initial load)
 import Index from "./pages/Index";
@@ -100,6 +101,27 @@ const AutoPushSubscriber = () => {
   return null;
 };
 
+const PendingTestSyncWorker = () => {
+  const { user, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+
+    const syncPending = () => {
+      void testsAPI.flushPendingTestSyncs(user.id);
+    };
+
+    syncPending();
+    window.addEventListener('online', syncPending);
+
+    return () => {
+      window.removeEventListener('online', syncPending);
+    };
+  }, [isAuthenticated, user?.id]);
+
+  return null;
+};
+
 // Mobile bottom nav - only renders on mobile for authenticated users, hidden on admin/educator routes
 const MobileBottomNav = () => {
   const isMobile = useIsMobile();
@@ -139,6 +161,7 @@ function App() {
               <LiveNotificationBanner />
               <OfflineBanner />
               <AutoPushSubscriber />
+              <PendingTestSyncWorker />
               <Suspense fallback={<LoadingScreen message="Loading..." />}>
                 <Routes>
                 {/* Public Route*/}

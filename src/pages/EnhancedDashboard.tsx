@@ -29,7 +29,7 @@ import PointsService from "@/services/pointsService";
 import { logger } from "@/utils/logger";
 
 const EnhancedDashboard = () => {
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const navigate = useNavigate();
   const { stats, profile, loading: isLoading, refresh: refreshStats } = useUserStats();
   const { streak } = useStreakData();
@@ -275,7 +275,11 @@ const EnhancedDashboard = () => {
                                 {profile?.target_exam || 'JEE'}: {examDaysLeft} days left
                               </Badge>
                             )}
-                            {!profile?.is_premium && (
+                            {isPremium ? (
+                              <Badge className="text-[10px] bg-emerald-500/80 text-white border-0">
+                                Pro Plan
+                              </Badge>
+                            ) : (
                               <Badge className="text-[10px] bg-amber-500/80 text-white border-0">
                                 Free Plan
                               </Badge>
@@ -351,7 +355,7 @@ const EnhancedDashboard = () => {
 
                 <div
                   ref={mobileSwipeRef}
-                  className="flex flex-1 min-h-0 overflow-x-scroll overscroll-x-contain scroll-smooth snap-x snap-mandatory no-scrollbar rounded-2xl border border-border bg-card/50"
+                  className="flex flex-1 min-h-0 overflow-x-auto scrollbar-hide overscroll-x-contain scroll-smooth snap-x snap-mandatory touch-pan-x rounded-2xl border border-border bg-card/50"
                   onScroll={(e) => {
                     const target = e.currentTarget;
                     const nextPanel = target.scrollLeft > target.clientWidth / 2 ? "leaderboard" : "overview";
@@ -360,7 +364,7 @@ const EnhancedDashboard = () => {
                 >
                   <div className="w-full flex-none snap-start p-1 min-h-0">
                     <div className="h-full space-y-2 overflow-y-auto p-1">
-                      <div className="grid grid-cols-2 gap-2 auto-rows-[1fr]">
+                      <div className="grid grid-cols-2 gap-2 auto-rows-fr items-stretch">
                         <Card className={`h-full rounded-xl shadow-sm border-l-4 ${streakColors.border} ${streakColors.bg}`}> 
                           <CardContent className="p-2.5 h-full flex flex-col justify-between">
                             <div className="flex items-start gap-2 mb-1">
@@ -388,7 +392,7 @@ const EnhancedDashboard = () => {
                         </Card>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 auto-rows-[1fr]">
+                      <div className="grid grid-cols-2 gap-2 auto-rows-fr items-stretch">
                         <Card className={`h-full rounded-xl shadow-sm border-l-4 ${goalColors.border} ${goalColors.bg}`}> 
                           <CardContent className="p-2.5 h-full flex flex-col justify-between">
                             <div className="flex items-start justify-between gap-2 mb-2">
@@ -500,7 +504,7 @@ const EnhancedDashboard = () => {
               </div>
 
               {/* 4 Dynamic Stats Cards */}
-              <div className="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
+              <div className="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0 auto-rows-fr items-stretch">
                 
                 {/* 1st Card: Day Streak */}
                 <Card className={`rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all border-l-4 ${streakColors.border} ${streakColors.bg} backdrop-blur-sm`}> 
@@ -677,7 +681,7 @@ const EnhancedDashboard = () => {
                           </div>
 
                           {/* Desktop: Card layout */}
-                          <div className="hidden sm:grid sm:grid-cols-2 gap-3">
+                              <div className="hidden sm:grid sm:grid-cols-1 gap-3">
                             {Object.entries(stats.subjectStats).map(([subject, data]: any) => {
                               const accuracy = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
                               const badge = getProgressBadge(accuracy);
@@ -730,7 +734,7 @@ const EnhancedDashboard = () => {
 
                 {/* Leaderboard */}
                 <div className="hidden lg:flex min-h-0 flex-col">
-                  <Leaderboard key={leaderboardKey} />
+                  <Leaderboard key={leaderboardKey} compact />
                 </div>
 
               </div>

@@ -234,17 +234,21 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ compact = false }) => {
     );
   }
 
+  const compactUsers = compact ? topUsers.slice(0, 3) : topUsers;
+
   return (
     <Card className="bg-white/90 backdrop-blur-xl border border-slate-200 shadow-2xl flex flex-col h-full min-h-0">
       <CardHeader className="border-b border-slate-100 p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-2 rounded-lg">
               <Trophy className="h-5 w-5 text-white" />
             </div>
             <div>
               <CardTitle className="text-lg font-bold">Leaderboard</CardTitle>
-              <p className="text-xs text-slate-500">Compete with top performers</p>
+              <p className="text-xs text-slate-500">
+                {compact ? 'Top ranks + your position' : 'Compete with top performers'}
+              </p>
             </div>
           </div>
           <Badge className={`text-white text-xs transition-all ${
@@ -256,7 +260,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ compact = false }) => {
         </div>
 
         {/* Time Filter */}
-        <div className="flex gap-2 mt-3">
+        <div className={`flex gap-2 mt-3 ${compact ? 'flex-wrap' : ''}`}>
           <button
             onClick={() => setTimeFilter('today')}
             disabled={isRefreshing}
@@ -293,7 +297,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ compact = false }) => {
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 space-y-3 flex-1 min-h-0 overflow-y-auto">
+      <CardContent className={`p-4 space-y-3 flex-1 min-h-0 ${compact ? 'overflow-visible' : 'overflow-y-auto'}`}>
         
         {/* Empty State */}
         {topUsers.length === 0 && (
@@ -335,14 +339,38 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ compact = false }) => {
         )}
 
         {/* Top Users */}
-        {topUsers.length === 0 ? (
+        {compact && topUsers.length > 0 && currentUser && currentUser.rank > 3 && (
+          <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {currentUser.rank}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-sm text-slate-900 truncate">You</p>
+                  <p className="text-xs text-slate-600 truncate">
+                    {currentUser.total_points} pts • {currentUser.total_questions} questions • {Math.round(currentUser.accuracy)}%
+                  </p>
+                </div>
+              </div>
+              {currentUser.rank_change !== 0 && (
+                <Badge className={currentUser.rank_change > 0 ? 'bg-green-500' : 'bg-red-500'}>
+                  {currentUser.rank_change > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                  {Math.abs(currentUser.rank_change)}
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        {compactUsers.length === 0 ? (
           <div className="text-center py-8 text-slate-500">
             <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p className="text-sm">No users found.</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {topUsers.map((leaderUser, index) => {
+            {compactUsers.map((leaderUser, index) => {
               const isCurrentUser = leaderUser.id === currentUser?.id;
               
               return (

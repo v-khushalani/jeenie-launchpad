@@ -477,18 +477,22 @@ const Settings = () => {
   }
 
   return (
-    <div className="mobile-app-shell bg-background">
+    <div className="mobile-app-shell bg-gradient-to-b from-slate-50 via-background to-slate-100/70">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-secondary rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-secondary rounded-full translate-y-1/2 -translate-x-1/3 opacity-30" />
+        <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-slate-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
+        <div className="absolute bottom-0 left-0 w-[340px] h-[340px] bg-cyan-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-35" />
       </div>
       <Header />
       <div className="relative z-10 h-full min-h-0 overflow-y-auto py-4 sm:py-6">
         <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-4xl">
 
+          <div className="mb-3 md:mb-4">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">App Controls</p>
+          </div>
+
           <div className="space-y-4 md:space-y-6">
             {/* Profile Settings */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-slate-300 shadow-sm bg-white/95">
               <CardHeader className="pb-2 md:pb-4 px-3 md:px-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center text-sm md:text-base text-primary">
@@ -685,7 +689,7 @@ const Settings = () => {
             </Card>
 
             {/* Notification Settings — coming soon */}
-            <Card className="border-0 shadow-lg opacity-75">
+            <Card className="border border-slate-300 shadow-sm bg-white/95 opacity-80">
               <CardHeader>
                 <CardTitle className="flex items-center text-primary">
                   <Bell className="w-5 h-5 mr-2" />
@@ -701,7 +705,7 @@ const Settings = () => {
             </Card>
 
             {/* Privacy & Security */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-slate-300 shadow-sm bg-white/95">
               <CardHeader>
                 <CardTitle className="flex items-center text-primary">
                   <Shield className="w-5 h-5 mr-2" />
@@ -728,7 +732,7 @@ const Settings = () => {
             </Card>
 
             {/* Appearance */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-slate-300 shadow-sm bg-white/95">
               <CardHeader>
                 <CardTitle className="flex items-center text-primary">
                   <Palette className="w-5 h-5 mr-2" />
@@ -757,7 +761,7 @@ const Settings = () => {
             </Card>
 
             {/* Account Actions */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border border-slate-300 shadow-sm bg-white/95">
               <CardHeader>
                 <CardTitle className="flex items-center text-red-600">
                   <LogOut className="w-5 h-5 mr-2" />

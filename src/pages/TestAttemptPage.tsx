@@ -62,6 +62,8 @@ interface UserAnswer {
   isMarkedForReview: boolean;
 }
 
+const LOCAL_TEST_HISTORY_KEY = 'testHistoryLocal';
+
 const TestAttemptPage = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -281,6 +283,41 @@ const TestAttemptPage = () => {
 
       const percentage = totalAnswered > 0 ? (correctAnswers / totalAnswered) * 100 : 0;
       let persistedSessionId: string | null = null;
+      let attemptInserts: Array<{
+        user_id: string;
+        question_id: string;
+        selected_option: string;
+        is_correct: boolean;
+        time_spent: number;
+        session_id: string | null;
+      }> = [];
+
+      const appendLocalHistory = () => {
+        try {
+          const historyEntry = {
+            id: `local-${Date.now()}`,
+            title: testSession.title || 'Mock Test',
+            status: 'completed',
+            score: Math.round(percentage),
+            accuracy: Math.round(percentage),
+            correct_answers: correctAnswers,
+            total_questions: testSession.questions.length,
+            time_taken: totalTimeSpent,
+            group_test_id: testSession.groupTestId || null,
+            completed_at: new Date().toISOString(),
+            started_at: testSession.startTime,
+            created_at: new Date().toISOString(),
+          };
+
+          const existingRaw = localStorage.getItem(LOCAL_TEST_HISTORY_KEY);
+          const existing = existingRaw ? JSON.parse(existingRaw) : [];
+          const list = Array.isArray(existing) ? existing : [];
+          const merged = [historyEntry, ...list].slice(0, 30);
+          localStorage.setItem(LOCAL_TEST_HISTORY_KEY, JSON.stringify(merged));
+        } catch (historyError) {
+          logger.error('Failed to persist local test history:', historyError);
+        }
+      };
 
       try {
         // Save test session
@@ -303,7 +340,7 @@ const TestAttemptPage = () => {
         persistedSessionId = sessionResult.data.id;
 
         // Save individual test_attempts so questions aren't repeated
-        const attemptInserts = results
+        attemptInserts = results
           .filter(r => r.selectedOption)
           .map(r => ({
             user_id: user.id,
@@ -324,7 +361,19 @@ const TestAttemptPage = () => {
         logger.info('Test results saved to database');
       } catch (dbError) {
         logger.error("Database save error:", dbError);
-        toast.error("Test save failed on cloud. Please retry from tests history.");
+        testsAPI.queuePendingTestSync({
+          userId: user.id,
+          subject: testSession.subject || 'General',
+          totalQuestions: testSession.questions.length,
+          correctAnswers,
+          totalTime: totalTimeSpent,
+          attemptedQuestions: totalAnswered,
+          groupTestId: testSession.groupTestId || undefined,
+          sessionId: persistedSessionId || testSession.sessionId || null,
+          attempts: attemptInserts,
+        });
+        appendLocalHistory();
+        toast.error("Cloud save failed. Result is stored locally and visible in Tests history.");
       }
 
       localStorage.removeItem("currentTest");

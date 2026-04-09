@@ -279,15 +279,15 @@ Student's current doubt: "${userContent}". Give direct solution, explain only wh
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-secondary/90 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-3">
-      <div className="bg-background rounded-xl sm:rounded-2xl shadow-2xl max-w-lg w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden border border-border relative">
+    <div className="fixed inset-0 bg-secondary/90 backdrop-blur-md z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-3">
+      <div className="bg-background rounded-none sm:rounded-2xl shadow-2xl max-w-lg w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden border border-border relative">
         {/* Floating JEEnie Icon */}
         <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2 bg-gradient-to-br from-accent-foreground to-primary p-2 sm:p-3 rounded-full shadow-lg animate-bounce">
           <Wand2 className="text-primary-foreground w-5 h-5 sm:w-6 sm:h-6" />
         </div>
 
         {/* Header */}
-        <div className="p-3 sm:p-4 border-b border-border bg-secondary/50 rounded-t-xl sm:rounded-t-2xl flex justify-between items-center">
+        <div className="p-3 sm:p-4 border-b border-border bg-secondary/50 sm:rounded-t-2xl flex justify-between items-center">
           <div className="flex items-center gap-2 sm:gap-3">
             <Bot className="text-accent-foreground" size={18} />
             <div>
@@ -317,7 +317,7 @@ Student's current doubt: "${userContent}". Give direct solution, explain only wh
         </div>
 
         {/* Chat Body */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-secondary/30 text-primary">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 bg-secondary/30 text-primary">
           {messages.map((msg, i) => (
             <div
               key={i}
@@ -401,7 +401,7 @@ Student's current doubt: "${userContent}". Give direct solution, explain only wh
         )}
 
         {/* Footer */}
-        <div className="p-2.5 sm:p-3 border-t border-border bg-secondary/30">
+        <div className="p-2.5 sm:p-3 border-t border-border bg-secondary/30 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:pb-3">
           <div className="flex gap-1.5 sm:gap-2 items-center">
             <input
               type="file"

@@ -7,7 +7,10 @@
 import { apiClient } from '../apiClient';
 import { cache, CACHE_TTL, CACHE_TAGS } from '../cache';
 import { questionsAPI } from './questions';
+import { logger } from '@/utils/logger';
 import type { TestSession, Question, ApiResponse, PaginatedResponse } from '../types';
+
+const PENDING_TEST_SYNC_KEY = 'pendingTestSyncs';
 
 export interface TestConfig {
   title: string;
@@ -32,7 +35,132 @@ export interface TestResult {
   }>;
 }
 
+export interface PendingTestAttempt {
+  user_id: string;
+  question_id: string;
+  selected_option: string;
+  is_correct: boolean;
+  time_spent: number;
+}
+
+export interface PendingTestSyncPayload {
+  id: string;
+  userId: string;
+  subject: string;
+  totalQuestions: number;
+  correctAnswers: number;
+  totalTime: number;
+  attemptedQuestions?: number;
+  groupTestId?: string;
+  sessionId?: string | null;
+  attempts: PendingTestAttempt[];
+  createdAt: string;
+}
+
+const readPendingTestSyncs = (): PendingTestSyncPayload[] => {
+  try {
+    if (typeof localStorage === 'undefined') return [];
+    const raw = localStorage.getItem(PENDING_TEST_SYNC_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as PendingTestSyncPayload[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const writePendingTestSyncs = (items: PendingTestSyncPayload[]): void => {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(PENDING_TEST_SYNC_KEY, JSON.stringify(items.slice(0, 20)));
+};
+
 export const testsAPI = {
+  queuePendingTestSync(payload: Omit<PendingTestSyncPayload, 'id' | 'createdAt'>): void {
+    try {
+      const existing = readPendingTestSyncs();
+      const nextItem: PendingTestSyncPayload = {
+        ...payload,
+        id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        createdAt: new Date().toISOString(),
+      };
+
+      const deduped = existing.filter((item) => {
+        if (payload.sessionId && item.sessionId) return item.sessionId !== payload.sessionId;
+        return item.subject !== payload.subject || item.userId !== payload.userId || item.createdAt !== nextItem.createdAt;
+      });
+
+      writePendingTestSyncs([nextItem, ...deduped]);
+    } catch (error) {
+      logger.error('Failed to queue pending test sync:', error);
+    }
+  },
+
+  getPendingTestSyncCount(): number {
+    return readPendingTestSyncs().length;
+  },
+
+  async flushPendingTestSyncs(targetUserId?: string): Promise<{ synced: number; remaining: number }> {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return { synced: 0, remaining: readPendingTestSyncs().length };
+    }
+
+    const items = readPendingTestSyncs();
+    if (items.length === 0) return { synced: 0, remaining: 0 };
+
+    let synced = 0;
+    const remaining: PendingTestSyncPayload[] = [];
+
+    for (const item of items) {
+      if (targetUserId && item.userId !== targetUserId) {
+        remaining.push(item);
+        continue;
+      }
+
+      try {
+        const sessionResult = await testsAPI.saveTestSessionLegacy(
+          item.userId,
+          item.subject,
+          item.totalQuestions,
+          item.correctAnswers,
+          item.totalTime,
+          item.attemptedQuestions,
+          item.groupTestId,
+          item.sessionId || undefined,
+        );
+
+        if (sessionResult.error || !sessionResult.data?.id) {
+          remaining.push(item);
+          continue;
+        }
+
+        if (item.attempts.length > 0) {
+          const attemptsResult = await apiClient.rawClient
+            .from('test_attempts')
+            .insert(
+              item.attempts.map((attempt) => ({
+                ...attempt,
+                session_id: sessionResult.data.id,
+              }))
+            );
+          const { error } = attemptsResult;
+
+          if (error) {
+            remaining.push({ ...item, sessionId: sessionResult.data.id });
+            continue;
+          }
+        }
+
+        synced += 1;
+      } catch {
+        remaining.push(item);
+      }
+    }
+
+    writePendingTestSyncs(remaining);
+    return { synced, remaining: remaining.length };
+  },
+
   /**
    * Reserve a test session when the user starts a test.
    * This creates the canonical row that monthly limits and history should count.

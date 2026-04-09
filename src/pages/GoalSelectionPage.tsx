@@ -41,6 +41,8 @@ const GoalSelectionPage = () => {
   const redirectCheckedRef = useRef(false);
   const { getExamDate } = useExamDates();
 
+  const GOAL_SAVE_TIMEOUT = 10_000;
+
   // Compute exam date based on grade
   const getExamDateForGrade = (exam: TargetExam): string | null => {
     if (exam === 'BOARDS') return null;
@@ -227,28 +229,49 @@ const GoalSelectionPage = () => {
 
       logger.info('Updating profile with:', { ...payload, target_exam_date: targetExamDate });
 
-      const { error: profileError, data: updateData } = await supabase
+      const writePromise = supabase
         .from('profiles')
-        .update({
-          ...payload,
-          ...(targetExamDate ? { target_exam_date: targetExamDate } : {}),
-        })
-        .eq('id', user.id)
-        .select();
+        .upsert(
+          {
+            id: user.id,
+            ...payload,
+            ...(targetExamDate ? { target_exam_date: targetExamDate } : {}),
+          },
+          { onConflict: 'id' }
+        )
+        .select('id, target_exam, grade')
+        .single();
+
+      const writeResult = await Promise.race([
+        writePromise,
+        new Promise<{ data: null; error: { message: string; code: string } }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: { message: 'Goal save timed out', code: 'TIMEOUT' } }), GOAL_SAVE_TIMEOUT)
+        ),
+      ]);
+
+      const { error: profileError, data: savedProfile } = writeResult;
 
       if (profileError) {
         logger.error('Profile update error:', profileError);
-        toast.error('Error saving profile. Please try again.');
+        toast.error('Unable to save your goal right now. Please try again.');
         setIsStartingJourney(false);
         return;
       }
 
-      if (updateData && updateData.length > 0) {
-        const saved = updateData[0];
-        if (isGoalComplete(saved)) {
-          logger.info('Profile verified successfully');
-        } else {
-          logger.warn('Profile update succeeded but missing some fields');
+      if (!isGoalComplete(savedProfile || {})) {
+        logger.warn('Goal save returned incomplete profile, re-verifying from DB');
+
+        const { data: verifiedProfile, error: verifyError } = await supabase
+          .from('profiles')
+          .select('target_exam, grade')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (verifyError || !isGoalComplete(verifiedProfile || {})) {
+          logger.error('Goal verification failed after save:', verifyError);
+          toast.error('We could not finalize your goal. Please retry.');
+          setIsStartingJourney(false);
+          return;
         }
       }
 
