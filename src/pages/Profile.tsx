@@ -176,10 +176,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="mobile-app-shell bg-gradient-to-b from-blue-50 via-background to-indigo-50/70">
+    <div className="mobile-app-shell bg-gradient-to-b from-blue-50 via-background to-indigo-50/70 dark:from-slate-950 dark:via-background dark:to-slate-900">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[420px] h-[420px] bg-blue-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-35" />
-        <div className="absolute bottom-0 left-0 w-[320px] h-[320px] bg-indigo-200 rounded-full translate-y-1/2 -translate-x-1/3 opacity-35" />
+        <div className="absolute top-0 right-0 w-[420px] h-[420px] bg-blue-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-35 dark:bg-blue-900/25" />
+        <div className="absolute bottom-0 left-0 w-[320px] h-[320px] bg-indigo-200 rounded-full translate-y-1/2 -translate-x-1/3 opacity-35 dark:bg-indigo-900/25" />
       </div>
       <Header />
       <div className="relative z-10 h-full min-h-0 overflow-y-auto py-4 sm:py-6">
@@ -189,12 +189,12 @@ const Profile = () => {
           </div>
           
           {/* Profile Header */}
-          <Card className="mb-4 md:mb-6 border border-primary/20 shadow-xl bg-gradient-to-r from-white via-blue-50/70 to-indigo-50/70 backdrop-blur">
+          <Card className="mb-4 md:mb-6 border border-primary/20 shadow-xl bg-gradient-to-r from-white via-blue-50/70 to-indigo-50/70 backdrop-blur dark:from-slate-900/95 dark:via-slate-900/85 dark:to-slate-800/80 dark:border-primary/30">
             <CardContent className="pt-4 md:pt-6 px-3 md:px-6">
               <div className="flex flex-col items-center gap-4 md:gap-6">
                 {/* Avatar */}
                 <div className="relative">
-                  <Avatar className="w-20 h-20 md:w-24 md:h-24 ring-4 ring-white shadow-lg">
+                  <Avatar className="w-20 h-20 md:w-24 md:h-24 ring-4 ring-white shadow-lg dark:ring-slate-700">
                     <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
                     <AvatarFallback className="text-lg md:text-xl font-bold bg-primary text-primary-foreground">
                       {getInitials(profile?.full_name || 'User')}
@@ -263,7 +263,7 @@ const Profile = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             {/* Personal Information */}
-            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur dark:bg-slate-900/80 dark:border-primary/30">
               <CardHeader className="pb-2 md:pb-4 px-3 md:px-6">
                 <CardTitle className="flex items-center gap-2 text-sm md:text-base text-primary">
                   <User className="w-4 h-4 md:w-5 md:h-5" />
@@ -302,7 +302,7 @@ const Profile = () => {
             </Card>
 
             {/* Academic Information with Daily Goal */}
-            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur dark:bg-slate-900/80 dark:border-primary/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <BookOpen className="w-5 h-5" />
@@ -390,7 +390,7 @@ const Profile = () => {
             </Card>
 
             {/* JEEnie Points & Level */}
-            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur dark:bg-slate-900/80 dark:border-primary/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <Star className="w-5 h-5" />
@@ -398,7 +398,7 @@ const Profile = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center p-4 rounded-lg bg-secondary">
+                <div className="text-center p-4 rounded-lg bg-secondary dark:bg-slate-800/80">
                   <div className="text-4xl font-bold mb-2 text-primary">
                     {pointsLevel.points.toLocaleString()}
                   </div>
@@ -416,7 +416,7 @@ const Profile = () => {
             </Card>
 
             {/* Streak Info */}
-            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur">
+            <Card className="border border-primary/15 shadow-md bg-white/90 backdrop-blur dark:bg-slate-900/80 dark:border-primary/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
                   <Flame className="w-5 h-5" />
@@ -425,11 +425,11 @@ const Profile = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <div className="text-center p-4 bg-orange-50 rounded-lg dark:bg-orange-950/30">
                     <div className="text-3xl font-bold text-orange-600">{stats?.streak || 0}</div>
                     <div className="text-sm text-muted-foreground">Current Streak</div>
                   </div>
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-center p-4 bg-red-50 rounded-lg dark:bg-red-950/30">
                     <div className="text-3xl font-bold text-red-600">{stats?.longest_streak || 0}</div>
                     <div className="text-sm text-muted-foreground">Best Streak</div>
                   </div>
@@ -439,7 +439,7 @@ const Profile = () => {
 
             {/* Performance Stats */}
             {stats && (
-              <Card className="md:col-span-2 border border-primary/15 shadow-md bg-white/90 backdrop-blur">
+              <Card className="md:col-span-2 border border-primary/15 shadow-md bg-white/90 backdrop-blur dark:bg-slate-900/80 dark:border-primary/30">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-primary">
                     <Trophy className="w-5 h-5" />
@@ -448,22 +448,22 @@ const Profile = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 rounded-lg bg-secondary">
+                    <div className="text-center p-4 rounded-lg bg-secondary dark:bg-slate-800/80">
                       <div className="text-2xl font-bold text-primary">{stats.total_questions || 0}</div>
                       <div className="text-sm text-muted-foreground">Questions Solved</div>
                     </div>
                     
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-center p-4 bg-green-50 rounded-lg dark:bg-green-950/30">
                       <div className="text-2xl font-bold text-green-600">{stats.correct_answers || 0}</div>
                       <div className="text-sm text-muted-foreground">Correct Answers</div>
                     </div>
                     
-                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-center p-4 bg-purple-50 rounded-lg dark:bg-purple-950/30">
                       <div className="text-2xl font-bold text-purple-600">{stats.accuracy || 0}%</div>
                       <div className="text-sm text-muted-foreground">Accuracy</div>
                     </div>
                     
-                    <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div className="text-center p-4 bg-yellow-50 rounded-lg dark:bg-yellow-950/30">
                       <div className="text-2xl font-bold text-yellow-600">{stats.total_points || 0}</div>
                       <div className="text-sm text-muted-foreground">Total Points</div>
                     </div>

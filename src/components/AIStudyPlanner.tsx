@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useExamDates } from '@/hooks/useExamDates';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
+import { normalizeTargetExam } from '@/config/goalConfig';
 
 interface TodayTask {
   topic: string;
@@ -56,6 +57,7 @@ interface PlannerData {
 }
 
 const MIN_QUESTIONS_REQUIRED = 10;
+const PLANNER_LOAD_TIMEOUT_MS = 8000;
 
 const normalizeDateString = (value: string) => {
   if (!value) return '';
@@ -88,6 +90,18 @@ const PRIORITY_COLORS = {
 };
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const getCachedTargetExam = () => {
+  try {
+    const cachedGoals = localStorage.getItem('userGoals');
+    if (!cachedGoals) return null;
+
+    const parsedGoals = JSON.parse(cachedGoals);
+    return normalizeTargetExam(parsedGoals?.goal || parsedGoals?.target_exam);
+  } catch {
+    return null;
+  }
+};
 
 // Default syllabus topics for when user has no data
 const DEFAULT_TOPICS: Record<string, { subject: string; chapter: string; topics: string[] }[]> = {
@@ -290,34 +304,28 @@ export default function AIStudyPlanner() {
   const loadData = useCallback(async () => {
     if (!user?.id) return;
     const requestId = ++loadRequestRef.current;
-    try {
-      setData(prev => ({ ...prev, isLoading: true }));
+    const cachedTargetExam = getCachedTargetExam();
 
-      const [{ data: profile }, { count: qCount }, { data: topicMastery }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('question_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('mode', 'practice'),
-        supabase.from('topic_mastery').select('*').eq('user_id', user.id),
-      ]);
-
-      const targetExam = profile?.target_exam || 'JEE';
+    const commitPlan = (
+      targetExam: string,
+      profile: any,
+      totalQuestions: number,
+      topicMastery: any[],
+      isFallback: boolean,
+      reason: string | null
+    ) => {
       const examDate = normalizeDateString(profile?.target_exam_date || getExamDate(targetExam as any));
       const daysToExam = calculateDaysToExam(examDate);
-      const totalQuestions = qCount || 0;
-      const hasEnoughData = totalQuestions >= MIN_QUESTIONS_REQUIRED && (topicMastery || []).length >= 3;
-
-      if (requestId !== loadRequestRef.current) return;
-
       const { todayTasks, weeklyPlan, weakCount, strongCount, totalTopics } = generatePlanFromData(
-        hasEnoughData ? (topicMastery || []) : [], profile, totalQuestions, daysToExam, targetExam
+        isFallback ? [] : topicMastery,
+        profile,
+        totalQuestions,
+        daysToExam,
+        targetExam
       );
 
-      setIsFallbackPlan(!hasEnoughData);
-      setFallbackReason(!hasEnoughData
-        ? totalQuestions === 0 && (topicMastery || []).length === 0
-          ? 'Using a starter plan until your first practice data arrives.'
-          : `Using a starter plan because only ${totalQuestions} questions and ${(topicMastery || []).length} topics are available.`
-        : null);
-
+      setIsFallbackPlan(isFallback);
+      setFallbackReason(reason);
       setData({
         todayTasks,
         weeklyPlan,
@@ -333,11 +341,89 @@ export default function AIStudyPlanner() {
         },
         isLoading: false,
       });
+    };
+
+    try {
+      setData(prev => ({ ...prev, isLoading: true }));
+      setIsFallbackPlan(false);
+      setFallbackReason(null);
+
+      const loadPromise = Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('question_attempts').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('mode', 'practice'),
+        supabase.from('topic_mastery').select('*').eq('user_id', user.id),
+      ]).then(([profileResult, questionCountResult, topicMasteryResult]) => ({
+        profile: profileResult.data,
+        profileError: profileResult.error,
+        totalQuestions: questionCountResult.count || 0,
+        questionError: questionCountResult.error,
+        topicMastery: topicMasteryResult.data || [],
+        topicError: topicMasteryResult.error,
+      }));
+
+      const timeoutPromise = new Promise<{ timeout: true }>(resolve => {
+        setTimeout(() => resolve({ timeout: true }), PLANNER_LOAD_TIMEOUT_MS);
+      });
+
+      const result = await Promise.race([loadPromise, timeoutPromise]);
+
+      if (requestId !== loadRequestRef.current) return;
+
+      if ('timeout' in result) {
+        const targetExam = cachedTargetExam || 'JEE';
+        commitPlan(
+          targetExam,
+          { target_exam: targetExam, overall_accuracy: 0, current_streak: 0 },
+          0,
+          [],
+          true,
+          'Using a starter plan while your study data finishes loading.'
+        );
+        return;
+      }
+
+      const targetExam = normalizeTargetExam(result.profile?.target_exam || cachedTargetExam || 'JEE');
+      const totalQuestions = result.totalQuestions;
+      const topicMastery = result.topicMastery;
+      const hasEnoughData =
+        !result.profileError &&
+        !result.questionError &&
+        !result.topicError &&
+        totalQuestions >= MIN_QUESTIONS_REQUIRED &&
+        topicMastery.length >= 3;
+
+      if (!hasEnoughData) {
+        const reason = result.questionError || result.topicError || result.profileError
+          ? 'Using a starter plan while we recover your study data.'
+          : totalQuestions === 0 && topicMastery.length === 0
+            ? 'Using a starter plan until your first practice data arrives.'
+            : `Using a starter plan because only ${totalQuestions} questions and ${topicMastery.length} topics are available.`;
+
+        commitPlan(
+          targetExam,
+          result.profile || { target_exam: targetExam, overall_accuracy: 0, current_streak: 0 },
+          totalQuestions,
+          topicMastery,
+          true,
+          reason
+        );
+        return;
+      }
+
+      commitPlan(targetExam, result.profile, totalQuestions, topicMastery, false, null);
     } catch (error) {
       if (requestId !== loadRequestRef.current) return;
       logger.error('Error loading planner data:', error);
-      setData(prev => ({ ...prev, isLoading: false }));
-      toast.error('Failed to load study plan');
+      const targetExam = cachedTargetExam || 'JEE';
+      commitPlan(
+        targetExam,
+        { target_exam: targetExam, overall_accuracy: 0, current_streak: 0 },
+        0,
+        [],
+        true,
+        'Using a starter plan because your study data could not be loaded right now.'
+      );
+      toast.error('Showing a starter plan while we reload your study data');
     }
   }, [user?.id, getExamDate]);
 

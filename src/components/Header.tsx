@@ -217,12 +217,12 @@ const Header = () => {
                   onClick={() => handleNavigation(item.path)}
                   className={`text-left px-4 py-3 rounded-xl font-medium transition-all border-l-4 ${
                     location.pathname === item.path
-                      ? 'bg-[#013062]/10 text-[#013062] border-l-[#013062] shadow-sm'
-                      : 'text-foreground border-l-transparent hover:bg-[#e6eeff]/30 hover:border-l-[#e6eeff]'
+                      ? 'bg-primary/15 text-primary border-l-primary shadow-sm dark:bg-primary/25'
+                      : 'text-foreground border-l-transparent hover:bg-muted/70 hover:border-l-primary/40'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={location.pathname === item.path ? 'text-[#013062]' : 'text-muted-foreground'}>
+                    <span className={location.pathname === item.path ? 'text-primary' : 'text-muted-foreground'}>
                       {mobileNavIcons[item.name] || <LayoutDashboard className="w-4 h-4" />}
                     </span>
                     <span>{item.name}</span>
@@ -237,21 +237,21 @@ const Header = () => {
                       <>
                         <Button
                           variant="ghost"
-                          className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                          className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
                           onClick={() => handleNavigation('/ai-planner')}
                         >
                           <div className="flex items-center gap-3">
-                            <Brain className="w-4 h-4 text-[#013062]" />
+                            <Brain className="w-4 h-4 text-primary" />
                             <span>AI Planner</span>
                           </div>
                         </Button>
                         <Button
                           variant="ghost"
-                          className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                          className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
                           onClick={() => handleNavigation('/analytics')}
                         >
                           <div className="flex items-center gap-3">
-                            <BarChart3 className="w-4 h-4 text-[#013062]" />
+                            <BarChart3 className="w-4 h-4 text-primary" />
                             <span>Analytics</span>
                           </div>
                         </Button>
@@ -259,7 +259,7 @@ const Header = () => {
                     )}
                     <Button 
                       variant="ghost"
-                      className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                      className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
                       onClick={() => handleNavigation('/badges')}
                     >
                       <div className="flex items-center gap-3">
@@ -269,18 +269,18 @@ const Header = () => {
                     </Button>
                     <Button 
                       variant="ghost"
-                      className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                      className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
                       onClick={() => handleNavigation('/settings')}
                     >
                       <div className="flex items-center gap-3">
-                        <Settings className="w-4 h-4 text-[#013062]" />
+                        <Settings className="w-4 h-4 text-primary" />
                         <span>Settings</span>
                       </div>
                     </Button>
                     {isAdmin && (
                       <Button 
                         variant="ghost"
-                        className="w-full justify-start h-12 rounded-xl bg-[#e6eeff]/30 hover:bg-[#e6eeff]/50 border border-[#e6eeff]"
+                        className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
                         onClick={() => handleNavigation('/admin')}
                       >
                         <div className="flex items-center gap-3">

@@ -828,7 +828,7 @@ const TestPage = () => {
   if (showUpgradeModal) {
     return (
       <>
-        <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+        <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 overflow-hidden">
           <Header />
         </div>
         <PricingModal 
@@ -1012,7 +1012,7 @@ const TestPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
               <div 
-                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-primary/20 hover:border-primary/40 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl"
+                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-primary/20 hover:border-primary/40 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl dark:bg-slate-900 dark:border-slate-700"
                 onClick={() => setTestMode("chapter")}
               >
                 <div className="p-4 sm:p-6 text-center">
@@ -1020,10 +1020,10 @@ const TestPage = () => {
                     <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
                   
-                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-gray-900">
+                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-foreground">
                     Chapter-wise Test
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
                     Select multiple chapters for laser-focused practice
                   </p>
                   
@@ -1033,8 +1033,8 @@ const TestPage = () => {
                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">25</div>
-                        <div className="text-gray-500 text-xs">Questions</div>
+                        <div className="text-foreground font-bold text-sm sm:text-base">25</div>
+                        <div className="text-muted-foreground text-xs">Questions</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1042,8 +1042,8 @@ const TestPage = () => {
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">60</div>
-                        <div className="text-gray-500 text-xs">Minutes</div>
+                        <div className="text-foreground font-bold text-sm sm:text-base">60</div>
+                        <div className="text-muted-foreground text-xs">Minutes</div>
                       </div>
                     </div>
                   </div>
@@ -1053,14 +1053,14 @@ const TestPage = () => {
                     Select Chapters
                   </Button>
                   
-                  <Badge className="mt-3 sm:mt-4 bg-green-50 text-green-700 border-green-200 text-xs">
+                  <Badge className="mt-3 sm:mt-4 bg-green-50 text-green-700 border-green-200 text-xs dark:bg-green-950/30 dark:text-green-300 dark:border-green-800/60">
                     Beginner Friendly
                   </Badge>
                 </div>
               </div>
 
               <div 
-                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-purple-200 hover:border-purple-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl"
+                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-purple-200 hover:border-purple-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl dark:bg-slate-900 dark:border-slate-700"
                 onClick={() => setTestMode("subject")}
               >
                 <div className="p-4 sm:p-6 text-center">
@@ -1068,10 +1068,10 @@ const TestPage = () => {
                     <Target className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
                   
-                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-gray-900">
+                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-foreground">
                     Subject-wise Test
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
                     Master entire subjects with comprehensive coverage
                   </p>
                   
@@ -1081,8 +1081,8 @@ const TestPage = () => {
                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">25</div>
-                        <div className="text-gray-500 text-xs">Questions</div>
+                        <div className="text-foreground font-bold text-sm sm:text-base">25</div>
+                        <div className="text-muted-foreground text-xs">Questions</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1090,8 +1090,8 @@ const TestPage = () => {
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">60</div>
-                        <div className="text-gray-500 text-xs">Minutes</div>
+                        <div className="text-foreground font-bold text-sm sm:text-base">60</div>
+                        <div className="text-muted-foreground text-xs">Minutes</div>
                       </div>
                     </div>
                   </div>
@@ -1101,14 +1101,14 @@ const TestPage = () => {
                     Select Subjects
                   </Button>
                   
-                  <Badge className="mt-3 sm:mt-4 bg-yellow-50 text-yellow-700 border-yellow-200 text-xs">
+                  <Badge className="mt-3 sm:mt-4 bg-yellow-50 text-yellow-700 border-yellow-200 text-xs dark:bg-yellow-950/30 dark:text-yellow-300 dark:border-yellow-800/60">
                     Intermediate Level
                   </Badge>
                 </div>
               </div>
 
               <div 
-                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-orange-200 hover:border-orange-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl"
+                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-orange-200 hover:border-orange-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl dark:bg-slate-900 dark:border-slate-700"
                 onClick={() => startTest("full")}
               >
                 <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
@@ -1123,10 +1123,10 @@ const TestPage = () => {
                     <Trophy className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
                   
-                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-gray-900">
+                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-foreground">
                     Full Syllabus Mock
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
                     {(() => {
                       const te = profile?.target_exam || 'JEE';
                       const pn = te === 'JEE' ? 'JEE Mains' : te;
@@ -1141,14 +1141,14 @@ const TestPage = () => {
                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">
+                        <div className="text-foreground font-bold text-sm sm:text-base">
                           {(() => {
                             const te = profile?.target_exam || 'JEE';
                             const pn = te === 'JEE' ? 'JEE Mains' : te;
                             return getExamPattern(pn).totalQuestions;
                           })()}
                         </div>
-                        <div className="text-gray-500 text-xs">Questions</div>
+                        <div className="text-muted-foreground text-xs">Questions</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1156,14 +1156,14 @@ const TestPage = () => {
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">
+                        <div className="text-foreground font-bold text-sm sm:text-base">
                           {(() => {
                             const te = profile?.target_exam || 'JEE';
                             const pn = te === 'JEE' ? 'JEE Mains' : te;
                             return getExamPattern(pn).duration;
                           })()}
                         </div>
-                        <div className="text-gray-500 text-xs">Minutes</div>
+                        <div className="text-muted-foreground text-xs">Minutes</div>
                       </div>
                     </div>
                   </div>
@@ -1173,7 +1173,7 @@ const TestPage = () => {
                     Start Mock Test
                   </Button>
                   
-                  <Badge className="mt-3 sm:mt-4 bg-orange-50 text-orange-700 border-orange-200 text-xs">
+                  <Badge className="mt-3 sm:mt-4 bg-orange-50 text-orange-700 border-orange-200 text-xs dark:bg-orange-950/30 dark:text-orange-300 dark:border-orange-800/60">
                     {(() => {
                       const te = profile?.target_exam || 'JEE';
                       const pn = te === 'JEE' ? 'JEE Mains' : te;
@@ -1187,7 +1187,7 @@ const TestPage = () => {
 
               {/* PYQ Mock Test Card */}
               <div 
-                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-amber-200 hover:border-amber-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl"
+                className="group relative overflow-hidden rounded-2xl bg-white border-2 border-amber-200 hover:border-amber-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl dark:bg-slate-900 dark:border-slate-700"
                 onClick={() => setTestMode("pyq")}
               >
                 <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
@@ -1202,10 +1202,10 @@ const TestPage = () => {
                     <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
                   
-                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-gray-900">
+                  <h3 className="text-lg sm:text-2xl font-bold mb-2 text-foreground">
                     PYQ Mock Test
                   </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">
+                  <p className="text-muted-foreground text-xs sm:text-sm mb-4 sm:mb-6">
                     Practice with actual previous year exam questions
                   </p>
                   
@@ -1215,14 +1215,14 @@ const TestPage = () => {
                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">
+                        <div className="text-foreground font-bold text-sm sm:text-base">
                           {(() => {
                             const te = profile?.target_exam || 'JEE';
                             const pn = te === 'JEE' ? 'JEE Mains' : te;
                             return getExamPattern(pn).totalQuestions;
                           })()}
                         </div>
-                        <div className="text-gray-500 text-xs">Questions</div>
+                        <div className="text-muted-foreground text-xs">Questions</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1230,14 +1230,14 @@ const TestPage = () => {
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
                       </div>
                       <div className="text-left">
-                        <div className="text-gray-900 font-bold text-sm sm:text-base">
+                        <div className="text-foreground font-bold text-sm sm:text-base">
                           {(() => {
                             const te = profile?.target_exam || 'JEE';
                             const pn = te === 'JEE' ? 'JEE Mains' : te;
                             return getExamPattern(pn).duration;
                           })()}
                         </div>
-                        <div className="text-gray-500 text-xs">Minutes</div>
+                        <div className="text-muted-foreground text-xs">Minutes</div>
                       </div>
                     </div>
                   </div>
@@ -1247,7 +1247,7 @@ const TestPage = () => {
                     Select Exam & Year
                   </Button>
                   
-                  <Badge className="mt-3 sm:mt-4 bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                  <Badge className="mt-3 sm:mt-4 bg-amber-50 text-amber-700 border-amber-200 text-xs dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/60">
                     Past Year Papers
                   </Badge>
                 </div>
@@ -1264,7 +1264,7 @@ const TestPage = () => {
     const years = Array.from({ length: 10 }, (_, i) => (currentYear - i).toString());
 
     return (
-      <div className="mobile-app-shell bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 flex flex-col overflow-hidden">
+      <div className="mobile-app-shell bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col overflow-hidden">
         <Header />
         <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-3xl">
@@ -1281,22 +1281,22 @@ const TestPage = () => {
               Back to Test Selection
             </Button>
 
-            <Card className="border-2 border-amber-200 shadow-lg bg-white overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-amber-200 p-4 sm:p-6">
-                <CardTitle className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Card className="border-2 border-amber-200 dark:border-amber-700/60 shadow-lg bg-white dark:bg-slate-900 overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/20 border-b border-amber-200 dark:border-amber-700/50 p-4 sm:p-6">
+                <CardTitle className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
                     <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <span className="text-base sm:text-3xl">PYQ Mock Test Setup</span>
                 </CardTitle>
-                <p className="text-gray-600 mt-2 flex items-center gap-2 text-xs sm:text-base">
+                <p className="text-muted-foreground mt-2 flex items-center gap-2 text-xs sm:text-base">
                   <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" />
                   Select exam and year to practice with actual past paper questions
                 </p>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 space-y-6">
                 <div>
-                  <h3 className="text-sm sm:text-lg font-bold mb-3 text-gray-900 flex items-center gap-2">
+                  <h3 className="text-sm sm:text-lg font-bold mb-3 text-foreground flex items-center gap-2">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                       1
                     </div>
@@ -1310,7 +1310,7 @@ const TestPage = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-sm sm:text-lg font-bold mb-3 text-gray-900 flex items-center gap-2">
+                  <h3 className="text-sm sm:text-lg font-bold mb-3 text-foreground flex items-center gap-2">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                       2
                     </div>
@@ -1346,7 +1346,7 @@ const TestPage = () => {
 
   if (testMode === "chapter") {
     return (
-      <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
+      <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col overflow-hidden">
         <Header />
         <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-6xl">
@@ -1365,22 +1365,22 @@ const TestPage = () => {
               Back to Test Selection
             </Button>
 
-            <Card className="border-2 border-primary/20 shadow-lg bg-white overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-blue-50 border-b border-primary/20 p-4 sm:p-6">
-                <CardTitle className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Card className="border-2 border-primary/20 shadow-lg bg-white overflow-hidden dark:bg-slate-900 dark:border-slate-700">
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-blue-50 border-b border-primary/20 p-4 sm:p-6 dark:from-slate-900 dark:to-slate-800 dark:border-slate-700">
+                <CardTitle className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
                     <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <span className="text-base sm:text-3xl">Chapter-wise Test Setup</span>
                 </CardTitle>
-                <p className="text-gray-600 mt-2 flex items-center gap-2 text-xs sm:text-base">
+                <p className="text-muted-foreground mt-2 flex items-center gap-2 text-xs sm:text-base">
                   <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500" />
                   Select subjects first, then choose specific chapters
                 </p>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-6 sm:mb-8">
-                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 flex items-center gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-foreground flex items-center gap-2">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                       1
                     </div>
@@ -1395,7 +1395,7 @@ const TestPage = () => {
 
                 {selectedSubjects.length > 0 && (
                   <div className="mb-6 sm:mb-8">
-                    <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-gray-900 flex items-center gap-2">
+                    <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 text-foreground flex items-center gap-2">
                       <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                         2
                       </div>
@@ -1410,8 +1410,8 @@ const TestPage = () => {
                           key={id}
                           className={`p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                             selectedChapters.some(ch => ch.id === id)
-                              ? 'border-purple-500 bg-purple-50 shadow-sm'
-                              : 'border-gray-200 bg-white hover:border-purple-300'
+                                ? 'border-purple-500 bg-purple-50 shadow-sm dark:bg-purple-950/30 dark:border-purple-500/60'
+                                : 'border-gray-200 bg-white hover:border-purple-300 dark:bg-slate-900 dark:border-slate-700 dark:hover:border-purple-500/60'
                           }`}
                           onClick={() => handleChapterToggle({ id, subject, chapter })}
                         >
@@ -1421,7 +1421,7 @@ const TestPage = () => {
                               className="w-4 h-4 shrink-0"
                             />
                             <label className="cursor-pointer flex-1 min-w-0">
-                              <span className="font-semibold text-gray-900 block text-xs sm:text-sm truncate">{chapter}</span>
+                              <span className="font-semibold text-foreground block text-xs sm:text-sm truncate">{chapter}</span>
                               <Badge variant="outline" className="text-[10px] mt-0.5">
                                 {subject}
                               </Badge>
@@ -1434,12 +1434,12 @@ const TestPage = () => {
                 )}
 
                 {selectedChapters.length > 0 && (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 rounded-xl bg-gradient-to-r from-primary/10 to-purple-50 border-2 border-primary/20 shadow-md gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 rounded-xl bg-gradient-to-r from-primary/10 to-purple-50 border-2 border-primary/20 shadow-md gap-3 dark:from-slate-900 dark:to-slate-800 dark:border-slate-700">
                     <div>
-                      <p className="font-bold text-xl sm:text-2xl text-gray-900 mb-2">
+                      <p className="font-bold text-xl sm:text-2xl text-foreground mb-2">
                         {selectedChapters.length} Chapter{selectedChapters.length > 1 ? 's' : ''} Selected
                       </p>
-                      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="font-medium">25 Questions</span>
@@ -1469,7 +1469,7 @@ const TestPage = () => {
 
   if (testMode === "subject") {
     return (
-      <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
+      <div className="mobile-app-shell bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col overflow-hidden">
         <Header />
         <div className="flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
           <div className="container mx-auto px-3 sm:px-4 lg:px-8 max-w-6xl">
@@ -1486,15 +1486,15 @@ const TestPage = () => {
               Back to Test Selection
             </Button>
 
-            <Card className="border-2 border-primary/20 shadow-lg bg-white overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 p-4 sm:p-6">
-                <CardTitle className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Card className="border-2 border-primary/20 shadow-lg bg-white overflow-hidden dark:bg-slate-900 dark:border-slate-700">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 p-4 sm:p-6 dark:from-slate-900 dark:to-slate-800 dark:border-slate-700">
+                <CardTitle className="text-xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
                     <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <span className="text-base sm:text-3xl">Subject-wise Test Setup</span>
                 </CardTitle>
-                <p className="text-gray-600 mt-2 flex items-center gap-2 text-xs sm:text-base">
+                <p className="text-muted-foreground mt-2 flex items-center gap-2 text-xs sm:text-base">
                   <Brain className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
                   Choose subjects to test your understanding
                 </p>
@@ -1509,12 +1509,12 @@ const TestPage = () => {
                 </div>
 
                 {selectedSubjects.length > 0 && (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 shadow-md gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 shadow-md gap-3 dark:from-slate-900 dark:to-slate-800 dark:border-slate-700">
                     <div>
-                      <p className="font-bold text-xl sm:text-2xl text-gray-900 mb-2">
+                      <p className="font-bold text-xl sm:text-2xl text-foreground mb-2">
                         {selectedSubjects.length} Subject{selectedSubjects.length > 1 ? 's' : ''} Selected
                       </p>
-                      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                      <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="font-medium">25 Questions</span>

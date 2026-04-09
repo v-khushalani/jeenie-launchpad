@@ -4,7 +4,43 @@ import StreakService from './streakService';
 import { FREE_LIMITS } from '@/config/subscriptionPlans';
 import { logger } from '@/utils/logger';
 
+const LOCAL_MONTHLY_TEST_USAGE_KEY = 'testMonthlyUsageLocal';
+
 export class UserLimitsService {
+
+  private static getCurrentMonthKey(): string {
+    const now = new Date();
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    return `${now.getFullYear()}-${month}`;
+  }
+
+  private static getLocalMonthlyUsage(userId: string): number {
+    try {
+      const raw = localStorage.getItem(LOCAL_MONTHLY_TEST_USAGE_KEY);
+      if (!raw) return 0;
+
+      const parsed = JSON.parse(raw) as Record<string, number>;
+      const key = `${userId}:${this.getCurrentMonthKey()}`;
+      const value = parsed?.[key];
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  static recordMonthlyTestUsage(userId: string): number {
+    try {
+      const raw = localStorage.getItem(LOCAL_MONTHLY_TEST_USAGE_KEY);
+      const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+      const key = `${userId}:${this.getCurrentMonthKey()}`;
+      const nextValue = this.getLocalMonthlyUsage(userId) + 1;
+      parsed[key] = Math.max(0, nextValue);
+      localStorage.setItem(LOCAL_MONTHLY_TEST_USAGE_KEY, JSON.stringify(parsed));
+      return parsed[key] || nextValue;
+    } catch {
+      return this.getLocalMonthlyUsage(userId) + 1;
+    }
+  }
 
   // Daily limit: 15 for free, unlimited for pro
   static async getDailyLimit(userId: string): Promise<number> {
@@ -63,22 +99,32 @@ export class UserLimitsService {
 
   // Monthly test limit: 2 for free, unlimited for pro
   static async getMonthlyTestUsage(userId: string): Promise<number> {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const localMonthlyCount = this.getLocalMonthlyUsage(userId);
 
-    const { data, error } = await supabase
-      .from('test_sessions')
-      .select('id')
-      .eq('user_id', userId)
-      .gte('created_at', monthStart)
-      .limit(FREE_LIMITS.testsPerMonth + 1);
+    try {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    if (error) {
-      logger.warn('Monthly test usage lookup failed, defaulting to 0', { userId, error: error.message });
-      return 0;
+      const { data, error } = await supabase
+        .from('test_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', monthStart)
+        .limit(FREE_LIMITS.testsPerMonth + 1);
+
+      if (error) {
+        logger.warn('Monthly test usage lookup failed, using local fallback', { userId, error: error.message });
+        return localMonthlyCount;
+      }
+
+      return Math.max(data?.length || 0, localMonthlyCount);
+    } catch (error) {
+      logger.warn('Monthly test usage lookup crashed, using local fallback', {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return localMonthlyCount;
     }
-
-    return data?.length || 0;
   }
 
   static async canStartTest(userId: string): Promise<{

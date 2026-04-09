@@ -26,6 +26,22 @@ const FUNNY_PLAN_FALLBACK = {
   }
 };
 
+const AI_FETCH_TIMEOUT_MS = 6000;
+
+async function fetchWithTimeout(input: string, init: RequestInit, label: string) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(`${label} timed out after ${AI_FETCH_TIMEOUT_MS}ms`), AI_FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function callAI(prompt: string): Promise<string | null> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -36,7 +52,7 @@ async function callAI(prompt: string): Promise<string | null> {
   if (LOVABLE_API_KEY) {
     try {
       console.log("[ADMIN] 🔄 Study Plan: Trying Lovable AI Gateway (PRIMARY)...");
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const res = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,7 +67,7 @@ async function callAI(prompt: string): Promise<string | null> {
           temperature: 0.6,
           max_tokens: 3000,
         }),
-      });
+      }, 'Lovable study plan request');
       if (res.ok) {
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content;
@@ -67,7 +83,7 @@ async function callAI(prompt: string): Promise<string | null> {
   if (GEMINI_KEY) {
     try {
       console.log("[ADMIN] 🔄 Study Plan: Trying Gemini (fallback)...");
-      const res = await fetch(
+      const res = await fetchWithTimeout(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
         {
           method: "POST",
@@ -76,7 +92,8 @@ async function callAI(prompt: string): Promise<string | null> {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.6, maxOutputTokens: 3000 },
           }),
-        }
+        },
+        'Gemini study plan request'
       );
       if (res.ok) {
         const data = await res.json();
@@ -90,7 +107,7 @@ async function callAI(prompt: string): Promise<string | null> {
   if (OPENAI_KEY) {
     try {
       console.log("[ADMIN] 🔄 Study Plan: Trying OpenAI (fallback)...");
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      const res = await fetchWithTimeout("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${OPENAI_KEY}` },
         body: JSON.stringify({
@@ -101,7 +118,7 @@ async function callAI(prompt: string): Promise<string | null> {
           ],
           temperature: 0.7, max_tokens: 2000,
         }),
-      });
+      }, 'OpenAI study plan request');
       if (res.ok) {
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content;
@@ -114,7 +131,7 @@ async function callAI(prompt: string): Promise<string | null> {
   if (GROQ_KEY) {
     try {
       console.log("[ADMIN] 🔄 Study Plan: Trying Groq (last resort)...");
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const res = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
         body: JSON.stringify({
@@ -125,7 +142,7 @@ async function callAI(prompt: string): Promise<string | null> {
           ],
           temperature: 0.7, max_tokens: 2000,
         }),
-      });
+      }, 'Groq study plan request');
       if (res.ok) {
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content;

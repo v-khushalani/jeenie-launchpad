@@ -428,7 +428,7 @@ const TestAttemptPage = () => {
       case "not-answered":
         return "bg-red-500 text-white";
       default:
-        return "bg-gray-200 text-gray-700";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -462,9 +462,9 @@ const TestAttemptPage = () => {
   const markedCount = Object.values(userAnswers).filter((a) => a.isMarkedForReview).length;
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col">
+    <div className="h-[100dvh] overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col">
       {/* Header */}
-      <div className="bg-white shadow-md border-b p-3 sm:p-4 shrink-0">
+      <div className="bg-white shadow-md border-b p-3 sm:p-4 shrink-0 dark:bg-slate-900 dark:border-slate-700">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             <Button
@@ -531,7 +531,7 @@ const TestAttemptPage = () => {
             {/* Question Panel */}
             <div className="lg:col-span-3 flex flex-col min-h-0 overflow-hidden">
               {/* Question Card */}
-              <Card className="flex-1 overflow-y-auto min-h-0 mb-0">
+              <Card className="flex-1 overflow-y-auto min-h-0 mb-0 dark:bg-slate-900 dark:border-slate-700">
                 <CardHeader className="pb-2 sm:pb-3 sticky top-0 bg-card z-[5] border-b">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base sm:text-lg">
@@ -559,8 +559,8 @@ const TestAttemptPage = () => {
                           onClick={() => handleAnswerSelect(option)}
                           className={`w-full p-3 sm:p-4 text-left rounded-lg border-2 transition-all ${
                             isSelected
-                              ? "border-primary bg-blue-50 text-primary"
-                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                              ? "border-primary bg-blue-50 text-primary dark:bg-blue-950/30 dark:text-blue-200"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -568,7 +568,7 @@ const TestAttemptPage = () => {
                               className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center text-xs sm:text-sm ${
                                 isSelected
                                   ? "border-primary bg-primary text-white"
-                                  : "border-gray-400"
+                                  : "border-gray-400 dark:border-slate-500"
                               }`}
                             >
                               {option}
@@ -585,7 +585,7 @@ const TestAttemptPage = () => {
               </Card>
 
               {/* Navigation - fixed at bottom */}
-              <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t bg-white px-3 py-2 sm:py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
+              <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 border-t bg-white px-3 py-2 sm:py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] dark:bg-slate-900 dark:border-slate-700 dark:shadow-[0_-2px_8px_rgba(0,0,0,0.3)]">
                 <Button
                   variant="outline"
                   onClick={() => navigateQuestion("prev")}
@@ -692,7 +692,7 @@ const TestAttemptPage = () => {
                       <span>Not Answered</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                      <div className="w-4 h-4 bg-gray-200 rounded dark:bg-slate-700"></div>
                       <span>Not Visited</span>
                     </div>
                   </div>
@@ -709,7 +709,7 @@ const TestAttemptPage = () => {
                         <div className="text-xs">Marked</div>
                       </div>
                       <div>
-                        <div className="font-bold text-gray-600">
+                        <div className="font-bold text-muted-foreground">
                           {testSession.questions.length - answeredCount}
                         </div>
                         <div className="text-xs">Left</div>
@@ -740,7 +740,7 @@ const TestAttemptPage = () => {
           onClick={() => setShowMobilePalette(false)}
         >
           <div 
-            className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto"
+            className="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto dark:bg-slate-900 dark:shadow-black/40"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4">
@@ -799,26 +799,26 @@ const TestAttemptPage = () => {
                   <span>Not Answered</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-5 h-5 bg-gray-200 rounded"></div>
+                  <div className="w-5 h-5 bg-muted rounded"></div>
                   <span>Not Visited</span>
                 </div>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-green-50 p-3 rounded-lg">
+                <div className="bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
                   <div className="font-bold text-xl text-green-600">{answeredCount}</div>
-                  <div className="text-xs text-gray-600">Done</div>
+                  <div className="text-xs text-muted-foreground">Done</div>
                 </div>
-                <div className="bg-yellow-50 p-3 rounded-lg">
+                <div className="bg-yellow-50 dark:bg-yellow-950/30 p-3 rounded-lg">
                   <div className="font-bold text-xl text-yellow-600">{markedCount}</div>
-                  <div className="text-xs text-gray-600">Marked</div>
+                  <div className="text-xs text-muted-foreground">Marked</div>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="font-bold text-xl text-gray-600">
+                <div className="bg-muted/60 dark:bg-muted/30 p-3 rounded-lg">
+                  <div className="font-bold text-xl text-muted-foreground">
                     {testSession.questions.length - answeredCount}
                   </div>
-                  <div className="text-xs text-gray-600">Left</div>
+                  <div className="text-xs text-muted-foreground">Left</div>
                 </div>
               </div>
 

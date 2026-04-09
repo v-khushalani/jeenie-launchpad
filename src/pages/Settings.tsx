@@ -477,10 +477,10 @@ const Settings = () => {
   }
 
   return (
-    <div className="mobile-app-shell bg-gradient-to-b from-slate-50 via-background to-slate-100/70">
+    <div className="mobile-app-shell bg-gradient-to-b from-slate-50 via-background to-slate-100/70 dark:from-slate-950 dark:via-background dark:to-slate-900">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-slate-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-40" />
-        <div className="absolute bottom-0 left-0 w-[340px] h-[340px] bg-cyan-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-35" />
+        <div className="absolute top-0 right-0 w-[380px] h-[380px] bg-slate-200 rounded-full -translate-y-1/2 translate-x-1/3 opacity-40 dark:bg-slate-700/30" />
+        <div className="absolute bottom-0 left-0 w-[340px] h-[340px] bg-cyan-100 rounded-full translate-y-1/2 -translate-x-1/3 opacity-35 dark:bg-cyan-900/20" />
       </div>
       <Header />
       <div className="relative z-10 h-full min-h-0 overflow-y-auto py-4 sm:py-6">
@@ -492,7 +492,7 @@ const Settings = () => {
 
           <div className="space-y-4 md:space-y-6">
             {/* Profile Settings */}
-            <Card className="border border-slate-300 shadow-sm bg-white/95">
+            <Card className="border border-slate-300 shadow-sm bg-white/95 dark:bg-slate-900/85 dark:border-slate-700">
               <CardHeader className="pb-2 md:pb-4 px-3 md:px-6">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center text-sm md:text-base text-primary">
@@ -640,10 +640,10 @@ const Settings = () => {
                 </div>
 
                 {/* Smart Goal Toggle */}
-                <div className="flex items-center justify-between gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-950/25 dark:border-blue-800/60">
                   <div className="flex-1 min-w-0">
                     <Label className="flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-blue-600" />
+                      <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-300" />
                       Smart Goal
                     </Label>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -689,7 +689,7 @@ const Settings = () => {
             </Card>
 
             {/* Notification Settings — coming soon */}
-            <Card className="border border-slate-300 shadow-sm bg-white/95 opacity-80">
+            <Card className="border border-slate-300 shadow-sm bg-white/95 opacity-80 dark:bg-slate-900/75 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center text-primary">
                   <Bell className="w-5 h-5 mr-2" />
@@ -705,7 +705,7 @@ const Settings = () => {
             </Card>
 
             {/* Privacy & Security */}
-            <Card className="border border-slate-300 shadow-sm bg-white/95">
+            <Card className="border border-slate-300 shadow-sm bg-white/95 dark:bg-slate-900/85 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center text-primary">
                   <Shield className="w-5 h-5 mr-2" />
@@ -732,7 +732,7 @@ const Settings = () => {
             </Card>
 
             {/* Appearance */}
-            <Card className="border border-slate-300 shadow-sm bg-white/95">
+            <Card className="border border-slate-300 shadow-sm bg-white/95 dark:bg-slate-900/85 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center text-primary">
                   <Palette className="w-5 h-5 mr-2" />
@@ -761,7 +761,7 @@ const Settings = () => {
             </Card>
 
             {/* Account Actions */}
-            <Card className="border border-slate-300 shadow-sm bg-white/95">
+            <Card className="border border-slate-300 shadow-sm bg-white/95 dark:bg-slate-900/85 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center text-red-600">
                   <LogOut className="w-5 h-5 mr-2" />

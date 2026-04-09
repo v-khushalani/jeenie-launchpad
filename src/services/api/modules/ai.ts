@@ -147,7 +147,7 @@ export const aiAPI = {
 
         return result;
       },
-      { priority: 'low', maxRetries: 2 }
+      { priority: 'low', maxRetries: 1 }
     );
   },
 

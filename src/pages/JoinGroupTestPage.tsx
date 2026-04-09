@@ -239,6 +239,7 @@ const JoinGroupTestPage = () => {
       };
 
       localStorage.setItem("currentTest", JSON.stringify(testSession));
+      UserLimitsService.recordMonthlyTestUsage(user.id);
 
       toast.success(`Joining "${groupTest.title}" with ${orderedQuestions.length} questions!`);
       navigate("/test-attempt");

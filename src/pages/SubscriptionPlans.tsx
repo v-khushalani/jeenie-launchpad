@@ -70,7 +70,7 @@ const SubscriptionPlans = () => {
   ];
 
   return (
-    <div className="mobile-app-shell bg-gradient-to-b from-background to-primary/5 flex flex-col overflow-hidden">
+    <div className="mobile-app-shell bg-gradient-to-b from-background to-primary/5 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col overflow-hidden">
       <Header />
       <div className="flex-1 min-h-0 px-4 flex items-center justify-center overflow-hidden">
         <div className="w-full max-w-md">
