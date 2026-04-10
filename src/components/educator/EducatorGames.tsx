@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import JeenieMathTugOfWar from './JeenieMathTugOfWar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,6 +29,7 @@ const EducatorGames: React.FC = () => {
   const [viewerSrc, setViewerSrc] = useState('');
   const [fullscreenAnimation, setFullscreenAnimation] = useState<EducatorContentItem | null>(null);
   const [fullscreenSrc, setFullscreenSrc] = useState('');
+  const [fullscreenClassroomGame, setFullscreenClassroomGame] = useState(false);
 
   useEffect(() => {
     fetchContent({ content_type: 'simulation' });
@@ -77,6 +79,26 @@ const EducatorGames: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {fullscreenClassroomGame && (
+        <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm flex flex-col">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground truncate">JEEnie Math Tug of War</span>
+                <Badge className="text-[10px] bg-primary text-primary-foreground hover:bg-primary/90">Built-in Game</Badge>
+              </div>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setFullscreenClassroomGame(false)} className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4 mr-1" /> Exit Fullscreen
+            </Button>
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden p-2 sm:p-3">
+            <JeenieMathTugOfWar fullscreen />
+          </div>
+        </div>
+      )}
+
       {fullscreenAnimation && (
         <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm flex flex-col">
           <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0">
@@ -93,7 +115,7 @@ const EducatorGames: React.FC = () => {
           </div>
           <div className="flex-1 min-h-0">
             {fullscreenSrc ? (
-              <SimulationViewer src={fullscreenSrc} title={fullscreenAnimation.title} hideHeader onClose={() => { setFullscreenAnimation(null); setFullscreenSrc(''); }} className="h-full" />
+              <SimulationViewer src={fullscreenSrc} title={fullscreenAnimation.title} onClose={() => { setFullscreenAnimation(null); setFullscreenSrc(''); }} className="h-full" />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center space-y-3">
@@ -133,27 +155,7 @@ const EducatorGames: React.FC = () => {
               <div className="flex gap-2 mt-2">
                 <Button
                   className="flex-1 bg-slate-900 border-b-4 border-slate-950 hover:bg-slate-800 hover:border-slate-900 text-white shadow-sm transition-all active:border-b-0 active:translate-y-1 rounded-xl font-bold h-10 px-4"
-                  onClick={() => {
-                    const builtInGameItem: EducatorContentItem = {
-                      id: 'builtin-jeenie-tug-war',
-                      title: 'JEEnie Math Tug of War',
-                      description: 'Built-in classroom game',
-                      subject: 'mathematics',
-                      grade: 9,
-                      chapter_id: null,
-                      content_type: 'simulation',
-                      file_path: null,
-                      embed_url: '/simulations/jeenie-math-tug-of-war.html',
-                      thumbnail_url: null,
-                      is_active: true,
-                      uploaded_by: 'system',
-                      created_at: new Date().toISOString(),
-                      original_filename: null,
-                      display_order: -1,
-                    };
-                    setFullscreenAnimation(builtInGameItem);
-                    setFullscreenSrc('/simulations/jeenie-math-tug-of-war.html');
-                  }}
+                  onClick={() => setFullscreenClassroomGame(true)}
                 >
                   <Play className="h-4 w-4 mr-2" /> Launch
                 </Button>
