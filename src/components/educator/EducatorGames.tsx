@@ -10,228 +10,13 @@ import {
   Sparkles, Loader2, Play, Link2, Upload, Search, Maximize2, X, ShieldCheck,
 } from 'lucide-react';
 import SimulationViewer from './SimulationViewer';
+import JeenieMathTugOfWar from './JeenieMathTugOfWar';
 import { useEducatorContent, EducatorContentItem } from '@/hooks/useEducatorContent';
 
 const SUBJECTS = ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
-const CODE_EXT_RE = /\.(jsx?|tsx?)$/i;
 
 type RenderPayload = {
   src: string;
-  srcDoc?: string;
-};
-
-function toBase64Utf8(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
-function fromBase64Utf8(value: string): string {
-  const bytes = Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-
-function extractLegacySourceCodeFromHtml(html: string): string | null {
-  // Newer runtime payload format
-  const payloadMatch = html.match(/(?:const|var)\s+payload\s*=\s*'([^']+)'/);
-  if (payloadMatch?.[1]) {
-    try {
-      return fromBase64Utf8(payloadMatch[1]);
-    } catch {
-      // fall through
-    }
-  }
-
-  // Older template-literal wrapper format
-  const sourceCodeMatch = html.match(/const\s+sourceCode\s*=\s*`([\s\S]*?)`;/);
-  if (sourceCodeMatch?.[1]) {
-    return sourceCodeMatch[1]
-      .replace(/\\`/g, '`')
-      .replace(/\\\$\{/g, '${')
-      .replace(/\\\\/g, '\\');
-  }
-
-  return null;
-}
-
-function buildExecutableHtmlFromCode(title: string, code: string): string {
-  const safeTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const payload = toBase64Utf8(code);
-
-  // Auto-detect optional libraries referenced in the simulation source
-  const needsP5    = /\bnew\s+p5\s*\(|\bp5\s*\(\s*(?:function|\()/.test(code);
-  const needsChart = /\bnew\s+Chart\s*\(/.test(code);
-  const extraScripts = [
-    needsP5    ? '    <script src="https://unpkg.com/p5@1.9.4/lib/p5.min.js"></script>' : '',
-    needsChart ? '    <script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js"></script>' : '',
-  ].filter(Boolean).join('\n');
-
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${safeTitle}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <style>
-      html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #f8fafc; overflow: hidden; font-family: 'Saira', system-ui, sans-serif; }
-      #sim-root { width: 100%; height: 100%; font-family: 'Saira', system-ui, sans-serif; }
-      .sim-error { font: 14px/1.5 'Saira', system-ui, sans-serif; color: #b91c1c; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 12px; margin: 16px; white-space: pre-wrap; max-height: 90vh; overflow: auto; }
-    </style>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-${extraScripts}
-  </head>
-  <body>
-    <div id="sim-root"></div>
-    <script>
-      (function () {
-        var root = document.getElementById('sim-root');
-        window.simRoot = root;
-        window.canvas = root;
-
-        var payload = '${payload}';
-        var bytes = Uint8Array.from(atob(payload), function(c) { return c.charCodeAt(0); });
-        var source = new TextDecoder().decode(bytes);
-        try {
-          // 1. Capture the component name from export default before stripping
-          var exportMatch = source.match(/export\\s+default\\s+(?:function|class)\\s+(\\w+)/);
-          var exportedName = exportMatch ? exportMatch[1] : null;
-
-          // 2. Also look for standalone "function App" or similar patterns
-          var allFnNames = [];
-          var fnRegex = /(?:^|\\n)\\s*(?:export\\s+default\\s+)?function\\s+(\\w+)/g;
-          var m;
-          while ((m = fnRegex.exec(source)) !== null) allFnNames.push(m[1]);
-
-          // 3. Strip imports and exports
-          var normalizedSource = source
-            .replace(/^\\uFEFF/, '')
-            .replace(/import\\s*\\{[\\s\\S]*?\\}\\s*from\\s*['"][^'"]*['"];?/g, '')
-            .replace(/^\\s*import\\s+[^;]+;?\\s*$/gm, '')
-            .replace(/^\\s*export\\s+default\\s+/gm, '')
-            .replace(/^\\s*export\\s+\\{[^}]*\\};?\\s*$/gm, '')
-            .replace(/^\\s*export\\s+(const|function|class)\\s+/gm, '$1 ');
-
-          // 4. Inject React hook destructuring + createElement alias
-          var hookPrefix = [
-            'var { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, forwardRef, Fragment, memo, createElement } = React;',
-            'var { createRoot } = ReactDOM;',
-            ''
-          ].join('\\n');
-
-          // 5. Build alias suffix - try exported name first, then scan for App/Simulation
-          var candidateNames = [];
-          if (exportedName) candidateNames.push(exportedName);
-          candidateNames = candidateNames.concat(allFnNames.filter(function(n) { return n !== exportedName; }));
-          // Prioritize: App > Simulation > exported name > first function
-          var orderedCandidates = ['App', 'Simulation'];
-          if (exportedName && orderedCandidates.indexOf(exportedName) === -1) orderedCandidates.push(exportedName);
-          allFnNames.forEach(function(n) { if (orderedCandidates.indexOf(n) === -1) orderedCandidates.push(n); });
-
-          var aliasSuffix = '\\n;var __SIM_CANDIDATES__ = {};\\n';
-          orderedCandidates.forEach(function(n) {
-            aliasSuffix += 'try { if (typeof ' + n + ' === "function") __SIM_CANDIDATES__["' + n + '"] = ' + n + '; } catch(e) {}\\n';
-          });
-
-          var transformed = Babel.transform(hookPrefix + normalizedSource + aliasSuffix, {
-            presets: ['react', 'typescript'],
-            sourceType: 'script',
-            filename: 'simulation.tsx',
-          }).code;
-
-          var runner = new Function(
-            'React', 'ReactDOM', 'window', 'document', 'root',
-            transformed + '\\nreturn __SIM_CANDIDATES__;'
-          );
-          var candidates = runner(window.React, window.ReactDOM, window, document, root) || {};
-
-          // Pick the best candidate
-          var Candidate = candidates['App'] || candidates['Simulation'] || candidates[exportedName] || null;
-          if (!Candidate) {
-            // Fallback: pick the first available candidate
-            var keys = Object.keys(candidates);
-            if (keys.length > 0) Candidate = candidates[keys[0]];
-          }
-          // Also check window globals
-          if (!Candidate) Candidate = window.App || window.Simulation;
-
-          if (typeof Candidate === 'function') {
-            window.ReactDOM.createRoot(root).render(window.React.createElement(Candidate));
-            return;
-          }
-
-          // Maybe it rendered directly to root via vanilla JS
-          if (root && root.childElementCount > 0) return;
-
-          throw new Error('No mountable component found. Functions scanned: ' + (allFnNames.join(', ') || 'none') + '. Exported: ' + (exportedName || 'none'));
-        } catch (e) {
-          try {
-            // Plain JS fallback for non-React simulation scripts
-            var stripped = source
-              .replace(/import\\s+[^;]+;?/g, '')
-              .replace(/export\\s+default\\s+/g, '')
-              .replace(/export\\s+\\{[^}]*\\};?/g, '');
-            var fallback = new Function('window', 'document', 'root', stripped);
-            fallback(window, document, root);
-            if (root && root.childElementCount > 0) return;
-          } catch (ignored) {}
-
-          var msg = e && e.message ? e.message : 'Script execution failed';
-          if (e && e.stack) msg += '\\n\\nStack:\\n' + e.stack.split('\\n').slice(0, 5).join('\\n');
-          root.innerHTML = '<div class="sim-error"><strong>Simulation execution error</strong><br />' + msg + '</div>';
-        }
-      })();
-    </script>
-  </body>
-</html>`;
-}
-
-
-
-async function resolveRenderableSrc(item: EducatorContentItem, signedUrl: string): Promise<RenderPayload> {
-  const pathRef = `${item.file_path ?? ''} ${item.original_filename ?? ''}`;
-  const likelyCode = CODE_EXT_RE.test(pathRef);
-  const likelyHtml = /\.(html?)$/i.test(pathRef);
-  if (!likelyCode && !likelyHtml) return { src: signedUrl };
-
-  try {
-    const res = await window.fetch(signedUrl, { cache: 'no-store' });
-    if (!res.ok) return { src: signedUrl };
-    const text = await res.text();
-    if (!text.trim()) return { src: signedUrl };
-
-    const looksHtml = /^\s*<!doctype html|^\s*<html/i.test(text);
-    // For known simulation file types, always normalize to executable HTML so we avoid
-    // incorrect content-type responses and legacy raw-code files being shown as text.
-    if (likelyCode || likelyHtml) {
-      let html = looksHtml ? text : buildExecutableHtmlFromCode(item.title, text);
-
-      // Legacy converted HTML could be syntactically broken; extract original code and rebuild.
-      if (looksHtml) {
-        const extractedSource = extractLegacySourceCodeFromHtml(text);
-        if (extractedSource?.trim()) {
-          html = buildExecutableHtmlFromCode(item.title, extractedSource);
-        }
-      }
-
-      // If we cannot recover embedded source from HTML, fall back to direct URL load.
-      // This avoids parsing malformed legacy wrappers via srcDoc.
-      if (looksHtml && !extractLegacySourceCodeFromHtml(text)) {
-        return { src: signedUrl };
-      }
-
-      return { src: '', srcDoc: html };
-    }
-
-    return { src: signedUrl };
-  } catch {
-    return { src: signedUrl };
-  }
 }
 
 const EducatorGames: React.FC = () => {
@@ -242,11 +27,9 @@ const EducatorGames: React.FC = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerItem, setViewerItem] = useState<EducatorContentItem | null>(null);
   const [viewerSrc, setViewerSrc] = useState('');
-  const [viewerDoc, setViewerDoc] = useState<string | undefined>(undefined);
   const [fullscreenAnimation, setFullscreenAnimation] = useState<EducatorContentItem | null>(null);
-  const [brandLogoBroken, setBrandLogoBroken] = useState(false);
   const [fullscreenSrc, setFullscreenSrc] = useState('');
-  const [fullscreenDoc, setFullscreenDoc] = useState<string | undefined>(undefined);
+  const [showClassroomGame, setShowClassroomGame] = useState(true);
 
   useEffect(() => {
     fetchContent({ content_type: 'simulation' });
@@ -276,11 +59,10 @@ const EducatorGames: React.FC = () => {
     if (!payload.src && item.file_path) {
       const url = await getSignedUrl(item.file_path);
       if (!url) return;
-      payload = await resolveRenderableSrc(item, url);
+      payload = { src: url };
     }
     setViewerItem(item);
     setViewerSrc(payload.src);
-    setViewerDoc(payload.srcDoc);
     setViewerOpen(true);
   };
 
@@ -289,11 +71,10 @@ const EducatorGames: React.FC = () => {
     if (!payload.src && item.file_path) {
       const url = await getSignedUrl(item.file_path);
       if (!url) return;
-      payload = await resolveRenderableSrc(item, url);
+      payload = { src: url };
     }
     setFullscreenAnimation(item);
     setFullscreenSrc(payload.src);
-    setFullscreenDoc(payload.srcDoc);
   };
 
   return (
@@ -309,13 +90,13 @@ const EducatorGames: React.FC = () => {
                 <Badge className="text-[10px] bg-primary text-primary-foreground hover:bg-primary/90">Interactive Animation</Badge>
               </div>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => { setFullscreenAnimation(null); setFullscreenSrc(''); setFullscreenDoc(undefined); }} className="text-muted-foreground hover:text-foreground">
+            <Button size="sm" variant="ghost" onClick={() => { setFullscreenAnimation(null); setFullscreenSrc(''); }} className="text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4 mr-1" /> Exit Fullscreen
             </Button>
           </div>
           <div className="flex-1 min-h-0">
-            {fullscreenSrc || fullscreenDoc ? (
-              <SimulationViewer src={fullscreenSrc} srcDoc={fullscreenDoc} title={fullscreenAnimation.title} hideHeader={!!fullscreenDoc} onClose={() => { setFullscreenAnimation(null); setFullscreenSrc(''); setFullscreenDoc(undefined); }} className="h-full" />
+            {fullscreenSrc ? (
+              <SimulationViewer src={fullscreenSrc} title={fullscreenAnimation.title} onClose={() => { setFullscreenAnimation(null); setFullscreenSrc(''); }} className="h-full" />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
                 <div className="text-center space-y-3">
@@ -335,6 +116,32 @@ const EducatorGames: React.FC = () => {
           Interactive animations for smartboard teaching
         </p>
       </div>
+
+      {/* Built-in JEEnie classroom game (no upload required) */}
+      <Card className="border-primary/20">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <CardTitle className="text-base">JEEnie Math Tug of War</CardTitle>
+              <CardDescription>
+                Ready-to-use live classroom game for two teams.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              className="h-9"
+              onClick={() => setShowClassroomGame((prev) => !prev)}
+            >
+              {showClassroomGame ? 'Hide Game' : 'Show Game'}
+            </Button>
+          </div>
+        </CardHeader>
+        {showClassroomGame && (
+          <CardContent>
+            <JeenieMathTugOfWar />
+          </CardContent>
+        )}
+      </Card>
 
       {/* Search & Filters */}
       <div className="flex flex-wrap gap-3">
@@ -414,7 +221,6 @@ const EducatorGames: React.FC = () => {
           setViewerOpen(open);
           if (!open) {
             setViewerSrc('');
-            setViewerDoc(undefined);
           }
         }}
       >
@@ -423,8 +229,8 @@ const EducatorGames: React.FC = () => {
             <DialogTitle>{viewerItem?.title ?? 'Interactive Animation'}</DialogTitle>
             <DialogDescription>Interactive simulation viewer</DialogDescription>
           </DialogHeader>
-          {viewerSrc || viewerDoc ? (
-            <SimulationViewer src={viewerSrc} srcDoc={viewerDoc} title={viewerItem?.title ?? 'Interactive Animation'} hideHeader={!!viewerDoc} onClose={() => { setViewerOpen(false); setViewerSrc(''); setViewerDoc(undefined); }} />
+          {viewerSrc ? (
+            <SimulationViewer src={viewerSrc} title={viewerItem?.title ?? 'Interactive Animation'} onClose={() => { setViewerOpen(false); setViewerSrc(''); }} />
           ) : (
             <div className="flex items-center justify-center h-[500px] text-muted-foreground">
               <div className="text-center space-y-3">
