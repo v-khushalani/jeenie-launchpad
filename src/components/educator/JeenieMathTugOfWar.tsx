@@ -76,7 +76,6 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
 
   // Team Blue is shown on the left; positive pull should move flag left.
   const markerPercent = useMemo(() => 50 - ropePull * 8, [ropePull]);
-  const pullMagnitude = useMemo(() => Math.min(1, Math.abs(ropePull) / MAX_PULL), [ropePull]);
 
   useEffect(() => {
     if (gameOver || roundLocked) return;
@@ -268,17 +267,119 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
           70% { box-shadow: 0 0 0 10px rgba(1, 48, 98, 0); }
           100% { box-shadow: 0 0 0 0 rgba(1, 48, 98, 0); }
         }
-        .jm-pull {
-          animation: jmPull 0.45s ease;
+        .jm-stage {
+          background:
+            radial-gradient(circle at 15% -20%, rgba(1, 48, 98, 0.10), transparent 55%),
+            radial-gradient(circle at 90% 10%, rgba(201, 101, 18, 0.10), transparent 50%),
+            #fff;
         }
-        @keyframes jmPull {
-          0% { transform: translateX(0px); }
-          30% { transform: translateX(-3px); }
-          100% { transform: translateX(0px); }
+        .jm-track-pull .jm-rope {
+          animation: jmRopePulse 360ms ease;
         }
-        @keyframes jmStep {
-          0%, 100% { filter: brightness(1); }
-          50% { filter: brightness(1.08); }
+        @keyframes jmRopePulse {
+          0% { transform: translateY(-50%) scaleX(1); }
+          40% { transform: translateY(-50%) scaleX(1.03); }
+          100% { transform: translateY(-50%) scaleX(1); }
+        }
+        .jm-flag {
+          position: absolute;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 40px;
+          height: 24px;
+          transition: left 280ms ease;
+          pointer-events: none;
+        }
+        .jm-flag-pole {
+          position: absolute;
+          left: 6px;
+          top: 1px;
+          width: 2px;
+          height: 22px;
+          background: #6b7280;
+          border-radius: 999px;
+        }
+        .jm-flag-cloth {
+          position: absolute;
+          left: 8px;
+          top: 2px;
+          width: 28px;
+          height: 16px;
+          border-radius: 3px;
+          overflow: hidden;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        .jm-flag-blue { background: #013062; }
+        .jm-flag-orange { background: #c96512; }
+        .jm-team {
+          display: flex;
+          gap: 8px;
+          min-height: 42px;
+        }
+        .jm-team-left { justify-content: flex-start; }
+        .jm-team-right { justify-content: flex-end; }
+        .jm-player {
+          position: relative;
+          width: 18px;
+          height: 36px;
+          transform: translateX(var(--shift, 0px)) rotate(var(--lean, 0deg));
+          transition: transform 220ms ease;
+          filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.12));
+        }
+        .jm-head {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          width: 10px;
+          height: 10px;
+          transform: translateX(-50%);
+          border-radius: 50%;
+          background: #f2c4a0;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .jm-shirt {
+          position: absolute;
+          left: 50%;
+          top: 10px;
+          width: 14px;
+          height: 14px;
+          transform: translateX(-50%);
+          border-radius: 5px;
+          background: var(--team-color);
+          color: #fff;
+          font-size: 8px;
+          font-weight: 800;
+          display: grid;
+          place-items: center;
+        }
+        .jm-arm {
+          position: absolute;
+          top: 14px;
+          width: 11px;
+          height: 5px;
+          border-bottom: 2px solid var(--team-color);
+          border-radius: 999px;
+        }
+        .jm-team-left .jm-arm {
+          right: -6px;
+          transform: rotate(-16deg);
+        }
+        .jm-team-right .jm-arm {
+          left: -6px;
+          transform: rotate(16deg);
+        }
+        .jm-legs {
+          position: absolute;
+          left: 50%;
+          bottom: 2px;
+          width: 12px;
+          height: 7px;
+          transform: translateX(-50%);
+          border-bottom: 2px solid var(--team-color);
+          border-radius: 999px;
         }
       `}</style>
 
@@ -329,23 +430,20 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
         <div style={styles.scoreBoxOrange}>Team Orange: {teamBScore}</div>
       </div>
 
-      <div style={{ ...styles.boardWrap, ...(isCompact ? { padding: '10px 12px', gap: 8 } : {}) }} className="jm-card">
+      <div style={{ ...styles.boardWrap, ...(isCompact ? { padding: '10px 12px', gap: 8 } : {}) }} className="jm-card jm-stage">
         <div style={styles.trackLabelRow}>
           <span style={styles.sideLabel}>Team Blue Pull Zone</span>
           <span style={styles.sideLabel}>Team Orange Pull Zone</span>
         </div>
-        <div
-          style={{
-            ...styles.trackOuter,
-            boxShadow: `inset ${ropePull * -2}px 0 20px rgba(1,48,98,${0.08 + pullMagnitude * 0.16}), inset ${ropePull * 2}px 0 20px rgba(201,101,18,${0.08 + pullMagnitude * 0.16})`,
-          }}
-        >
-          <div style={styles.ropeLine} />
+        <div style={styles.trackOuter} className={pullFlashWinner ? 'jm-track-pull' : ''}>
+          <div style={styles.ropeLine} className="jm-rope" />
           <div style={styles.centerLine} />
-          <div style={{ ...styles.flag, left: `${markerPercent}%` }} className={pullFlashWinner ? 'jm-pull' : ''}>
-            <span style={styles.flagBlue} />
-            <span style={styles.flagOrange} />
-            <span style={styles.flagPole} />
+          <div className="jm-flag" style={{ left: `${markerPercent}%` }}>
+            <span className="jm-flag-pole" />
+            <span className="jm-flag-cloth">
+              <span className="jm-flag-blue" />
+              <span className="jm-flag-orange" />
+            </span>
           </div>
         </div>
         <div style={styles.playersRow}>
@@ -372,7 +470,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
               ? {
                   minHeight: 0,
                   gap: 8,
-                  gridTemplateColumns: '1fr 200px 1fr',
+                  gridTemplateColumns: '1fr 185px 1fr',
                 }
               : {}),
           }}
@@ -442,30 +540,27 @@ type TugTeamPlayersProps = {
 
 const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing, ropePull, isWinner }) => {
   const directionalPull = facing === 'right' ? Math.max(0, ropePull) : Math.max(0, -ropePull);
-  const baseLean = facing === 'right' ? -12 : 12;
-  const lean = baseLean + (facing === 'right' ? -1 : 1) * Math.min(8, directionalPull * 1.4);
-  const pullShift = (isWinner ? (facing === 'right' ? -10 : 10) : 0) + (facing === 'right' ? -1 : 1) * Math.min(6, directionalPull);
+  const baseLean = facing === 'right' ? -9 : 9;
+  const lean = baseLean + (facing === 'right' ? -1 : 1) * Math.min(6, directionalPull * 1.2);
+  const pullShift = isWinner ? (facing === 'right' ? -7 : 7) : 0;
   const align = facing === 'right' ? 'flex-start' : 'flex-end';
 
   return (
-    <div style={{ ...styles.teamPlayersWrap, justifyContent: align }}>
-      {[0, 1, 2, 3].map((idx) => (
+    <div className={`jm-team ${facing === 'right' ? 'jm-team-left' : 'jm-team-right'}`} style={{ ...styles.teamPlayersWrap, justifyContent: align }}>
+      {[0, 1, 2].map((idx) => (
         <div
           key={`${accent}-${idx}`}
+          className="jm-player"
           style={{
-            ...styles.playerFigure,
-            transform: `translateX(${pullShift + (facing === 'right' ? -idx : idx)}px) rotate(${lean + (idx % 2 === 0 ? 1 : -1)}deg)`,
-            animationDelay: `${idx * 80}ms`,
-          }}
+            '--team-color': accent,
+            '--lean': `${lean}deg`,
+            '--shift': `${pullShift + (facing === 'right' ? -idx * 1.2 : idx * 1.2)}px`,
+          } as React.CSSProperties}
         >
-          <span style={{ ...styles.playerHead, background: accent }} />
-          <span style={{ ...styles.playerBody, background: accent }}>
-            <span style={styles.playerBadge}>J</span>
-          </span>
-          <span style={{ ...styles.playerArmBack, borderColor: accent, transform: facing === 'right' ? 'rotate(-36deg)' : 'rotate(36deg)' }} />
-          <span style={{ ...styles.playerArm, borderColor: accent, transform: facing === 'right' ? 'rotate(-12deg)' : 'rotate(12deg)' }} />
-          <span style={{ ...styles.playerLeg, borderColor: accent }} />
-          <span style={{ ...styles.playerFoot, borderColor: accent }} />
+          <span className="jm-head" />
+          <span className="jm-shirt">J</span>
+          <span className="jm-arm" />
+          <span className="jm-legs" />
         </div>
       ))}
     </div>
@@ -617,7 +712,7 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: '1fr auto 1fr',
     alignItems: 'center',
     gap: 8,
-    padding: 12,
+    padding: 10,
   },
   scoreBoxBlue: {
     background: '#e6eeff',
@@ -648,7 +743,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 12px 12px',
     display: 'grid',
     gap: 8,
-    background: 'radial-gradient(circle at 50% -60px, #ffffff 0%, #f5f8ff 45%, #edf3ff 100%)',
   },
   playersRow: {
     display: 'grid',
@@ -658,76 +752,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   teamPlayersWrap: {
     display: 'flex',
-    gap: 6,
-    minHeight: 50,
-  },
-  playerFigure: {
-    display: 'grid',
-    justifyItems: 'center',
-    gap: 1,
-    transition: 'transform 220ms ease',
-    animation: 'jmStep 1s ease-in-out infinite',
-  },
-  playerFoot: {
-    width: 14,
-    height: 4,
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderRadius: 999,
-    opacity: 0.85,
-    marginTop: -2,
-  },
-  playerHead: {
-    width: 12,
-    height: 12,
-    borderRadius: '50%',
-    display: 'block',
-    opacity: 0.92,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
-  },
-  playerBody: {
-    width: 15,
-    height: 17,
-    borderRadius: 6,
-    display: 'grid',
-    placeItems: 'center',
-    opacity: 0.95,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
-  },
-  playerBadge: {
-    color: '#ffffff',
-    fontWeight: 800,
-    fontSize: 8,
-    lineHeight: 1,
-  },
-  playerLeg: {
-    width: 12,
-    height: 6,
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderRadius: 999,
-    display: 'block',
-    opacity: 0.95,
-  },
-  playerArm: {
-    width: 14,
-    height: 4,
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderRadius: 999,
-    display: 'block',
-    opacity: 0.95,
-    marginTop: -2,
-  },
-  playerArmBack: {
-    width: 10,
-    height: 4,
-    borderBottomWidth: 2,
-    borderBottomStyle: 'solid',
-    borderRadius: 999,
-    display: 'block',
-    opacity: 0.6,
-    marginTop: -1,
+    gap: 8,
+    minHeight: 42,
   },
   trackLabelRow: {
     display: 'flex',
@@ -742,10 +768,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   trackOuter: {
     position: 'relative',
-    height: 40,
+    height: 38,
     borderRadius: 999,
     border: '1px solid #d2def3',
-    background: 'linear-gradient(90deg, #e5efff 0%, #f9fbff 50%, #fff2e3 100%)',
+    background: 'linear-gradient(90deg, #e9f1ff 0%, #f8fbff 50%, #fff3e7 100%)',
     overflow: 'hidden',
   },
   ropeLine: {
@@ -758,7 +784,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 999,
     background: 'repeating-linear-gradient(90deg, #8f7348 0 8px, #b29164 8px 16px)',
     opacity: 0.9,
-    boxShadow: '0 1px 0 rgba(255,255,255,0.4) inset, 0 2px 4px rgba(0,0,0,0.15)',
   },
   centerLine: {
     position: 'absolute',
@@ -770,50 +795,12 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#013062',
     opacity: 0.45,
   },
-  flag: {
-    position: 'absolute',
-    top: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 32,
-    height: 20,
-    borderRadius: 6,
-    overflow: 'hidden',
-    transition: 'left 280ms ease',
-    border: '1px solid #cbd6ea',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.18)',
-    background: '#fff',
-  },
-  flagBlue: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: '50%',
-    background: '#013062',
-  },
-  flagOrange: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: '50%',
-    background: '#c96512',
-  },
-  flagPole: {
-    position: 'absolute',
-    left: '50%',
-    top: -8,
-    width: 2,
-    height: 36,
-    transform: 'translateX(-50%)',
-    background: '#5f6f86',
-  },
   questionBox: {
-    padding: 10,
+    padding: 9,
     textAlign: 'center',
   },
   questionText: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 800,
     color: '#013062',
     lineHeight: 1.15,
@@ -827,7 +814,7 @@ const styles: Record<string, React.CSSProperties> = {
   playArea: {
     display: 'grid',
     gridTemplateColumns: '1fr 240px 1fr',
-    gap: 12,
+    gap: 10,
     alignItems: 'stretch',
   },
   teamPanel: {
@@ -837,16 +824,16 @@ const styles: Record<string, React.CSSProperties> = {
   },
   teamTitle: {
     margin: '0 0 8px',
-    fontSize: 18,
+    fontSize: 16,
   },
   answerInput: {
     width: '100%',
     padding: '10px 12px',
-    fontSize: 20,
+    fontSize: 18,
     borderRadius: 10,
     borderWidth: 1,
     borderStyle: 'solid',
-    marginBottom: 10,
+    marginBottom: 8,
     fontWeight: 700,
     color: '#0f274b',
     outline: 'none',
@@ -854,7 +841,7 @@ const styles: Record<string, React.CSSProperties> = {
   keypadGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 8,
+    gap: 6,
   },
   teamActions: {
     marginTop: 7,
