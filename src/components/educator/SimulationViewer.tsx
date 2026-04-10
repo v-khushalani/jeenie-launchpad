@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Maximize2, Minimize2, X, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,7 +6,6 @@ import AnnotationOverlay from './AnnotationOverlay';
 
 interface SimulationViewerProps {
   src: string;
-  srcDoc?: string;
   title?: string;
   className?: string;
   onClose?: () => void;
@@ -15,7 +14,6 @@ interface SimulationViewerProps {
 
 const SimulationViewer: React.FC<SimulationViewerProps> = ({
   src,
-  srcDoc,
   title = 'Interactive Animation',
   className,
   onClose,
@@ -27,21 +25,8 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  // Convert srcDoc to blob URL to avoid inheriting parent CSP
-  const blobUrl = useMemo(() => {
-    if (!srcDoc) return null;
-    const blob = new Blob([srcDoc], { type: 'text/html' });
-    return URL.createObjectURL(blob);
-  }, [srcDoc]);
-
-  // Cleanup blob URL on unmount or change
-  useEffect(() => {
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-  }, [blobUrl]);
-
-  const effectiveSrc = blobUrl || src;
+  // Use direct URLs for simulation content to avoid CSP issues with blob/srcDoc wrappers.
+  const effectiveSrc = src;
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -63,7 +48,7 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
   useEffect(() => {
     setIsLoaded(false);
     setHasError(false);
-  }, [src, srcDoc]);
+  }, [src]);
 
   // Blur on tab switch
   useEffect(() => {

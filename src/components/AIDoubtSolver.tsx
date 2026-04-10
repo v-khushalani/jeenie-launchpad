@@ -279,8 +279,8 @@ Student's current doubt: "${userContent}". Give direct solution, explain only wh
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-secondary/90 backdrop-blur-md z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-3">
-      <div className="bg-background rounded-none sm:rounded-2xl shadow-2xl max-w-lg w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden border border-border relative">
+    <div className="fixed inset-0 bg-secondary/90 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-background rounded-2xl shadow-2xl max-w-lg w-full h-[88dvh] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden border border-border relative">
         {/* Floating JEEnie Icon */}
         <div className="absolute -top-6 sm:-top-8 left-1/2 -translate-x-1/2 bg-gradient-to-br from-accent-foreground to-primary p-2 sm:p-3 rounded-full shadow-lg animate-bounce">
           <Wand2 className="text-primary-foreground w-5 h-5 sm:w-6 sm:h-6" />
