@@ -15,6 +15,10 @@ const MAX_PULL = 5;
 
 const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
+type JeenieMathTugOfWarProps = {
+  fullscreen?: boolean;
+};
+
 const buildQuestion = (round: number, mode: OperationMode): Question => {
   const op =
     mode === 'mix'
@@ -48,7 +52,7 @@ const buildQuestion = (round: number, mode: OperationMode): Question => {
   return { a, b, op, answer: a * b, label: `${a} x ${b} = ?` };
 };
 
-const JeenieMathTugOfWar: React.FC = () => {
+const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = false }) => {
   const [mode, setMode] = useState<OperationMode>('mix');
   const [maxRounds, setMaxRounds] = useState<number>(10);
 
@@ -208,9 +212,23 @@ const JeenieMathTugOfWar: React.FC = () => {
   }, [mode, round]);
 
   const keypad = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', 'DEL'];
+  const isCompact = fullscreen;
 
   return (
-    <div style={styles.pageWrap}>
+    <div
+      style={{
+        ...styles.pageWrap,
+        ...(isCompact
+          ? {
+              height: '100%',
+              minHeight: 0,
+              padding: 10,
+              gap: 9,
+              gridTemplateRows: 'auto auto auto auto 1fr',
+            }
+          : {}),
+      }}
+    >
       <style>{`
         .jm-card {
           background: #ffffff;
@@ -247,11 +265,11 @@ const JeenieMathTugOfWar: React.FC = () => {
         }
       `}</style>
 
-      <div style={styles.header} className="jm-card">
+      <div style={{ ...styles.header, ...(isCompact ? { padding: 10, gap: 10 } : {}) }} className="jm-card">
         <div>
           <p style={styles.brandTag}>JEEnie Classroom Game</p>
-          <h2 style={styles.title}>Math Tug of War</h2>
-          <p style={styles.subtitle}>Two teams race to solve each equation and pull the rope.</p>
+          <h2 style={{ ...styles.title, ...(isCompact ? { fontSize: 21, margin: '2px 0 2px' } : {}) }}>Math Tug of War</h2>
+          <p style={{ ...styles.subtitle, ...(isCompact ? { fontSize: 12 } : {}) }}>Two teams race to solve each equation and pull the rope.</p>
         </div>
 
         <div style={styles.controls}>
@@ -291,7 +309,7 @@ const JeenieMathTugOfWar: React.FC = () => {
         </div>
       </div>
 
-      <div style={styles.scoreStrip} className="jm-card">
+      <div style={{ ...styles.scoreStrip, ...(isCompact ? { padding: 9 } : {}) }} className="jm-card">
         <div style={styles.scoreBoxBlue}>Team Blue: {teamAScore}</div>
         <div style={styles.centerMeta}>
           <span>Round {round}/{maxRounds}</span>
@@ -300,7 +318,7 @@ const JeenieMathTugOfWar: React.FC = () => {
         <div style={styles.scoreBoxOrange}>Team Orange: {teamBScore}</div>
       </div>
 
-      <div style={styles.boardWrap} className="jm-card">
+      <div style={{ ...styles.boardWrap, ...(isCompact ? { padding: '10px 12px', gap: 8 } : {}) }} className="jm-card">
         <div style={styles.trackLabelRow}>
           <span style={styles.sideLabel}>Team Blue Pull Zone</span>
           <span style={styles.sideLabel}>Team Orange Pull Zone</span>
@@ -315,9 +333,9 @@ const JeenieMathTugOfWar: React.FC = () => {
         </div>
       </div>
 
-      <div style={styles.questionBox} className="jm-card">
-        <div style={styles.questionText}>{question.label}</div>
-        <div style={styles.answerHint}>First correct answer wins the round.</div>
+      <div style={{ ...styles.questionBox, ...(isCompact ? { padding: 10 } : {}) }} className="jm-card">
+        <div style={{ ...styles.questionText, ...(isCompact ? { fontSize: 27 } : {}) }}>{question.label}</div>
+        <div style={{ ...styles.answerHint, ...(isCompact ? { marginTop: 3, fontSize: 12 } : {}) }}>First correct answer wins the round.</div>
       </div>
 
       {gameOver ? (
@@ -326,7 +344,18 @@ const JeenieMathTugOfWar: React.FC = () => {
           <p style={{ margin: '8px 0 0', color: '#3b4f72' }}>Tap Restart to play again with your class.</p>
         </div>
       ) : (
-        <div style={styles.playArea}>
+        <div
+          style={{
+            ...styles.playArea,
+            ...(isCompact
+              ? {
+                  minHeight: 0,
+                  gap: 9,
+                  gridTemplateColumns: '1fr 200px 1fr',
+                }
+              : {}),
+          }}
+        >
           <TeamPanel
             teamName="Team Blue"
             inputValue={teamAInput}
@@ -337,6 +366,7 @@ const JeenieMathTugOfWar: React.FC = () => {
             accent="#013062"
             soft="#e6eeff"
             disabled={roundLocked || gameOver}
+            compact={isCompact}
           />
 
           <div style={styles.statusCol} className="jm-card jm-status">
@@ -361,6 +391,7 @@ const JeenieMathTugOfWar: React.FC = () => {
             accent="#c96512"
             soft="#fff2e6"
             disabled={roundLocked || gameOver}
+            compact={isCompact}
           />
         </div>
       )}
@@ -378,6 +409,7 @@ type TeamPanelProps = {
   accent: string;
   soft: string;
   disabled: boolean;
+  compact?: boolean;
 };
 
 type TugTeamPlayersProps = {
@@ -394,7 +426,9 @@ const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing }) => {
       {[0, 1, 2].map((idx) => (
         <div key={`${accent}-${idx}`} style={{ ...styles.playerFigure, transform: lean }}>
           <span style={{ ...styles.playerHead, background: accent }} />
-          <span style={{ ...styles.playerBody, background: accent }} />
+          <span style={{ ...styles.playerBody, background: accent }}>
+            <span style={styles.playerBadge}>J</span>
+          </span>
           <span style={{ ...styles.playerLeg, borderColor: accent }} />
         </div>
       ))}
@@ -412,16 +446,17 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
   accent,
   soft,
   disabled,
+  compact = false,
 }) => {
   return (
-    <div style={{ ...styles.teamPanel, borderColor: accent }} className="jm-card">
+    <div style={{ ...styles.teamPanel, borderColor: accent, ...(compact ? { padding: 10 } : {}) }} className="jm-card">
       <h3 style={{ ...styles.teamTitle, color: accent }}>{teamName}</h3>
 
       <input
         value={inputValue}
         onChange={(e) => onInputChange(e.target.value.replace(/[^0-9-]/g, '').slice(0, 6))}
         placeholder="Type answer"
-        style={{ ...styles.answerInput, borderColor: accent, background: soft }}
+        style={{ ...styles.answerInput, borderColor: accent, background: soft, ...(compact ? { fontSize: 17, marginBottom: 8, padding: '8px 10px' } : {}) }}
         disabled={disabled}
         onKeyDown={(e) => {
           if (e.key === 'Enter') onSubmit();
@@ -436,6 +471,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
             style={{
               background: soft,
               color: accent,
+              minHeight: compact ? 32 : 38,
               opacity: disabled ? 0.6 : 1,
             }}
             onClick={() => onKey(key)}
@@ -449,7 +485,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
       <div style={styles.teamActions}>
         <button
           className="jm-btn"
-          style={{ ...styles.actionBtn, background: accent }}
+          style={{ ...styles.actionBtn, background: accent, ...(compact ? { padding: '8px 8px' } : {}) }}
           onClick={onSubmit}
           disabled={disabled}
         >
@@ -457,7 +493,7 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
         </button>
         <button
           className="jm-btn"
-          style={{ ...styles.actionBtnSecondary, color: accent, borderColor: accent }}
+          style={{ ...styles.actionBtnSecondary, color: accent, borderColor: accent, ...(compact ? { padding: '8px 8px' } : {}) }}
           onClick={() => onKey('C')}
           disabled={disabled}
         >
@@ -475,6 +511,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 20,
     padding: 16,
     display: 'grid',
+    gridTemplateRows: 'auto auto auto auto auto',
     gap: 14,
     width: '100%',
     fontFamily: 'Saira, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
@@ -595,11 +632,18 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.95,
   },
   playerBody: {
-    width: 5,
-    height: 15,
-    borderRadius: 8,
-    display: 'block',
+    width: 14,
+    height: 16,
+    borderRadius: 6,
+    display: 'grid',
+    placeItems: 'center',
     opacity: 0.95,
+  },
+  playerBadge: {
+    color: '#ffffff',
+    fontWeight: 800,
+    fontSize: 8,
+    lineHeight: 1,
   },
   playerLeg: {
     width: 10,
