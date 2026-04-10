@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Menu, X, LogOut, ChevronDown, Shield, Trophy, Award, LayoutDashboard, BookOpen, Brain, BarChart3, Home, HelpCircle, FileText, Settings, User as UserIcon } from 'lucide-react';
+import { Menu, X, LogOut, ChevronDown, Shield, Trophy, Award, LayoutDashboard, BookOpen, Brain, BarChart3, Home, HelpCircle, FileText, Settings, User as UserIcon, Sun, Moon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { logger } from '@/utils/logger';
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ const Header = () => {
   const location = useLocation();
   const { isAuthenticated, signOut, isPremium, user, userRole } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const handleNavigation = (path: string) => {
     setIsMenuOpen(false);

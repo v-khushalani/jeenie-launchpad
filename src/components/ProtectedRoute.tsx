@@ -53,10 +53,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           }
         }
 
-        // Check session flag
+        // Check session flag — don't remove it so re-mounts still see it
         const goalSelectionComplete = sessionStorage.getItem('goalSelectionComplete') === 'true';
         if (goalSelectionComplete) {
-          sessionStorage.removeItem('goalSelectionComplete');
           setNeedsGoalSelection(false);
           setGoalsChecked(true);
           return;
