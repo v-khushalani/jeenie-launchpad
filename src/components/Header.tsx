@@ -240,6 +240,16 @@ const Header = () => {
               ))}
               
               <div className="pt-3 mt-3 border-t border-border/50 space-y-1">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
+                  onClick={toggleTheme}
+                >
+                  <div className="flex items-center gap-3">
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+                    <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                  </div>
+                </Button>
                 {isAuthenticated ? (
                   <>
                     {!isAdmin && !isEducator && (
