@@ -69,7 +69,8 @@ const JeenieMathTugOfWar: React.FC = () => {
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [winnerText, setWinnerText] = useState<string>('');
 
-  const markerPercent = useMemo(() => 50 + ropePull * 8, [ropePull]);
+  // Team Blue is shown on the left; positive pull should move flag left.
+  const markerPercent = useMemo(() => 50 - ropePull * 8, [ropePull]);
 
   useEffect(() => {
     if (gameOver || roundLocked) return;
@@ -126,8 +127,8 @@ const JeenieMathTugOfWar: React.FC = () => {
     setTeamBScore(nextB);
     setRopePull(nextPull);
 
-    if (winner === 'A') setStatusText('Team Blue answered correctly first. Rope pulled right.');
-    if (winner === 'B') setStatusText('Team Orange answered correctly first. Rope pulled left.');
+    if (winner === 'A') setStatusText('Team Blue answered correctly first. Rope pulled left.');
+    if (winner === 'B') setStatusText('Team Orange answered correctly first. Rope pulled right.');
     if (winner === null) setStatusText('Time up. No pull this round.');
 
     const lastRoundReached = round >= maxRounds;
@@ -301,12 +302,16 @@ const JeenieMathTugOfWar: React.FC = () => {
 
       <div style={styles.boardWrap} className="jm-card">
         <div style={styles.trackLabelRow}>
-          <span style={styles.sideLabel}>Team Orange Pull Zone</span>
           <span style={styles.sideLabel}>Team Blue Pull Zone</span>
+          <span style={styles.sideLabel}>Team Orange Pull Zone</span>
         </div>
         <div style={styles.trackOuter}>
           <div style={styles.centerLine} />
           <div style={{ ...styles.flag, left: `${markerPercent}%` }}>FLAG</div>
+        </div>
+        <div style={styles.playersRow}>
+          <TugTeamPlayers accent="#013062" facing="right" />
+          <TugTeamPlayers accent="#c96512" facing="left" />
         </div>
       </div>
 
@@ -373,6 +378,28 @@ type TeamPanelProps = {
   accent: string;
   soft: string;
   disabled: boolean;
+};
+
+type TugTeamPlayersProps = {
+  accent: string;
+  facing: 'left' | 'right';
+};
+
+const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing }) => {
+  const lean = facing === 'right' ? 'rotate(-9deg)' : 'rotate(9deg)';
+  const align = facing === 'right' ? 'flex-start' : 'flex-end';
+
+  return (
+    <div style={{ ...styles.teamPlayersWrap, justifyContent: align }}>
+      {[0, 1, 2].map((idx) => (
+        <div key={`${accent}-${idx}`} style={{ ...styles.playerFigure, transform: lean }}>
+          <span style={{ ...styles.playerHead, background: accent }} />
+          <span style={{ ...styles.playerBody, background: accent }} />
+          <span style={{ ...styles.playerLeg, borderColor: accent }} />
+        </div>
+      ))}
+    </div>
+  );
 };
 
 const TeamPanel: React.FC<TeamPanelProps> = ({
@@ -543,6 +570,45 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '14px 16px 18px',
     display: 'grid',
     gap: 10,
+  },
+  playersRow: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 8,
+    alignItems: 'end',
+  },
+  teamPlayersWrap: {
+    display: 'flex',
+    gap: 8,
+    minHeight: 48,
+  },
+  playerFigure: {
+    display: 'grid',
+    justifyItems: 'center',
+    gap: 2,
+  },
+  playerHead: {
+    width: 11,
+    height: 11,
+    borderRadius: '50%',
+    display: 'block',
+    opacity: 0.95,
+  },
+  playerBody: {
+    width: 5,
+    height: 15,
+    borderRadius: 8,
+    display: 'block',
+    opacity: 0.95,
+  },
+  playerLeg: {
+    width: 10,
+    height: 6,
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
+    borderRadius: 999,
+    display: 'block',
+    opacity: 0.95,
   },
   trackLabelRow: {
     display: 'flex',
