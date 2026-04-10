@@ -125,7 +125,7 @@ export const BatchManager: React.FC = () => {
 
       let batchId: string;
       if (editing) {
-        const { error } = await supabase.from('batches').update(payload).eq('id', editing.id);
+        const { error } = await supabase.from('batches').update(payload as any).eq('id', editing.id);
         if (error) throw error;
         batchId = editing.id;
       } else {
