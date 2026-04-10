@@ -72,6 +72,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
 
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [winnerText, setWinnerText] = useState<string>('');
+  const [pullFlashWinner, setPullFlashWinner] = useState<TeamId | null>(null);
 
   // Team Blue is shown on the left; positive pull should move flag left.
   const markerPercent = useMemo(() => 50 - ropePull * 8, [ropePull]);
@@ -98,6 +99,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
     setTeamBInput('');
     setSecondsLeft(20);
     setRoundLocked(false);
+    setPullFlashWinner(null);
     setStatusText('New round started. Solve fast!');
   };
 
@@ -130,6 +132,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
     setTeamAScore(nextA);
     setTeamBScore(nextB);
     setRopePull(nextPull);
+    setPullFlashWinner(winner);
 
     if (winner === 'A') setStatusText('Team Blue answered correctly first. Rope pulled left.');
     if (winner === 'B') setStatusText('Team Orange answered correctly first. Rope pulled right.');
@@ -200,6 +203,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
     setRoundLocked(false);
     setGameOver(false);
     setWinnerText('');
+    setPullFlashWinner(null);
     setStatusText('Fresh game started. Solve and pull!');
   };
 
@@ -222,9 +226,9 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
           ? {
               height: '100%',
               minHeight: 0,
-              padding: 10,
-              gap: 9,
-              gridTemplateRows: 'auto auto auto auto 1fr',
+              padding: 8,
+              gap: 8,
+              gridTemplateRows: 'auto auto auto auto minmax(0, 1fr)',
             }
           : {}),
       }}
@@ -265,13 +269,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
         }
       `}</style>
 
-      <div style={{ ...styles.header, ...(isCompact ? { padding: 10, gap: 10 } : {}) }} className="jm-card">
-        <div>
-          <p style={styles.brandTag}>JEEnie Classroom Game</p>
-          <h2 style={{ ...styles.title, ...(isCompact ? { fontSize: 21, margin: '2px 0 2px' } : {}) }}>Math Tug of War</h2>
-          <p style={{ ...styles.subtitle, ...(isCompact ? { fontSize: 12 } : {}) }}>Two teams race to solve each equation and pull the rope.</p>
-        </div>
-
+      <div style={{ ...styles.controlsBar, ...(isCompact ? { padding: 8 } : {}) }} className="jm-card">
         <div style={styles.controls}>
           <label style={styles.controlLabel}>
             Mode
@@ -324,12 +322,13 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
           <span style={styles.sideLabel}>Team Orange Pull Zone</span>
         </div>
         <div style={styles.trackOuter}>
+          <div style={styles.ropeLine} />
           <div style={styles.centerLine} />
           <div style={{ ...styles.flag, left: `${markerPercent}%` }}>FLAG</div>
         </div>
         <div style={styles.playersRow}>
-          <TugTeamPlayers accent="#013062" facing="right" />
-          <TugTeamPlayers accent="#c96512" facing="left" />
+          <TugTeamPlayers accent="#013062" facing="right" ropePull={ropePull} isWinner={pullFlashWinner === 'A'} />
+          <TugTeamPlayers accent="#c96512" facing="left" ropePull={ropePull} isWinner={pullFlashWinner === 'B'} />
         </div>
       </div>
 
@@ -350,7 +349,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
             ...(isCompact
               ? {
                   minHeight: 0,
-                  gap: 9,
+                  gap: 8,
                   gridTemplateColumns: '1fr 200px 1fr',
                 }
               : {}),
@@ -415,20 +414,26 @@ type TeamPanelProps = {
 type TugTeamPlayersProps = {
   accent: string;
   facing: 'left' | 'right';
+  ropePull: number;
+  isWinner: boolean;
 };
 
-const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing }) => {
-  const lean = facing === 'right' ? 'rotate(-9deg)' : 'rotate(9deg)';
+const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing, ropePull, isWinner }) => {
+  const directionalPull = facing === 'right' ? Math.max(0, ropePull) : Math.max(0, -ropePull);
+  const baseLean = facing === 'right' ? -9 : 9;
+  const lean = baseLean + (facing === 'right' ? -1 : 1) * Math.min(6, directionalPull * 1.2);
+  const pullShift = isWinner ? (facing === 'right' ? -7 : 7) : 0;
   const align = facing === 'right' ? 'flex-start' : 'flex-end';
 
   return (
     <div style={{ ...styles.teamPlayersWrap, justifyContent: align }}>
       {[0, 1, 2].map((idx) => (
-        <div key={`${accent}-${idx}`} style={{ ...styles.playerFigure, transform: lean }}>
+        <div key={`${accent}-${idx}`} style={{ ...styles.playerFigure, transform: `translateX(${pullShift}px) rotate(${lean}deg)` }}>
           <span style={{ ...styles.playerHead, background: accent }} />
           <span style={{ ...styles.playerBody, background: accent }}>
             <span style={styles.playerBadge}>J</span>
           </span>
+          <span style={{ ...styles.playerArm, borderColor: accent, transform: facing === 'right' ? 'rotate(-20deg)' : 'rotate(20deg)' }} />
           <span style={{ ...styles.playerLeg, borderColor: accent }} />
         </div>
       ))}
@@ -549,6 +554,11 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'flex-end',
     flexWrap: 'wrap',
   },
+  controlsBar: {
+    padding: 10,
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
   controlLabel: {
     display: 'grid',
     gap: 4,
@@ -604,9 +614,9 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 8px',
   },
   boardWrap: {
-    padding: '14px 16px 18px',
+    padding: '10px 12px 12px',
     display: 'grid',
-    gap: 10,
+    gap: 8,
   },
   playersRow: {
     display: 'grid',
@@ -617,12 +627,13 @@ const styles: Record<string, React.CSSProperties> = {
   teamPlayersWrap: {
     display: 'flex',
     gap: 8,
-    minHeight: 48,
+    minHeight: 42,
   },
   playerFigure: {
     display: 'grid',
     justifyItems: 'center',
     gap: 2,
+    transition: 'transform 220ms ease',
   },
   playerHead: {
     width: 11,
@@ -654,6 +665,16 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'block',
     opacity: 0.95,
   },
+  playerArm: {
+    width: 12,
+    height: 5,
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
+    borderRadius: 999,
+    display: 'block',
+    opacity: 0.95,
+    marginTop: -1,
+  },
   trackLabelRow: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -670,8 +691,19 @@ const styles: Record<string, React.CSSProperties> = {
     height: 36,
     borderRadius: 999,
     border: '1px solid #d2def3',
-    background: 'linear-gradient(90deg, #fff3e7 0%, #f8fbff 50%, #e9f1ff 100%)',
+    background: 'linear-gradient(90deg, #e9f1ff 0%, #f8fbff 50%, #fff3e7 100%)',
     overflow: 'hidden',
+  },
+  ropeLine: {
+    position: 'absolute',
+    left: '7%',
+    right: '7%',
+    top: '50%',
+    height: 5,
+    transform: 'translateY(-50%)',
+    borderRadius: 999,
+    background: 'repeating-linear-gradient(90deg, #8f7348 0 8px, #b29164 8px 16px)',
+    opacity: 0.9,
   },
   centerLine: {
     position: 'absolute',
@@ -697,7 +729,7 @@ const styles: Record<string, React.CSSProperties> = {
     whiteSpace: 'nowrap',
   },
   questionBox: {
-    padding: 15,
+    padding: 10,
     textAlign: 'center',
   },
   questionText: {
@@ -707,8 +739,8 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.15,
   },
   answerHint: {
-    marginTop: 5,
-    fontSize: 13,
+    marginTop: 3,
+    fontSize: 12,
     color: '#4d6387',
     fontWeight: 600,
   },
@@ -745,10 +777,10 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   teamActions: {
-    marginTop: 10,
+    marginTop: 7,
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: 8,
+    gap: 6,
   },
   actionBtn: {
     color: '#fff',
@@ -768,8 +800,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'grid',
     alignContent: 'center',
     justifyItems: 'center',
-    gap: 12,
-    padding: 12,
+    gap: 8,
+    padding: 10,
     textAlign: 'center',
   },
   statusText: {
