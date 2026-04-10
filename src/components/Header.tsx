@@ -126,6 +126,13 @@ const Header = () => {
 
           {/* Right Side */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
+            </button>
             {isAuthenticated ? (
               <>
               <DropdownMenu>
