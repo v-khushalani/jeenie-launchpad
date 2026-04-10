@@ -254,7 +254,6 @@ export const testsAPI = {
         .insert({
           user_id: userId,
           batch_id: batchId,
-          test_type: config.testType,
           title: config.title,
           total_questions: questions.length,
           attempted_questions: 0,

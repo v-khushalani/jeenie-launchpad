@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AlertTriangle, CheckCircle, Eye, Trash2, RefreshCw, Edit, Save, X, ImageOff } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Eye, Trash2, RefreshCw, Edit, Save, X, ImageOff, ShieldCheck } from 'lucide-react';
 import { MathDisplay } from './MathDisplay';
 
 interface QuestionReport {
@@ -99,7 +99,7 @@ export const QuestionReportsManager: React.FC = () => {
 
   useEffect(() => { loadReports(); }, [statusFilter]);
 
-  const updateStatus = async (reportId: string, newStatus: string) => {
+  const updateStatus = async (reportId: string, newStatus: string, questionId?: string) => {
     const { error } = await supabase
       .from('question_reports')
       .update({ status: newStatus })
@@ -107,6 +107,19 @@ export const QuestionReportsManager: React.FC = () => {
     if (error) { toast.error('Failed to update'); return; }
     toast.success(`Report marked as ${newStatus}`);
     loadReports();
+  };
+
+  const approveAndReactivate = async (reportId: string, questionId: string) => {
+    // Reactivate + verify the question
+    const { error: qErr } = await supabase
+      .from('questions')
+      .update({ is_active: true, is_verified: true })
+      .eq('id', questionId);
+    if (qErr) { toast.error('Failed to reactivate question'); return; }
+    
+    // Mark report as resolved
+    await updateStatus(reportId, 'resolved', questionId);
+    toast.success('Question approved, verified & reactivated!');
   };
 
   const startEditing = async (questionId: string) => {
@@ -242,7 +255,11 @@ export const QuestionReportsManager: React.FC = () => {
                         <div className="flex items-center gap-1">
                           {report.status === 'pending' && (
                             <>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-green-600" title="Mark Resolved"
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-green-600" title="Approve & Reactivate"
+                                onClick={(e) => { e.stopPropagation(); approveAndReactivate(report.id, report.question_id); }}>
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-amber-600" title="Mark Resolved (keep inactive)"
                                 onClick={(e) => { e.stopPropagation(); updateStatus(report.id, 'resolved'); }}>
                                 <CheckCircle className="w-3.5 h-3.5" />
                               </Button>

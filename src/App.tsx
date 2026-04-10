@@ -61,6 +61,7 @@ import EducatorRoute from "@/components/EducatorRoute";
 import FloatingAIButton from "@/components/FloatingAIButton";
 import RouteTracker from "@/components/RouteTracker";
 import FeatureGate from "@/components/FeatureGate";
+import PremiumGate from "@/components/PremiumGate";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -213,7 +214,7 @@ function App() {
                   <ProtectedRoute><TestHistoryPage /></ProtectedRoute>
                 } />
                 <Route path="/analytics" element={
-                  <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
+                  <ProtectedRoute><PremiumGate featureName="Analytics"><AnalyticsPage /></PremiumGate></ProtectedRoute>
                 } />
                 <Route path="/subscription-plans" element={<FeatureGate flagKey="pricing_plans"><SubscriptionPlans /></FeatureGate>} />
                 <Route path="/subscription" element={<Navigate to="/subscription-plans" replace />} />
@@ -224,7 +225,9 @@ function App() {
                   path="/ai-planner"
                   element={
                     <ProtectedRoute>
-                      <AIStudyPlannerPage />
+                      <PremiumGate featureName="AI Study Planner">
+                        <AIStudyPlannerPage />
+                      </PremiumGate>
                     </ProtectedRoute>
                   }
                 />

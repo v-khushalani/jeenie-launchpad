@@ -62,7 +62,7 @@ export const usersAPI = {
     try {
       const { data, error } = await apiClient.rawClient
         .from('profiles')
-        .update(updates as Record<string, unknown>)
+        .update(updates as any)
         .eq('id', userId)
         .select()
         .single();
@@ -440,7 +440,6 @@ export const usersAPI = {
         .upsert({
           user_id: userId,
           batch_id: batchId,
-          tier,
           expires_at: expiresAt.toISOString(),
           status: 'active',
         }, {

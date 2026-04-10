@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Menu, X, LogOut, ChevronDown, Shield, Trophy, Award, LayoutDashboard, BookOpen, Brain, BarChart3, Home, HelpCircle, FileText, Settings, User as UserIcon } from 'lucide-react';
+import { Menu, X, LogOut, ChevronDown, Shield, Trophy, Award, LayoutDashboard, BookOpen, Brain, BarChart3, Home, HelpCircle, FileText, Settings, User as UserIcon, Sun, Moon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { logger } from '@/utils/logger';
 import {
   DropdownMenu,
@@ -19,6 +20,7 @@ const Header = () => {
   const location = useLocation();
   const { isAuthenticated, signOut, isPremium, user, userRole } = useAuth();
   const { isAdmin } = useAdminAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const handleNavigation = (path: string) => {
     setIsMenuOpen(false);
@@ -124,6 +126,13 @@ const Header = () => {
 
           {/* Right Side */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
+            </button>
             {isAuthenticated ? (
               <>
               <DropdownMenu>
@@ -231,6 +240,16 @@ const Header = () => {
               ))}
               
               <div className="pt-3 mt-3 border-t border-border/50 space-y-1">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start h-12 rounded-xl bg-muted/50 hover:bg-muted border border-border"
+                  onClick={toggleTheme}
+                >
+                  <div className="flex items-center gap-3">
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-muted-foreground" />}
+                    <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                  </div>
+                </Button>
                 {isAuthenticated ? (
                   <>
                     {!isAdmin && !isEducator && (
