@@ -217,6 +217,9 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
 
   const keypad = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '-', '0', 'DEL'];
   const isCompact = fullscreen;
+  const bluePull = Math.max(0, ropePull);
+  const orangePull = Math.max(0, -ropePull);
+  const ropeCurve = ropePull * 18;
 
   return (
     <div
@@ -307,34 +310,100 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
         </div>
       </div>
 
-      <div style={{ ...styles.scoreStrip, ...(isCompact ? { padding: 9 } : {}) }} className="jm-card">
-        <div style={styles.scoreBoxBlue}>Team Blue: {teamAScore}</div>
-        <div style={styles.centerMeta}>
-          <span>Round {round}/{maxRounds}</span>
-          <span>Time: {secondsLeft}s</span>
-        </div>
-        <div style={styles.scoreBoxOrange}>Team Orange: {teamBScore}</div>
-      </div>
+      <div style={{ ...styles.mainGrid, ...(isCompact ? { gap: 8 } : {}) }}>
+        <TeamPanel
+          teamName="Team Blue"
+          inputValue={teamAInput}
+          onInputChange={setTeamAInput}
+          onSubmit={() => submitAnswer('A')}
+          onKey={(key) => appendKey('A', key)}
+          keypad={keypad}
+          accent="#013062"
+          soft="#e6eeff"
+          disabled={roundLocked || gameOver}
+          compact={isCompact}
+          score={teamAScore}
+        />
 
-      <div style={{ ...styles.boardWrap, ...(isCompact ? { padding: '10px 12px', gap: 8 } : {}) }} className="jm-card">
-        <div style={styles.trackLabelRow}>
-          <span style={styles.sideLabel}>Team Blue Pull Zone</span>
-          <span style={styles.sideLabel}>Team Orange Pull Zone</span>
-        </div>
-        <div style={styles.trackOuter}>
-          <div style={styles.ropeLine} />
-          <div style={styles.centerLine} />
-          <div style={{ ...styles.flag, left: `${markerPercent}%` }}>FLAG</div>
-        </div>
-        <div style={styles.playersRow}>
-          <TugTeamPlayers accent="#013062" facing="right" ropePull={ropePull} isWinner={pullFlashWinner === 'A'} />
-          <TugTeamPlayers accent="#c96512" facing="left" ropePull={ropePull} isWinner={pullFlashWinner === 'B'} />
-        </div>
-      </div>
+        <div style={{ ...styles.sceneCard, ...(isCompact ? { padding: 8 } : {}) }} className="jm-card">
+          <div style={{ ...styles.sceneToolbar, ...(isCompact ? { marginBottom: 6 } : {}) }}>
+            <div style={styles.roundMeta}>Round {round}/{maxRounds}</div>
+            <div style={styles.timerMeta}>Time: {secondsLeft}s</div>
+            <div style={styles.questionPill}>{question.label}</div>
+          </div>
 
-      <div style={{ ...styles.questionBox, ...(isCompact ? { padding: 10 } : {}) }} className="jm-card">
-        <div style={{ ...styles.questionText, ...(isCompact ? { fontSize: 27 } : {}) }}>{question.label}</div>
-        <div style={{ ...styles.answerHint, ...(isCompact ? { marginTop: 3, fontSize: 12 } : {}) }}>First correct answer wins the round.</div>
+          <div style={styles.sceneStage} className={pullFlashWinner ? `winner-${pullFlashWinner}` : ''}>
+            <svg viewBox="0 0 900 390" role="img" aria-label="JEEnie tug of war illustration" style={styles.sceneSvg}>
+              <defs>
+                <linearGradient id="skyGrad" x1="0%" x2="0%" y1="0%" y2="100%">
+                  <stop offset="0%" stopColor="#f8fbff" />
+                  <stop offset="100%" stopColor="#e8f0ff" />
+                </linearGradient>
+                <linearGradient id="groundGrad" x1="0%" x2="0%" y1="0%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#edf4ff" />
+                </linearGradient>
+                <linearGradient id="flagGrad" x1="0%" x2="100%">
+                  <stop offset="0%" stopColor="#013062" />
+                  <stop offset="50%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#c96512" />
+                </linearGradient>
+                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#013062" floodOpacity="0.12" />
+                </filter>
+              </defs>
+
+              <rect x="0" y="0" width="900" height="390" rx="24" fill="url(#skyGrad)" />
+              <circle cx="450" cy="110" r="110" fill="#dce9ff" opacity="0.45" />
+              <circle cx="450" cy="110" r="58" fill="#fefefe" opacity="0.5" />
+              <path d="M 0 286 C 170 252, 310 248, 450 274 C 595 300, 720 288, 900 254 L 900 390 L 0 390 Z" fill="url(#groundGrad)" />
+              <path d="M 0 303 C 170 278, 305 276, 450 296 C 595 317, 730 310, 900 280" stroke="#c9d8ef" strokeWidth="3" fill="none" strokeLinecap="round" />
+              <line x1="450" y1="96" x2="450" y2="330" stroke="#013062" strokeWidth="2.5" strokeDasharray="6 8" opacity="0.45" />
+
+              <g transform={`translate(${440 + ropePull * 2} 175)`}>
+                <path d={`M -260 22 C -140 ${18 + ropeCurve} -54 ${18 - ropeCurve * 0.4} 0 22 C 54 ${26 + ropeCurve * 0.4} 140 ${20 - ropeCurve} 260 22`} fill="none" stroke="#8c6d43" strokeWidth="9" strokeLinecap="round" />
+                <path d={`M -260 22 C -140 ${18 + ropeCurve} -54 ${18 - ropeCurve * 0.4} 0 22 C 54 ${26 + ropeCurve * 0.4} 140 ${20 - ropeCurve} 260 22`} fill="none" stroke="#c29b6a" strokeWidth="3" strokeDasharray="10 11" strokeLinecap="round" opacity="0.65" />
+                <rect x="-10" y="6" width="20" height="32" rx="10" fill="#013062" filter="url(#softShadow)" />
+                <rect x="-16" y="12" width="32" height="18" rx="4" fill="url(#flagGrad)" />
+                <rect x="-1" y="-38" width="2" height="54" fill="#1a2f55" />
+                <path d="M 1 -37 L 42 -29 L 1 -20 Z" fill="#013062" />
+              </g>
+
+              <g className="blue-team" transform={`translate(${112 - bluePull * 8} ${232 + bluePull * 1.5}) rotate(${ -11 - bluePull * 1.8})`}>
+                <PlayerArt x={0} y={0} color="#013062" facing="right" tilt={0} pull={bluePull} jerseyLabel="J" winner={pullFlashWinner === 'A'} />
+                <PlayerArt x={82} y={6} color="#2a6ccf" facing="right" tilt={2} pull={bluePull} jerseyLabel="J" winner={pullFlashWinner === 'A'} />
+                <circle cx="36" cy="126" r="18" fill="#f7fbff" opacity="0.65" />
+              </g>
+
+              <g className="orange-team" transform={`translate(${682 + orangePull * 8} ${232 + orangePull * 1.5}) rotate(${11 + orangePull * 1.8})`}>
+                <PlayerArt x={0} y={0} color="#c96512" facing="left" tilt={0} pull={orangePull} jerseyLabel="J" winner={pullFlashWinner === 'B'} />
+                <PlayerArt x={82} y={6} color="#ef7f1d" facing="left" tilt={-2} pull={orangePull} jerseyLabel="J" winner={pullFlashWinner === 'B'} />
+                <circle cx="36" cy="126" r="18" fill="#fff8ef" opacity="0.7" />
+              </g>
+            </svg>
+          </div>
+
+          <div style={styles.sceneFooter}>
+            <div style={styles.sceneStatus}>{statusText}</div>
+            <button className="jm-btn" style={styles.skipBtn} onClick={() => resolveRound(null)} disabled={roundLocked || gameOver}>
+              Skip Round
+            </button>
+          </div>
+        </div>
+
+        <TeamPanel
+          teamName="Team Orange"
+          inputValue={teamBInput}
+          onInputChange={setTeamBInput}
+          onSubmit={() => submitAnswer('B')}
+          onKey={(key) => appendKey('B', key)}
+          keypad={keypad}
+          accent="#c96512"
+          soft="#fff2e6"
+          disabled={roundLocked || gameOver}
+          compact={isCompact}
+          score={teamBScore}
+        />
       </div>
 
       {gameOver ? (
@@ -342,58 +411,7 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
           <strong style={{ color: '#013062', fontSize: 20 }}>{winnerText}</strong>
           <p style={{ margin: '8px 0 0', color: '#3b4f72' }}>Tap Restart to play again with your class.</p>
         </div>
-      ) : (
-        <div
-          style={{
-            ...styles.playArea,
-            ...(isCompact
-              ? {
-                  minHeight: 0,
-                  gap: 8,
-                  gridTemplateColumns: '1fr 200px 1fr',
-                }
-              : {}),
-          }}
-        >
-          <TeamPanel
-            teamName="Team Blue"
-            inputValue={teamAInput}
-            onInputChange={setTeamAInput}
-            onSubmit={() => submitAnswer('A')}
-            onKey={(key) => appendKey('A', key)}
-            keypad={keypad}
-            accent="#013062"
-            soft="#e6eeff"
-            disabled={roundLocked || gameOver}
-            compact={isCompact}
-          />
-
-          <div style={styles.statusCol} className="jm-card jm-status">
-            <p style={styles.statusText}>{statusText}</p>
-            <button
-              className="jm-btn"
-              style={styles.skipBtn}
-              onClick={() => resolveRound(null)}
-              disabled={roundLocked || gameOver}
-            >
-              Skip Round
-            </button>
-          </div>
-
-          <TeamPanel
-            teamName="Team Orange"
-            inputValue={teamBInput}
-            onInputChange={setTeamBInput}
-            onSubmit={() => submitAnswer('B')}
-            onKey={(key) => appendKey('B', key)}
-            keypad={keypad}
-            accent="#c96512"
-            soft="#fff2e6"
-            disabled={roundLocked || gameOver}
-            compact={isCompact}
-          />
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };
@@ -409,37 +427,41 @@ type TeamPanelProps = {
   soft: string;
   disabled: boolean;
   compact?: boolean;
+  score: number;
 };
 
-type TugTeamPlayersProps = {
-  accent: string;
+type PlayerArtProps = {
+  x: number;
+  y: number;
+  color: string;
   facing: 'left' | 'right';
-  ropePull: number;
-  isWinner: boolean;
+  tilt: number;
+  pull: number;
+  jerseyLabel: string;
+  winner: boolean;
 };
 
-const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing, ropePull, isWinner }) => {
-  const directionalPull = facing === 'right' ? Math.max(0, ropePull) : Math.max(0, -ropePull);
-  const baseLean = facing === 'right' ? -9 : 9;
-  const lean = baseLean + (facing === 'right' ? -1 : 1) * Math.min(6, directionalPull * 1.2);
-  const pullShift = isWinner ? (facing === 'right' ? -7 : 7) : 0;
-  const align = facing === 'right' ? 'flex-start' : 'flex-end';
-
-  return (
-    <div style={{ ...styles.teamPlayersWrap, justifyContent: align }}>
-      {[0, 1, 2].map((idx) => (
-        <div key={`${accent}-${idx}`} style={{ ...styles.playerFigure, transform: `translateX(${pullShift}px) rotate(${lean}deg)` }}>
-          <span style={{ ...styles.playerHead, background: accent }} />
-          <span style={{ ...styles.playerBody, background: accent }}>
-            <span style={styles.playerBadge}>J</span>
-          </span>
-          <span style={{ ...styles.playerArm, borderColor: accent, transform: facing === 'right' ? 'rotate(-20deg)' : 'rotate(20deg)' }} />
-          <span style={{ ...styles.playerLeg, borderColor: accent }} />
-        </div>
-      ))}
-    </div>
-  );
-};
+const PlayerArt: React.FC<PlayerArtProps> = ({ x, y, color, facing, tilt, pull, jerseyLabel, winner }) => {
+   const direction = facing === 'left' ? -1 : 1;
+   const swing = tilt + direction * Math.min(10, pull * 1.6);
+   const push = winner ? direction * 12 : direction * Math.min(10, pull * 2.2);
+ 
+   return (
+     <g transform={`translate(${x + push} ${y}) scale(${direction} 1) rotate(${swing})`}>
+       <ellipse cx="0" cy="120" rx="42" ry="12" fill="rgba(15,39,75,0.16)" />
+       <circle cx="0" cy="28" r="16" fill="#f2c39b" stroke="rgba(0,0,0,0.08)" strokeWidth="2" />
+       <path d="M -20 52 Q 0 42 20 52 L 14 94 Q 0 106 -14 94 Z" fill={color} />
+       <rect x="-20" y="52" width="40" height="28" rx="11" fill={color} opacity="0.9" />
+       <text x="0" y="71" textAnchor="middle" fill="#ffffff" fontSize="18" fontWeight="800">{jerseyLabel}</text>
+       <path d="M -18 59 L -44 88" stroke={color} strokeWidth="8" strokeLinecap="round" />
+       <path d="M 18 59 L 40 81" stroke={color} strokeWidth="8" strokeLinecap="round" />
+       <path d="M -9 92 L -20 126" stroke="#10294f" strokeWidth="9" strokeLinecap="round" />
+       <path d="M 9 92 L 22 126" stroke="#10294f" strokeWidth="9" strokeLinecap="round" />
+       <path d="M -22 126 L -42 126" stroke="#10294f" strokeWidth="8" strokeLinecap="round" />
+       <path d="M 22 126 L 44 126" stroke="#10294f" strokeWidth="8" strokeLinecap="round" />
+     </g>
+   );
+ };
 
 const TeamPanel: React.FC<TeamPanelProps> = ({
   teamName,
@@ -452,10 +474,14 @@ const TeamPanel: React.FC<TeamPanelProps> = ({
   soft,
   disabled,
   compact = false,
+  score,
 }) => {
   return (
     <div style={{ ...styles.teamPanel, borderColor: accent, ...(compact ? { padding: 10 } : {}) }} className="jm-card">
-      <h3 style={{ ...styles.teamTitle, color: accent }}>{teamName}</h3>
+      <div style={styles.panelHeadRow}>
+        <h3 style={{ ...styles.teamTitle, color: accent }}>{teamName}</h3>
+        <div style={{ ...styles.teamScorePill, background: soft, color: accent }}>{score}</div>
+      </div>
 
       <input
         value={inputValue}
