@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JEEnie Math Tug of War</title>
+  <style>
+    :root {
+      --blue: #013062;
+      --blue-soft: #e6eeff;
+      --orange: #c96512;
+      --orange-soft: #fff2e6;
+      --ink: #10294f;
+      --muted: #557096;
+      --line: #d3dff2;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Saira, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+      color: var(--ink);
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      grid-template-rows: auto auto auto auto 1fr;
+      overflow: hidden;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(1, 48, 98, 0.08);
+      min-height: 0;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 10px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin: 0;
+    }
+
+    .title {
+      margin: 2px 0;
+      font-size: clamp(18px, 2.2vw, 24px);
+      color: var(--blue);
+      line-height: 1.15;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .ctrl {
+      display: flex;
+      align-items: end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #3f5d84;
+      display: grid;
+      gap: 3px;
+    }
+
+    select, button, input {
+      font-family: inherit;
+    }
+
+    select {
+      border: 1px solid #c9d9f1;
+      border-radius: 8px;
+      padding: 6px 8px;
+      min-width: 96px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .restart {
+      background: var(--blue);
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .score {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 9px;
+    }
+
+    .score-box {
+      text-align: center;
+      border-radius: 10px;
+      padding: 8px;
+      font-weight: 800;
+      font-size: clamp(13px, 1.5vw, 15px);
+    }
+
+    .score-blue { background: var(--blue-soft); color: var(--blue); }
+    .score-orange { background: var(--orange-soft); color: var(--orange); }
+
+    .meta {
+      display: grid;
+      justify-items: center;
+      gap: 2px;
+      font-size: 11px;
+      color: #47638b;
+      font-weight: 800;
+      min-width: 90px;
+    }
+
+    .arena {
+      padding: 10px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .zones {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      color: #58739a;
+      text-transform: uppercase;
+    }
+
+    .rope-track {
+      position: relative;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: linear-gradient(90deg, #eaf2ff 0%, #f8fbff 50%, #fff4e9 100%);
+      overflow: hidden;
+    }
+
+    .rope-line {
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      top: 50%;
+      height: 5px;
+      transform: translateY(-50%);
+      border-radius: 999px;
+      background: repeating-linear-gradient(90deg, #8f7348 0 8px, #b19062 8px 16px);
+      opacity: 0.9;
+    }
+
+    .center {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      transform: translateX(-50%);
+      background: var(--blue);
+      opacity: 0.45;
+    }
+
+    .flag {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 38px;
+      height: 20px;
+      border-radius: 5px;
+      border: 1px solid #d7d7d7;
+      overflow: hidden;
+      transition: left 260ms ease;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .flag::before,
+    .flag::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+    }
+
+    .flag::before { left: 0; background: var(--blue); }
+    .flag::after { right: 0; background: var(--orange); }
+
+    .teams {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: end;
+      gap: 8px;
+      min-height: 46px;
+    }
+
+    .team-row {
+      display: flex;
+      gap: 8px;
+      min-height: 44px;
+    }
+
+    .team-row.left { justify-content: flex-start; }
+    .team-row.right { justify-content: flex-end; }
+
+    .player {
+      width: 16px;
+      height: 34px;
+      position: relative;
+      transform-origin: center bottom;
+      transition: transform 220ms ease;
+    }
+
+    .head {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: #f2c39b;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .body {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      transform: translateX(-50%);
+      border-radius: 5px;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    }
+
+    .legs {
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      width: 12px;
+      height: 7px;
+      transform: translateX(-50%);
+      border-bottom: 2px solid;
+      border-radius: 999px;
+    }
+
+    .question {
+      padding: 10px;
+      text-align: center;
+    }
+
+    .question-text {
+      font-size: clamp(24px, 3.2vw, 32px);
+      line-height: 1.1;
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    .hint {
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4f6890;
+    }
+
+    .play {
+      display: grid;
+      grid-template-columns: 1fr 190px 1fr;
+      gap: 8px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel {
+      border: 1px solid;
+      padding: 9px;
+      display: grid;
+      min-height: 0;
+      align-content: start;
+      gap: 7px;
+      overflow: hidden;
+    }
+
+    .panel h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .ans {
+      width: 100%;
+      border: 1px solid;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 800;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .k {
+      min-height: 31px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .enter {
+      color: #fff;
+      padding: 8px 6px;
+      font-size: 11px;
+    }
+
+    .clear {
+      border: 1px solid;
+      background: #fff;
+      padding: 8px 6px;
+      font-size: 11px;
+    }
+
+    .status {
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 10px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .status p {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      color: #38537b;
+    }
+
+    .skip {
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--blue);
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .winner {
+      text-align: center;
+      padding: 14px;
+      display: grid;
+      gap: 4px;
+      align-content: center;
+    }
+
+    .winner strong { color: var(--blue); font-size: 20px; }
+    .winner small { color: #4f6890; font-weight: 700; }
+
+    @media (max-width: 980px) {
+      .play { grid-template-columns: 1fr; overflow: auto; }
+      .status { order: -1; }
+      #app { overflow: auto; }
+      html, body { overflow: auto; }
+    }
+
+    @media (max-height: 760px) {
+      .question-text { font-size: 24px; }
+      .player { height: 30px; }
+      .k { min-height: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <section class="card top">
+      <div>
+        <p class="brand">JEEnie Classroom Game</p>
+        <h1 class="title">Math Tug of War</h1>
+        <p class="sub">Solve fast, pull hard, and win the rope battle.</p>
+      </div>
+      <div class="ctrl">
+        <label>Mode
+          <select id="mode">
+            <option value="mix">Mixed</option>
+            <option value="add">Addition</option>
+            <option value="sub">Subtraction</option>
+            <option value="mul">Multiplication</option>
+          </select>
+        </label>
+        <label>Rounds
+          <select id="rounds">
+            <option value="8">8</option>
+            <option value="10" selected>10</option>
+            <option value="12">12</option>
+            <option value="15">15</option>
+          </select>
+        </label>
+        <button id="restart" class="btn restart">Restart</button>
+      </div>
+    </section>
+
+    <section class="card score">
+      <div class="score-box score-blue" id="scoreBlue">Team Blue: 0</div>
+      <div class="meta">
+        <span id="roundMeta">Round 1/10</span>
+        <span id="timerMeta">Time: 20s</span>
+      </div>
+      <div class="score-box score-orange" id="scoreOrange">Team Orange: 0</div>
+    </section>
+
+    <section class="card arena">
+      <div class="zones">
+        <span>Team Blue Pull Zone</span>
+        <span>Team Orange Pull Zone</span>
+      </div>
+      <div class="rope-track">
+        <div class="rope-line"></div>
+        <div class="center"></div>
+        <div id="flag" class="flag" style="left:50%"></div>
+      </div>
+      <div class="teams">
+        <div id="bluePlayers" class="team-row left"></div>
+        <div id="orangePlayers" class="team-row right"></div>
+      </div>
+    </section>
+
+    <section class="card question">
+      <div class="question-text" id="question">9 + 6 = ?</div>
+      <div class="hint">First correct answer wins the round.</div>
+    </section>
+
+    <section id="playWrap" class="play">
+      <article class="card panel" style="border-color: var(--blue)">
+        <h3 style="color:var(--blue)">Team Blue</h3>
+        <input id="inputA" class="ans" style="border-color:var(--blue);background:var(--blue-soft)" placeholder="Type answer" />
+        <div id="keysA" class="keys"></div>
+        <div class="actions">
+          <button id="enterA" class="btn enter" style="background:var(--blue)">ENTER</button>
+          <button id="clearA" class="btn clear" style="border-color:var(--blue);color:var(--blue)">CLEAR</button>
+        </div>
+      </article>
+
+      <article class="card status">
+        <p id="status">Solve and hit ENTER to pull the rope.</p>
+        <button id="skip" class="btn skip">Skip Round</button>
+      </article>
+
+      <article class="card panel" style="border-color: var(--orange)">
+        <h3 style="color:var(--orange)">Team Orange</h3>
+        <input id="inputB" class="ans" style="border-color:var(--orange);background:var(--orange-soft)" placeholder="Type answer" />
+        <div id="keysB" class="keys"></div>
+        <div class="actions">
+          <button id="enterB" class="btn enter" style="background:var(--orange)">ENTER</button>
+          <button id="clearB" class="btn clear" style="border-color:var(--orange);color:var(--orange)">CLEAR</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="winnerWrap" class="card winner" style="display:none">
+      <strong id="winnerText"></strong>
+      <small>Tap Restart to play again with your class.</small>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      var MAX_PULL = 5;
+      var KEYS = ['7','8','9','4','5','6','1','2','3','-','0','DEL'];
+
+      var state = {
+        mode: 'mix',
+        maxRounds: 10,
+        round: 1,
+        aScore: 0,
+        bScore: 0,
+        ropePull: 0,
+        seconds: 20,
+        lock: false,
+        over: false,
+        status: 'Solve and hit ENTER to pull the rope.',
+        winner: '',
+        question: null,
+      };
+
+      var el = {
+        mode: document.getElementById('mode'),
+        rounds: document.getElementById('rounds'),
+        restart: document.getElementById('restart'),
+        scoreBlue: document.getElementById('scoreBlue'),
+        scoreOrange: document.getElementById('scoreOrange'),
+        roundMeta: document.getElementById('roundMeta'),
+        timerMeta: document.getElementById('timerMeta'),
+        flag: document.getElementById('flag'),
+        question: document.getElementById('question'),
+        inputA: document.getElementById('inputA'),
+        inputB: document.getElementById('inputB'),
+        keysA: document.getElementById('keysA'),
+        keysB: document.getElementById('keysB'),
+        enterA: document.getElementById('enterA'),
+        enterB: document.getElementById('enterB'),
+        clearA: document.getElementById('clearA'),
+        clearB: document.getElementById('clearB'),
+        skip: document.getElementById('skip'),
+        status: document.getElementById('status'),
+        winnerWrap: document.getElementById('winnerWrap'),
+        winnerText: document.getElementById('winnerText'),
+        playWrap: document.getElementById('playWrap'),
+        bluePlayers: document.getElementById('bluePlayers'),
+        orangePlayers: document.getElementById('orangePlayers'),
+      };
+
+      function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+      function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+      function buildQuestion(round, mode) {
+        var op = mode === 'mix' ? pick(['+','-','x']) : mode === 'add' ? '+' : mode === 'sub' ? '-' : 'x';
+        var level = Math.min(4, Math.floor((round - 1) / 3) + 1);
+
+        if (op === '+') {
+          var max = level === 1 ? 20 : level === 2 ? 40 : level === 3 ? 70 : 100;
+          var a = rand(1, max);
+          var b = rand(1, max);
+          return { label: a + ' + ' + b + ' = ?', answer: a + b };
+        }
+
+        if (op === '-') {
+          var mx = level === 1 ? 20 : level === 2 ? 50 : level === 3 ? 80 : 120;
+          var hi = rand(10, mx);
+          var lo = rand(1, Math.max(2, hi - 1));
+          return { label: hi + ' - ' + lo + ' = ?', answer: hi - lo };
+        }
+
+        var mm = level === 1 ? 6 : level === 2 ? 9 : level === 3 ? 12 : 15;
+        var x = rand(2, mm);
+        var y = rand(2, mm);
+        return { label: x + ' x ' + y + ' = ?', answer: x * y };
+      }
+
+      function renderPlayers() {
+        var leftLean = -8 - Math.max(0, state.ropePull) * 1.4;
+        var rightLean = 8 + Math.max(0, -state.ropePull) * 1.4;
+
+        function makeFigure(color, lean) {
+          return (
+            '<div class="player" style="transform: rotate(' + lean + 'deg)">' +
+              '<span class="head"></span>' +
+              '<span class="body" style="background:' + color + '">J</span>' +
+              '<span class="legs" style="border-color:' + color + '"></span>' +
+            '</div>'
+          );
+        }
+
+        var blueHtml = makeFigure('#013062', leftLean) + makeFigure('#013062', leftLean) + makeFigure('#013062', leftLean);
+        var orangeHtml = makeFigure('#c96512', rightLean) + makeFigure('#c96512', rightLean) + makeFigure('#c96512', rightLean);
+
+        el.bluePlayers.innerHTML = blueHtml;
+        el.orangePlayers.innerHTML = orangeHtml;
+      }
+
+      function render() {
+        el.scoreBlue.textContent = 'Team Blue: ' + state.aScore;
+        el.scoreOrange.textContent = 'Team Orange: ' + state.bScore;
+        el.roundMeta.textContent = 'Round ' + state.round + '/' + state.maxRounds;
+        el.timerMeta.textContent = 'Time: ' + state.seconds + 's';
+        el.question.textContent = state.question.label;
+        el.status.textContent = state.status;
+
+        var left = 50 - state.ropePull * 8;
+        el.flag.style.left = left + '%';
+
+        var disabled = state.lock || state.over;
+        [el.inputA, el.inputB, el.enterA, el.enterB, el.clearA, el.clearB, el.skip].forEach(function(node) {
+          node.disabled = disabled;
+        });
+
+        if (state.over) {
+          el.playWrap.style.display = 'none';
+          el.winnerWrap.style.display = 'grid';
+          el.winnerText.textContent = state.winner;
+        } else {
+          el.playWrap.style.display = 'grid';
+          el.winnerWrap.style.display = 'none';
+        }
+
+        renderPlayers();
+      }
+
+      function nextRound() {
+        state.round += 1;
+        state.question = buildQuestion(state.round, state.mode);
+        state.seconds = 20;
+        state.lock = false;
+        state.status = 'New round started. Solve fast!';
+        el.inputA.value = '';
+        el.inputB.value = '';
+        render();
+      }
+
+      function finish() {
+        state.over = true;
+        if (Math.abs(state.ropePull) >= MAX_PULL) {
+          state.winner = state.ropePull > 0 ? 'Team Blue wins by rope pull!' : 'Team Orange wins by rope pull!';
+        } else if (state.aScore > state.bScore) {
+          state.winner = 'Team Blue wins on points!';
+        } else if (state.bScore > state.aScore) {
+          state.winner = 'Team Orange wins on points!';
+        } else {
+          state.winner = 'It is a draw. Great battle from both teams!';
+        }
+        render();
+      }
+
+      function resolveRound(winner) {
+        if (state.lock || state.over) return;
+        state.lock = true;
+
+        if (winner === 'A') {
+          state.aScore += 1;
+          state.ropePull += 1;
+          state.status = 'Team Blue answered correctly first. Rope pulled left.';
+        } else if (winner === 'B') {
+          state.bScore += 1;
+          state.ropePull -= 1;
+          state.status = 'Team Orange answered correctly first. Rope pulled right.';
+        } else {
+          state.status = 'Time up. No pull this round.';
+        }
+
+        render();
+
+        var lastRound = state.round >= state.maxRounds;
+        var edge = Math.abs(state.ropePull) >= MAX_PULL;
+
+        if (lastRound || edge) {
+          setTimeout(finish, 800);
+          return;
+        }
+
+        setTimeout(nextRound, 1000);
+      }
+
+      function submit(team) {
+        if (state.lock || state.over) return;
+        var raw = (team === 'A' ? el.inputA.value : el.inputB.value).trim();
+        if (!raw) return;
+        var v = Number(raw);
+        if (Number.isNaN(v)) return;
+
+        if (v === state.question.answer) {
+          resolveRound(team);
+        } else {
+          state.status = (team === 'A' ? 'Team Blue' : 'Team Orange') + ' guessed ' + v + '. Try again.';
+          render();
+        }
+      }
+
+      function append(team, key) {
+        if (state.lock || state.over) return;
+        var input = team === 'A' ? el.inputA : el.inputB;
+        var value = input.value;
+
+        if (key === 'C') { input.value = ''; return; }
+        if (key === 'DEL') { input.value = value.slice(0, -1); return; }
+        if (key === 'ENTER') { submit(team); return; }
+
+        if (/^[0-9-]$/.test(key)) {
+          if (key === '-' && (value.indexOf('-') !== -1 || value.length > 0)) return;
+          if (value.length >= 6) return;
+          input.value = value + key;
+        }
+      }
+
+      function setupKeys(node, team, accent, soft) {
+        node.innerHTML = '';
+        KEYS.forEach(function (k) {
+          var b = document.createElement('button');
+          b.className = 'k';
+          b.textContent = k;
+          b.style.background = soft;
+          b.style.color = accent;
+          b.addEventListener('click', function () { append(team, k); });
+          node.appendChild(b);
+        });
+      }
+
+      function resetAll() {
+        state.mode = el.mode.value;
+        state.maxRounds = Number(el.rounds.value);
+        state.round = 1;
+        state.aScore = 0;
+        state.bScore = 0;
+        state.ropePull = 0;
+        state.seconds = 20;
+        state.lock = false;
+        state.over = false;
+        state.winner = '';
+        state.status = 'Fresh game started. Solve and pull!';
+        state.question = buildQuestion(1, state.mode);
+        el.inputA.value = '';
+        el.inputB.value = '';
+        render();
+      }
+
+      el.mode.addEventListener('change', function () {
+        state.mode = el.mode.value;
+        state.question = buildQuestion(state.round, state.mode);
+        state.status = 'Operation mode updated. Continue playing.';
+        el.inputA.value = '';
+        el.inputB.value = '';
+        render();
+      });
+
+      el.rounds.addEventListener('change', function () {
+        state.maxRounds = Number(el.rounds.value);
+        render();
+      });
+
+      el.restart.addEventListener('click', resetAll);
+      el.enterA.addEventListener('click', function () { submit('A'); });
+      el.enterB.addEventListener('click', function () { submit('B'); });
+      el.clearA.addEventListener('click', function () { append('A', 'C'); });
+      el.clearB.addEventListener('click', function () { append('B', 'C'); });
+      el.skip.addEventListener('click', function () { resolveRound(null); });
+
+      el.inputA.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit('A'); });
+      el.inputB.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit('B'); });
+      el.inputA.addEventListener('input', function () { el.inputA.value = el.inputA.value.replace(/[^0-9-]/g, '').slice(0, 6); });
+      el.inputB.addEventListener('input', function () { el.inputB.value = el.inputB.value.replace(/[^0-9-]/g, '').slice(0, 6); });
+
+      setupKeys(el.keysA, 'A', '#013062', '#e6eeff');
+      setupKeys(el.keysB, 'B', '#c96512', '#fff2e6');
+
+      state.question = buildQuestion(1, state.mode);
+      render();
+
+      setInterval(function () {
+        if (state.over || state.lock) return;
+        if (state.seconds > 0) {
+          state.seconds -= 1;
+          render();
+          if (state.seconds === 0) resolveRound(null);
+        }
+      }, 1000);
+    })();
+  </script>
+</body>
+</html>
