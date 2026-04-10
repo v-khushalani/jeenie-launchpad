@@ -45,6 +45,17 @@
       min-height: 0;
     }
 
+    .scene-card {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.9) 0 24%, transparent 25%),
+        radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.8) 0 20%, transparent 21%),
+        linear-gradient(180deg, #eff6ff 0%, #f8fbff 42%, #fff8f1 100%);
+      border: 1px solid #d9e5f7;
+      box-shadow: 0 12px 34px rgba(1, 48, 98, 0.09);
+    }
+
     .top {
       display: flex;
       justify-content: space-between;
@@ -52,6 +63,13 @@
       gap: 10px;
       padding: 10px;
       flex-wrap: wrap;
+    }
+
+    .top .ctrl {
+      background: linear-gradient(180deg, rgba(230, 238, 255, 0.7), rgba(255, 255, 255, 0.95));
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid #d6e2f3;
     }
 
     .brand {
@@ -153,9 +171,56 @@
     }
 
     .arena {
-      padding: 10px;
+      padding: 12px;
       display: grid;
-      gap: 7px;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .arena::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 8%, rgba(1, 48, 98, 0.06) 0 8%, transparent 9%),
+        linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+
+    .scene-top {
+      position: relative;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .scene-pill {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.25px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid #d8e4f4;
+      color: #4f6890;
+      backdrop-filter: blur(8px);
+    }
+
+    .scene-center-badge {
+      margin: 0 auto;
+      background: rgba(1, 48, 98, 0.92);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.35px;
+      box-shadow: 0 8px 18px rgba(1, 48, 98, 0.18);
     }
 
     .zones {
@@ -166,27 +231,79 @@
       letter-spacing: 0.2px;
       color: #58739a;
       text-transform: uppercase;
+      position: relative;
+      z-index: 1;
     }
+
+    .zones span:first-child { color: var(--blue); }
+    .zones span:last-child { color: var(--orange); }
 
     .rope-track {
       position: relative;
-      height: 34px;
+      height: 48px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: linear-gradient(90deg, #eaf2ff 0%, #f8fbff 50%, #fff4e9 100%);
+      background: linear-gradient(90deg, #deebff 0%, #f8fbff 48%, #fff0de 100%);
       overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+      z-index: 1;
     }
 
     .rope-line {
       position: absolute;
-      left: 5%;
-      right: 5%;
+      left: 6%;
+      right: 6%;
       top: 50%;
-      height: 5px;
+      height: 6px;
       transform: translateY(-50%);
       border-radius: 999px;
       background: repeating-linear-gradient(90deg, #8f7348 0 8px, #b19062 8px 16px);
-      opacity: 0.9;
+      opacity: 0.95;
+      filter: saturate(1.05);
+    }
+
+    .rope-knot {
+      position: absolute;
+      top: 50%;
+      width: 44px;
+      height: 24px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f7d6ad, #dfb075);
+      border: 2px solid rgba(113, 82, 39, 0.25);
+      box-shadow: 0 8px 18px rgba(93, 65, 22, 0.18);
+      transition: left 260ms ease;
+      z-index: 2;
+    }
+
+    .rope-knot::before,
+    .rope-knot::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 18px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(113, 82, 39, 0.65);
+      transform: translateY(-50%);
+    }
+
+    .rope-knot::before { left: 4px; }
+    .rope-knot::after { right: 4px; }
+
+    .rope-tension {
+      position: absolute;
+      top: 50%;
+      width: 22px;
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(113, 82, 39, 0.45);
+      transform: translateY(-50%);
+      filter: blur(0.2px);
+    }
+
+    .rope-tension.left { left: 30%; transform: translateY(-50%) rotate(8deg); }
+    .rope-tension.right { right: 30%; transform: translateY(-50%) rotate(-8deg); }
     }
 
     .center {
@@ -204,14 +321,15 @@
       position: absolute;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: 38px;
-      height: 20px;
-      border-radius: 5px;
-      border: 1px solid #d7d7d7;
+      width: 42px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid rgba(255,255,255,0.7);
       overflow: hidden;
       transition: left 260ms ease;
       background: #fff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+      z-index: 3;
     }
 
     .flag::before,
@@ -231,52 +349,123 @@
       grid-template-columns: 1fr 1fr;
       align-items: end;
       gap: 8px;
-      min-height: 46px;
+      min-height: 96px;
+      position: relative;
+      z-index: 1;
     }
 
     .team-row {
       display: flex;
       gap: 8px;
-      min-height: 44px;
+      min-height: 92px;
     }
 
     .team-row.left { justify-content: flex-start; }
     .team-row.right { justify-content: flex-end; }
 
     .player {
-      width: 16px;
-      height: 34px;
+      width: 48px;
+      height: 86px;
       position: relative;
       transform-origin: center bottom;
       transition: transform 220ms ease;
+      filter: drop-shadow(0 8px 10px rgba(1, 48, 98, 0.12));
     }
 
     .head {
       position: absolute;
       top: 0;
       left: 50%;
-      width: 10px;
-      height: 10px;
+      width: 18px;
+      height: 18px;
       transform: translateX(-50%);
       border-radius: 50%;
       background: #f2c39b;
       border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.06);
+    }
+
+    .hair {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 18px;
+      height: 10px;
+      transform: translateX(-50%);
+      border-radius: 50% 50% 46% 46%;
+      background: rgba(8, 23, 43, 0.16);
     }
 
     .body {
       position: absolute;
-      top: 10px;
+      top: 19px;
       left: 50%;
-      width: 14px;
-      height: 14px;
+      width: 28px;
+      height: 30px;
       transform: translateX(-50%);
-      border-radius: 5px;
+      border-radius: 9px 9px 10px 10px;
       color: #fff;
-      font-size: 8px;
+      font-size: 12px;
       font-weight: 800;
       display: grid;
       place-items: center;
-      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255,255,255,0.24);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,0.08);
+    }
+
+    .arm {
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      width: 18px;
+      height: 4px;
+      border-bottom: 3px solid;
+      border-radius: 999px;
+      transform-origin: center;
+      opacity: 0.95;
+    }
+
+    .arm.front { transform: translateX(-3px) rotate(-18deg); }
+    .arm.back { transform: translateX(-3px) rotate(18deg); opacity: 0.75; }
+
+    .leg-left,
+    .leg-right {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      width: 14px;
+      height: 11px;
+      border-bottom: 3px solid;
+      border-radius: 999px;
+      transform-origin: center;
+    }
+
+    .leg-left { transform: translateX(-14px) rotate(18deg); }
+    .leg-right { transform: translateX(2px) rotate(-18deg); }
+
+    .shoe-left,
+    .shoe-right {
+      position: absolute;
+      bottom: 6px;
+      width: 9px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(8, 23, 43, 0.22);
+    }
+
+    .shoe-left { left: 10px; }
+    .shoe-right { right: 9px; }
+
+    .shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 1px;
+      width: 30px;
+      height: 7px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: rgba(1, 48, 98, 0.1);
     }
 
     .legs {
@@ -325,6 +514,7 @@
       align-content: start;
       gap: 7px;
       overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98));
     }
 
     .panel h3 {
@@ -383,6 +573,7 @@
       gap: 10px;
       text-align: center;
       padding: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.98));
     }
 
     .status p {
@@ -411,6 +602,34 @@
     .winner strong { color: var(--blue); font-size: 20px; }
     .winner small { color: #4f6890; font-weight: 700; }
 
+    .go-flash-blue .body,
+    .go-flash-blue .head,
+    .go-flash-blue .leg-left,
+    .go-flash-blue .leg-right,
+    .go-flash-blue .arm {
+      animation: teamPulseBlue 700ms ease-out 1;
+    }
+
+    .go-flash-orange .body,
+    .go-flash-orange .head,
+    .go-flash-orange .leg-left,
+    .go-flash-orange .leg-right,
+    .go-flash-orange .arm {
+      animation: teamPulseOrange 700ms ease-out 1;
+    }
+
+    @keyframes teamPulseBlue {
+      0% { transform: translateY(0) scale(1); filter: brightness(1); }
+      35% { transform: translateY(-4px) scale(1.04); filter: brightness(1.15); }
+      100% { transform: translateY(0) scale(1); filter: brightness(1); }
+    }
+
+    @keyframes teamPulseOrange {
+      0% { transform: translateY(0) scale(1); filter: brightness(1); }
+      35% { transform: translateY(-4px) scale(1.04); filter: brightness(1.15); }
+      100% { transform: translateY(0) scale(1); filter: brightness(1); }
+    }
+
     @media (max-width: 980px) {
       .play { grid-template-columns: 1fr; overflow: auto; }
       .status { order: -1; }
@@ -420,7 +639,7 @@
 
     @media (max-height: 760px) {
       .question-text { font-size: 24px; }
-      .player { height: 30px; }
+      .player { transform: scale(0.88); transform-origin: center bottom; }
       .k { min-height: 28px; }
     }
   </style>
@@ -463,14 +682,22 @@
       <div class="score-box score-orange" id="scoreOrange">Team Orange: 0</div>
     </section>
 
-    <section class="card arena">
+    <section class="card arena scene-card">
+      <div class="scene-top">
+        <span class="scene-pill">Classroom Arena</span>
+        <div class="scene-center-badge">JEEnie Power Pull</div>
+        <span class="scene-pill">Full-screen Ready</span>
+      </div>
       <div class="zones">
         <span>Team Blue Pull Zone</span>
         <span>Team Orange Pull Zone</span>
       </div>
       <div class="rope-track">
         <div class="rope-line"></div>
+        <div class="rope-tension left"></div>
+        <div class="rope-tension right"></div>
         <div class="center"></div>
+        <div id="knot" class="rope-knot" style="left:50%"></div>
         <div id="flag" class="flag" style="left:50%"></div>
       </div>
       <div class="teams">
@@ -546,6 +773,7 @@
         roundMeta: document.getElementById('roundMeta'),
         timerMeta: document.getElementById('timerMeta'),
         flag: document.getElementById('flag'),
+        knot: document.getElementById('knot'),
         question: document.getElementById('question'),
         inputA: document.getElementById('inputA'),
         inputB: document.getElementById('inputB'),
@@ -592,21 +820,33 @@
       }
 
       function renderPlayers() {
-        var leftLean = -8 - Math.max(0, state.ropePull) * 1.4;
-        var rightLean = 8 + Math.max(0, -state.ropePull) * 1.4;
+        var blueForce = Math.max(0, state.ropePull);
+        var orangeForce = Math.max(0, -state.ropePull);
+        var leftLean = -10 - blueForce * 2;
+        var rightLean = 10 + orangeForce * 2;
 
         function makeFigure(color, lean) {
           return (
-            '<div class="player" style="transform: rotate(' + lean + 'deg)">' +
+            '<div class="player" style="--c:' + color + '; transform: translateY(' + (Math.abs(lean) > 12 ? '-2px' : '0') + ') rotate(' + lean + 'deg)">' +
+              '<span class="shadow"></span>' +
+              '<span class="hair"></span>' +
               '<span class="head"></span>' +
               '<span class="body" style="background:' + color + '">J</span>' +
-              '<span class="legs" style="border-color:' + color + '"></span>' +
+              '<span class="arm back" style="border-color:' + color + '"></span>' +
+              '<span class="arm front" style="border-color:' + color + '"></span>' +
+              '<span class="leg-left" style="border-color:' + color + '"></span>' +
+              '<span class="leg-right" style="border-color:' + color + '"></span>' +
+              '<span class="shoe-left"></span>' +
+              '<span class="shoe-right"></span>' +
             '</div>'
           );
         }
 
-        var blueHtml = makeFigure('#013062', leftLean) + makeFigure('#013062', leftLean) + makeFigure('#013062', leftLean);
-        var orangeHtml = makeFigure('#c96512', rightLean) + makeFigure('#c96512', rightLean) + makeFigure('#c96512', rightLean);
+        var blueBurst = state.lock && state.status.indexOf('Blue') !== -1 ? ' go-flash-blue' : '';
+        var orangeBurst = state.lock && state.status.indexOf('Orange') !== -1 ? ' go-flash-orange' : '';
+
+        var blueHtml = '<div class="team-stack' + blueBurst + '">' + makeFigure('#013062', leftLean) + makeFigure('#013062', leftLean - 2) + makeFigure('#013062', leftLean - 4) + '</div>';
+        var orangeHtml = '<div class="team-stack' + orangeBurst + '">' + makeFigure('#c96512', rightLean) + makeFigure('#c96512', rightLean + 2) + makeFigure('#c96512', rightLean + 4) + '</div>';
 
         el.bluePlayers.innerHTML = blueHtml;
         el.orangePlayers.innerHTML = orangeHtml;
@@ -622,6 +862,7 @@
 
         var left = 50 - state.ropePull * 8;
         el.flag.style.left = left + '%';
+        el.knot.style.left = left + '%';
 
         var disabled = state.lock || state.over;
         [el.inputA, el.inputB, el.enterA, el.enterB, el.clearA, el.clearB, el.skip].forEach(function(node) {
@@ -784,6 +1025,13 @@
 
       setupKeys(el.keysA, 'A', '#013062', '#e6eeff');
       setupKeys(el.keysB, 'B', '#c96512', '#fff2e6');
+
+      var holderA = document.createElement('div');
+      holderA.className = 'team-stack';
+      var holderB = document.createElement('div');
+      holderB.className = 'team-stack';
+      el.bluePlayers.appendChild(holderA);
+      el.orangePlayers.appendChild(holderB);
 
       state.question = buildQuestion(1, state.mode);
       render();
