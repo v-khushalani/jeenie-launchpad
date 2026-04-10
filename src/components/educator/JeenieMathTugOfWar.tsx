@@ -73,10 +73,10 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [winnerText, setWinnerText] = useState<string>('');
   const [pullFlashWinner, setPullFlashWinner] = useState<TeamId | null>(null);
-  const [swayTick, setSwayTick] = useState<number>(0);
 
   // Team Blue is shown on the left; positive pull should move flag left.
   const markerPercent = useMemo(() => 50 - ropePull * 8, [ropePull]);
+  const pullMagnitude = useMemo(() => Math.min(1, Math.abs(ropePull) / MAX_PULL), [ropePull]);
 
   useEffect(() => {
     if (gameOver || roundLocked) return;
@@ -92,13 +92,6 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft, gameOver, roundLocked]);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setSwayTick((prev) => (prev + 1) % 2);
-    }, 420);
-    return () => window.clearInterval(id);
-  }, []);
 
   const prepareNextRound = (nextRound: number) => {
     setRound(nextRound);
@@ -275,6 +268,18 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
           70% { box-shadow: 0 0 0 10px rgba(1, 48, 98, 0); }
           100% { box-shadow: 0 0 0 0 rgba(1, 48, 98, 0); }
         }
+        .jm-pull {
+          animation: jmPull 0.45s ease;
+        }
+        @keyframes jmPull {
+          0% { transform: translateX(0px); }
+          30% { transform: translateX(-3px); }
+          100% { transform: translateX(0px); }
+        }
+        @keyframes jmStep {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.08); }
+        }
       `}</style>
 
       <div style={{ ...styles.controlsBar, ...(isCompact ? { padding: 8 } : {}) }} className="jm-card">
@@ -329,22 +334,23 @@ const JeenieMathTugOfWar: React.FC<JeenieMathTugOfWarProps> = ({ fullscreen = fa
           <span style={styles.sideLabel}>Team Blue Pull Zone</span>
           <span style={styles.sideLabel}>Team Orange Pull Zone</span>
         </div>
-        <div style={styles.trackOuter}>
-          <div style={styles.zoneBlueTint} />
-          <div style={styles.zoneOrangeTint} />
+        <div
+          style={{
+            ...styles.trackOuter,
+            boxShadow: `inset ${ropePull * -2}px 0 20px rgba(1,48,98,${0.08 + pullMagnitude * 0.16}), inset ${ropePull * 2}px 0 20px rgba(201,101,18,${0.08 + pullMagnitude * 0.16})`,
+          }}
+        >
           <div style={styles.ropeLine} />
-          <div style={{ ...styles.ropeKnot, left: '34%' }} />
-          <div style={{ ...styles.ropeKnot, left: '66%' }} />
           <div style={styles.centerLine} />
-          <div style={{ ...styles.flagPole, left: `${markerPercent}%` }} />
-          <div style={{ ...styles.flag, left: `${markerPercent}%` }}>
+          <div style={{ ...styles.flag, left: `${markerPercent}%` }} className={pullFlashWinner ? 'jm-pull' : ''}>
             <span style={styles.flagBlue} />
             <span style={styles.flagOrange} />
+            <span style={styles.flagPole} />
           </div>
         </div>
         <div style={styles.playersRow}>
-          <TugTeamPlayers accent="#013062" facing="right" ropePull={ropePull} isWinner={pullFlashWinner === 'A'} swayTick={swayTick} />
-          <TugTeamPlayers accent="#c96512" facing="left" ropePull={ropePull} isWinner={pullFlashWinner === 'B'} swayTick={swayTick} />
+          <TugTeamPlayers accent="#013062" facing="right" ropePull={ropePull} isWinner={pullFlashWinner === 'A'} />
+          <TugTeamPlayers accent="#c96512" facing="left" ropePull={ropePull} isWinner={pullFlashWinner === 'B'} />
         </div>
       </div>
 
@@ -432,37 +438,36 @@ type TugTeamPlayersProps = {
   facing: 'left' | 'right';
   ropePull: number;
   isWinner: boolean;
-  swayTick: number;
 };
 
-const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing, ropePull, isWinner, swayTick }) => {
+const TugTeamPlayers: React.FC<TugTeamPlayersProps> = ({ accent, facing, ropePull, isWinner }) => {
   const directionalPull = facing === 'right' ? Math.max(0, ropePull) : Math.max(0, -ropePull);
-  const baseLean = facing === 'right' ? -9 : 9;
-  const lean = baseLean + (facing === 'right' ? -1 : 1) * Math.min(6, directionalPull * 1.2);
-  const pullShift = isWinner ? (facing === 'right' ? -7 : 7) : 0;
+  const baseLean = facing === 'right' ? -12 : 12;
+  const lean = baseLean + (facing === 'right' ? -1 : 1) * Math.min(8, directionalPull * 1.4);
+  const pullShift = (isWinner ? (facing === 'right' ? -10 : 10) : 0) + (facing === 'right' ? -1 : 1) * Math.min(6, directionalPull);
   const align = facing === 'right' ? 'flex-start' : 'flex-end';
 
   return (
     <div style={{ ...styles.teamPlayersWrap, justifyContent: align }}>
-      {[0, 1, 2, 3].map((idx) => {
-        const microSway = (swayTick === 0 ? -1 : 1) * (idx % 2 === 0 ? 1.2 : 0.7);
-        return (
+      {[0, 1, 2, 3].map((idx) => (
         <div
           key={`${accent}-${idx}`}
           style={{
             ...styles.playerFigure,
-            transform: `translateX(${pullShift + (facing === 'right' ? -idx : idx)}px) translateY(${idx % 2 === 0 ? 0 : 1}px) rotate(${lean + microSway}deg)`,
+            transform: `translateX(${pullShift + (facing === 'right' ? -idx : idx)}px) rotate(${lean + (idx % 2 === 0 ? 1 : -1)}deg)`,
+            animationDelay: `${idx * 80}ms`,
           }}
         >
           <span style={{ ...styles.playerHead, background: accent }} />
           <span style={{ ...styles.playerBody, background: accent }}>
             <span style={styles.playerBadge}>J</span>
           </span>
-          <span style={{ ...styles.playerArm, borderColor: accent, transform: facing === 'right' ? 'rotate(-26deg)' : 'rotate(26deg)' }} />
-          <span style={{ ...styles.playerArmBack, borderColor: accent, transform: facing === 'right' ? 'rotate(14deg)' : 'rotate(-14deg)' }} />
+          <span style={{ ...styles.playerArmBack, borderColor: accent, transform: facing === 'right' ? 'rotate(-36deg)' : 'rotate(36deg)' }} />
+          <span style={{ ...styles.playerArm, borderColor: accent, transform: facing === 'right' ? 'rotate(-12deg)' : 'rotate(12deg)' }} />
           <span style={{ ...styles.playerLeg, borderColor: accent }} />
+          <span style={{ ...styles.playerFoot, borderColor: accent }} />
         </div>
-      )})}
+      ))}
     </div>
   );
 };
@@ -643,7 +648,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 12px 12px',
     display: 'grid',
     gap: 8,
-    background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,250,255,0.98) 100%)',
+    background: 'radial-gradient(circle at 50% -60px, #ffffff 0%, #f5f8ff 45%, #edf3ff 100%)',
   },
   playersRow: {
     display: 'grid',
@@ -654,30 +659,40 @@ const styles: Record<string, React.CSSProperties> = {
   teamPlayersWrap: {
     display: 'flex',
     gap: 6,
-    minHeight: 42,
+    minHeight: 50,
   },
   playerFigure: {
     display: 'grid',
     justifyItems: 'center',
-    gap: 2,
+    gap: 1,
     transition: 'transform 220ms ease',
+    animation: 'jmStep 1s ease-in-out infinite',
+  },
+  playerFoot: {
+    width: 14,
+    height: 4,
+    borderBottomWidth: 2,
+    borderBottomStyle: 'solid',
+    borderRadius: 999,
+    opacity: 0.85,
+    marginTop: -2,
   },
   playerHead: {
-    width: 11,
-    height: 11,
+    width: 12,
+    height: 12,
     borderRadius: '50%',
     display: 'block',
-    opacity: 0.98,
-    boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.35)',
+    opacity: 0.92,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
   },
   playerBody: {
-    width: 14,
-    height: 16,
+    width: 15,
+    height: 17,
     borderRadius: 6,
     display: 'grid',
     placeItems: 'center',
-    opacity: 0.98,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.18)',
+    opacity: 0.95,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
   },
   playerBadge: {
     color: '#ffffff',
@@ -686,7 +701,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1,
   },
   playerLeg: {
-    width: 10,
+    width: 12,
     height: 6,
     borderBottomWidth: 2,
     borderBottomStyle: 'solid',
@@ -695,14 +710,14 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.95,
   },
   playerArm: {
-    width: 12,
-    height: 5,
+    width: 14,
+    height: 4,
     borderBottomWidth: 2,
     borderBottomStyle: 'solid',
     borderRadius: 999,
     display: 'block',
     opacity: 0.95,
-    marginTop: -1,
+    marginTop: -2,
   },
   playerArmBack: {
     width: 10,
@@ -712,8 +727,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 999,
     display: 'block',
     opacity: 0.6,
-    marginTop: -8,
-    marginLeft: -6,
+    marginTop: -1,
   },
   trackLabelRow: {
     display: 'flex',
@@ -728,27 +742,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   trackOuter: {
     position: 'relative',
-    height: 42,
+    height: 40,
     borderRadius: 999,
     border: '1px solid #d2def3',
-    background: 'linear-gradient(90deg, #f3f8ff 0%, #f9fbff 50%, #fff8ef 100%)',
+    background: 'linear-gradient(90deg, #e5efff 0%, #f9fbff 50%, #fff2e3 100%)',
     overflow: 'hidden',
-  },
-  zoneBlueTint: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: '50%',
-    background: 'linear-gradient(90deg, rgba(1,48,98,0.11) 0%, rgba(1,48,98,0.03) 100%)',
-  },
-  zoneOrangeTint: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: '50%',
-    background: 'linear-gradient(90deg, rgba(201,101,18,0.03) 0%, rgba(201,101,18,0.12) 100%)',
   },
   ropeLine: {
     position: 'absolute',
@@ -760,18 +758,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 999,
     background: 'repeating-linear-gradient(90deg, #8f7348 0 8px, #b29164 8px 16px)',
     opacity: 0.9,
-    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
-  },
-  ropeKnot: {
-    position: 'absolute',
-    top: '50%',
-    width: 10,
-    height: 10,
-    transform: 'translate(-50%, -50%)',
-    borderRadius: '50%',
-    background: '#9d7e51',
-    border: '1px solid rgba(88,61,21,0.4)',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+    boxShadow: '0 1px 0 rgba(255,255,255,0.4) inset, 0 2px 4px rgba(0,0,0,0.15)',
   },
   centerLine: {
     position: 'absolute',
@@ -786,24 +773,15 @@ const styles: Record<string, React.CSSProperties> = {
   flag: {
     position: 'absolute',
     top: '50%',
-    transform: 'translate(-50%, -62%)',
-    width: 30,
-    height: 18,
-    borderRadius: 3,
-    overflow: 'hidden',
-    border: '1px solid rgba(0,0,0,0.12)',
-    transition: 'left 280ms cubic-bezier(0.22, 1, 0.36, 1)',
-    boxShadow: '0 3px 8px rgba(0,0,0,0.2)',
-  },
-  flagPole: {
-    position: 'absolute',
-    top: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 2,
-    height: 28,
-    background: '#5f6f8c',
-    opacity: 0.9,
-    transition: 'left 280ms cubic-bezier(0.22, 1, 0.36, 1)',
+    width: 32,
+    height: 20,
+    borderRadius: 6,
+    overflow: 'hidden',
+    transition: 'left 280ms ease',
+    border: '1px solid #cbd6ea',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.18)',
+    background: '#fff',
   },
   flagBlue: {
     position: 'absolute',
@@ -820,6 +798,15 @@ const styles: Record<string, React.CSSProperties> = {
     bottom: 0,
     width: '50%',
     background: '#c96512',
+  },
+  flagPole: {
+    position: 'absolute',
+    left: '50%',
+    top: -8,
+    width: 2,
+    height: 36,
+    transform: 'translateX(-50%)',
+    background: '#5f6f86',
   },
   questionBox: {
     padding: 10,
