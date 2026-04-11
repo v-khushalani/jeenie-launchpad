@@ -11,12 +11,9 @@ import {
 } from 'lucide-react';
 import SimulationViewer from './SimulationViewer';
 import { useEducatorContent, EducatorContentItem } from '@/hooks/useEducatorContent';
+import { buildHostedSimulationUrl, getSimulationContentKind } from '@/lib/simulationPipeline';
 
 const SUBJECTS = ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
-
-type RenderPayload = {
-  src: string;
-}
 
 const EducatorGames: React.FC = () => {
   const { items, loading, fetchContent, getSignedUrl } = useEducatorContent();
@@ -52,27 +49,40 @@ const EducatorGames: React.FC = () => {
     return g;
   }, [filteredItems]);
 
-  const openAnimation = async (item: EducatorContentItem) => {
-    let payload: RenderPayload = { src: item.embed_url ?? '' };
-    if (!payload.src && item.file_path) {
-      const url = await getSignedUrl(item.file_path);
-      if (!url) return;
-      payload = { src: url };
+  const resolveAnimationSrc = async (item: EducatorContentItem) => {
+    if (item.embed_url) {
+      return item.embed_url;
     }
+
+    if (!item.file_path) {
+      return '';
+    }
+
+    const url = await getSignedUrl(item.file_path);
+    if (!url) {
+      return '';
+    }
+
+    return getSimulationContentKind(item.file_path, item.original_filename) === 'script'
+      ? buildHostedSimulationUrl(url, item.title)
+      : url;
+  };
+
+  const openAnimation = async (item: EducatorContentItem) => {
+    const src = await resolveAnimationSrc(item);
+    if (!src) return;
+
     setViewerItem(item);
-    setViewerSrc(payload.src);
+    setViewerSrc(src);
     setViewerOpen(true);
   };
 
   const openFullscreen = async (item: EducatorContentItem) => {
-    let payload: RenderPayload = { src: item.embed_url ?? '' };
-    if (!payload.src && item.file_path) {
-      const url = await getSignedUrl(item.file_path);
-      if (!url) return;
-      payload = { src: url };
-    }
+    const src = await resolveAnimationSrc(item);
+    if (!src) return;
+
     setFullscreenAnimation(item);
-    setFullscreenSrc(payload.src);
+    setFullscreenSrc(src);
   };
 
   return (

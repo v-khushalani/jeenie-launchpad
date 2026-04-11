@@ -39,43 +39,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://checkout.razorpay.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/app-shell.css" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/logo.png">
     <link rel="alternate icon" href="/logo.png" />
     <link rel="apple-touch-icon" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
-    
-    <!-- Structured Data for SEO -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "EducationalOrganization",
-      "name": "JEEnie AI",
-      "description": "AI-powered JEE preparation platform",
-      "url": "https://jeenie.website",
-      "logo": "https://jeenie.website/logo.png",
-      "sameAs": [
-        "https://facebook.com/jeenieai",
-        "https://twitter.com/jeenieai",
-        "https://instagram.com/jeenieai"
-      ],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "Customer Support",
-        "email": "support@jeenie.website"
-      }
-    }
-    </script>
-
-    <!-- Google Analytics (Add your GA4 ID) -->
-    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
-    </script> -->
     
     <meta property="og:title" content="JEEnie AI - AI-Powered JEE Preparation Platform">
   <meta name="twitter:title" content="JEEnie AI - AI-Powered JEE Preparation Platform">
@@ -85,13 +55,9 @@
 
   <body>
     <!-- Skip navigation for accessibility -->
-    <a href="#root" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;" onfocus="this.style.cssText='position:absolute;top:8px;left:8px;z-index:9999;background:#fff;color:#013062;padding:8px 16px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.2);font-weight:600;font-family:sans-serif;text-decoration:none;'" onblur="this.style.cssText='position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;'">
+    <a href="#root" class="skip-link">
       Skip to main content
     </a>
-    <!-- App Version -->
-    <script>
-      console.log('JEEnie AI v1.0.1 - Production Build');
-    </script>
 
     <!-- React App Root -->
     <div id="root"></div>
@@ -99,12 +65,9 @@
     <!-- Main App Script -->
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Razorpay Checkout SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
-
     <!-- Noscript Fallback -->
     <noscript>
-      <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+      <div class="noscript-fallback">
         <h1>JavaScript Required</h1>
         <p>JEEnie AI requires JavaScript to run. Please enable JavaScript in your browser.</p>
       </div>
