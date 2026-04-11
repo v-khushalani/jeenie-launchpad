@@ -35,6 +35,7 @@ async function nativeStorageUpload(
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const JSX_LIKE_EXTS = new Set(['jsx', 'tsx', 'js']);
+const HTML_EXTS = new Set(['html', 'htm']);
 
 function normalizeChapterId(chapterId?: string | null): string | null {
   if (!chapterId) return null;
@@ -62,7 +63,7 @@ function buildJsxRuntimeHtml(title: string, sourceCode: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://unpkg.com; connect-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; default-src 'self'" />
+  <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net blob:; connect-src * https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://fonts.googleapis.com; img-src * data: blob:; default-src 'self' blob:" />
   <title>${safeTitle}</title>
   <style>
     html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
