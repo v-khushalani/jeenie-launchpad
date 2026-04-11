@@ -7,6 +7,18 @@ import { initSentry } from '@/lib/sentry';
 import { initMixpanel } from '@/integrations/analytics';
 import { registerSW } from 'virtual:pwa-register';
 
+declare global {
+  interface Window {
+    __JEENIE_SIM_REACT__?: typeof React;
+    __JEENIE_SIM_REACT_DOM__?: {
+      createRoot: typeof createRoot;
+    };
+  }
+}
+
+window.__JEENIE_SIM_REACT__ = React;
+window.__JEENIE_SIM_REACT_DOM__ = { createRoot };
+
 // Initialize error tracking and analytics before rendering
 initSentry();
 initMixpanel();

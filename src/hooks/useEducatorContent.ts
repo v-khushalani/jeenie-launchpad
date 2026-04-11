@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
+import { prepareSimulationUploadFile } from '@/lib/simulationPipeline';
 
 // Uploads a file directly via native fetch, bypassing the Supabase client's
 // 15-second fetchWithTimeout wrapper which kills large file uploads.
@@ -34,8 +35,6 @@ async function nativeStorageUpload(
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const JSX_LIKE_EXTS = new Set(['jsx', 'tsx', 'js']);
-const HTML_EXTS = new Set(['html', 'htm']);
 
 function normalizeChapterId(chapterId?: string | null): string | null {
   if (!chapterId) return null;
@@ -45,127 +44,6 @@ function normalizeChapterId(chapterId?: string | null): string | null {
     throw new Error('Invalid chapter selected. Please reselect chapter and try again.');
   }
   return normalized;
-}
-
-function toBase64Utf8(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
-function buildJsxRuntimeHtml(title: string, sourceCode: string): string {
-  const safeTitle = (title || 'Interactive Animation').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const payload = toBase64Utf8(sourceCode);
-
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net blob:; connect-src * https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://fonts.googleapis.com; img-src * data: blob:; default-src 'self' blob:" />
-  <title>${safeTitle}</title>
-  <style>
-    html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #ffffff; }
-    .sim-error { font: 14px/1.5 system-ui, sans-serif; color: #b91c1c; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 12px; margin: 16px; white-space: pre-wrap; }
-  </style>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-<body>
-  <div id="root"></div>
-  <script>
-    (function () {
-      var root = document.getElementById('root');
-      window.simRoot = root;
-      window.canvas = root;
-
-      var payload = '${payload}';
-      var bytes = Uint8Array.from(atob(payload), function(c) { return c.charCodeAt(0); });
-      var source = new TextDecoder().decode(bytes);
-      try {
-        var exportMatch = source.match(/export\\s+default\\s+(?:function|class)\\s+(\\w+)/);
-        var exportedName = exportMatch ? exportMatch[1] : null;
-
-        var allFnNames = [];
-        var fnRegex = /(?:^|\\n)\\s*(?:export\\s+default\\s+)?function\\s+(\\w+)/g;
-        var m;
-        while ((m = fnRegex.exec(source)) !== null) allFnNames.push(m[1]);
-
-        var normalizedSource = source
-          .replace(/^\\uFEFF/, '')
-          .replace(/^\\s*import\\s+[^;]+;?\\s*$/gm, '')
-          .replace(/^\\s*export\\s+default\\s+/gm, '')
-          .replace(/^\\s*export\\s+\\{[^}]*\\};?\\s*$/gm, '')
-          .replace(/^\\s*export\\s+(const|function|class)\\s+/gm, '$1 ');
-
-        var hookPrefix = 'var { useState, useEffect, useRef, useCallback, useMemo, useReducer, useContext, createContext, forwardRef, Fragment, memo, createElement } = React;\\n';
-
-        var orderedCandidates = ['App', 'Simulation'];
-        if (exportedName && orderedCandidates.indexOf(exportedName) === -1) orderedCandidates.push(exportedName);
-        allFnNames.forEach(function(n) { if (orderedCandidates.indexOf(n) === -1) orderedCandidates.push(n); });
-
-        var aliasSuffix = '\\n;var __SIM_CANDIDATES__ = {};\\n';
-        orderedCandidates.forEach(function(n) {
-          aliasSuffix += 'try { if (typeof ' + n + ' === "function") __SIM_CANDIDATES__["' + n + '"] = ' + n + '; } catch(e) {}\\n';
-        });
-
-        var transformed = Babel.transform(hookPrefix + normalizedSource + aliasSuffix, {
-          presets: ['react', 'typescript'],
-          sourceType: 'script',
-          filename: 'simulation.tsx',
-        }).code;
-
-        var runner = new Function('React', 'ReactDOM', 'window', 'document', 'root', transformed + '\\nreturn __SIM_CANDIDATES__;');
-        var candidates = runner(window.React, window.ReactDOM, window, document, root) || {};
-
-        var Candidate = candidates['App'] || candidates['Simulation'] || candidates[exportedName] || null;
-        if (!Candidate) {
-          var keys = Object.keys(candidates);
-          if (keys.length > 0) Candidate = candidates[keys[0]];
-        }
-        if (!Candidate) Candidate = window.App || window.Simulation;
-
-        if (typeof Candidate === 'function') {
-          window.ReactDOM.createRoot(root).render(window.React.createElement(Candidate));
-          return;
-        }
-
-        if (root && root.childElementCount > 0) return;
-
-        throw new Error('No mountable component found.');
-      } catch (e) {
-        var msg = e && e.message ? e.message : 'Script execution failed';
-        root.innerHTML = '<div class="sim-error"><strong>Simulation error</strong><br />' + msg + '</div>';
-      }
-    })();
-  </script>
-</body>
-</html>`;
-}
-
-async function prepareSimulationUploadFile(title: string, file: File): Promise<File> {
-  const ext = (file.name.split('.').pop() || '').toLowerCase();
-  
-  // HTML files are uploaded as-is — no wrapping needed
-  if (HTML_EXTS.has(ext)) {
-    return file;
-  }
-  
-  if (!JSX_LIKE_EXTS.has(ext)) {
-    return file;
-  }
-
-  const code = await file.text();
-  if (!code.trim()) {
-    throw new Error('Simulation file is empty. Please upload a valid JSX file.');
-  }
-
-  const html = buildJsxRuntimeHtml(title, code);
-  const htmlName = file.name.replace(/\.[^.]+$/, '') + '.html';
-  return new File([html], htmlName, { type: 'text/html' });
 }
 
 export interface EducatorContentItem {
@@ -332,7 +210,7 @@ export function useEducatorContent() {
       let originalFilename: string | null = input.original_filename ?? input.file?.name ?? null;
 
       if (input.file) {
-        const uploadFile = await prepareSimulationUploadFile(input.title, input.file);
+        const uploadFile = await prepareSimulationUploadFile(input.file);
         const ext = uploadFile.name.split('.').pop() ?? 'html';
         
         // Generate descriptive filename: originalname-componenttype-timestamp

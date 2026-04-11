@@ -24,36 +24,6 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [htmlContent, setHtmlContent] = useState<string | null>(null);
-
-  // Fetch HTML content from storage and inject via srcDoc
-  // This ensures proper rendering instead of displaying raw HTML
-  useEffect(() => {
-    const loadHtmlContent = async () => {
-      try {
-        if (!src.startsWith('http')) {
-          setHtmlContent(null);
-          return;
-        }
-        
-        const response = await fetch(src);
-        if (!response.ok) {
-          throw new Error(`Failed to load: ${response.statusText}`);
-        }
-        
-        const html = await response.text();
-        setHtmlContent(html);
-        setIsLoaded(true);
-      } catch (error) {
-        console.error('Error loading simulation:', error);
-        setHasError(true);
-      }
-    };
-
-    loadHtmlContent();
-  }, [src]);
-
-  const effectiveSrc = src;
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -74,9 +44,8 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
 
   // Reset loading state when src changes
   useEffect(() => {
-    setHtmlContent(null);
     setIsLoaded(false);
-    setHasError(false);
+    setHasError(!src);
   }, [src]);
 
   // Blur on tab switch
@@ -164,37 +133,22 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
           {hasError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted z-10 text-destructive">
               <AlertTriangle className="h-8 w-8" />
-              <p className="text-sm">Failed to load animation.</p>
+              <p className="text-sm">{src ? 'Failed to load animation.' : 'No animation source configured.'}</p>
             </div>
           )}
           <AnnotationOverlay />
-          {htmlContent ? (
-            <iframe
-              ref={iframeRef}
-              srcDoc={htmlContent}
-              title={title}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms allow-same-origin"
-              referrerPolicy="no-referrer"
-              style={{ display: 'block', transition: 'filter 0.3s ease' }}
-              onLoad={() => setIsLoaded(true)}
-              onError={() => setHasError(true)}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-          ) : (
-            <iframe
-              ref={iframeRef}
-              src={effectiveSrc}
-              title={title}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
-              referrerPolicy="no-referrer"
-              style={{ display: 'block', transition: 'filter 0.3s ease' }}
-              onLoad={() => setIsLoaded(true)}
-              onError={() => setHasError(true)}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-          )}
+          <iframe
+            ref={iframeRef}
+            src={src}
+            title={title}
+            className="w-full h-full border-0"
+            sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms allow-same-origin"
+            referrerPolicy="no-referrer"
+            style={{ display: 'block', transition: 'filter 0.3s ease' }}
+            onLoad={() => setIsLoaded(true)}
+            onError={() => setHasError(true)}
+            onContextMenu={(e) => e.preventDefault()}
+          />
         </div>
       </div>
     </>
