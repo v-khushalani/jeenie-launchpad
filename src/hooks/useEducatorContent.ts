@@ -148,6 +148,12 @@ function buildJsxRuntimeHtml(title: string, sourceCode: string): string {
 
 async function prepareSimulationUploadFile(title: string, file: File): Promise<File> {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
+  
+  // HTML files are uploaded as-is — no wrapping needed
+  if (HTML_EXTS.has(ext)) {
+    return file;
+  }
+  
   if (!JSX_LIKE_EXTS.has(ext)) {
     return file;
   }
