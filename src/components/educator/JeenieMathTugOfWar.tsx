@@ -9,7 +9,7 @@ type Question = {
   op: '+' | '-' | 'x';
   answer: number;
   label: string;
-};
+};  
 
 const MAX_PULL = 5;
 
