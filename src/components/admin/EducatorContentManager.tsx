@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { useEducatorContent, EducatorContentItem } from '@/hooks/useEducatorContent';
 import { supabase } from '@/integrations/supabase/client';
-import JeenieMathTugOfWar from '@/components/educator/JeenieMathTugOfWar';
 
 const GRADES = [8, 9, 10, 11, 12];
 const SUBJECTS = ['Physics', 'Chemistry', 'Mathematics', 'Biology'];
@@ -217,17 +216,6 @@ export const EducatorContentManager: React.FC = () => {
           <ContentGrid items={filtered} loading={loading} onDelete={deleteContent} type="presentation" />
         </TabsContent>
         <TabsContent value="simulation" className="mt-4">
-          <Card className="mb-4 border-primary/25">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Built-in JEEnie Classroom Game</CardTitle>
-              <CardDescription>
-                This game is code-integrated and appears automatically in Educator {'>'} Animations after deployment.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <JeenieMathTugOfWar />
-            </CardContent>
-          </Card>
           <ContentGrid items={filtered} loading={loading} onDelete={deleteContent} type="simulation" />
         </TabsContent>
       </Tabs>

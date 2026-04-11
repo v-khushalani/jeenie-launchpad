@@ -2,13 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import JeenieMathTugOfWar from './JeenieMathTugOfWar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
-  Sparkles, Loader2, Play, Link2, Upload, Search, Maximize2, X, ShieldCheck,
+  Sparkles, Loader2, Play, Link2, Upload, Search, X, ShieldCheck,
 } from 'lucide-react';
 import SimulationViewer from './SimulationViewer';
 import { useEducatorContent, EducatorContentItem } from '@/hooks/useEducatorContent';
@@ -29,7 +28,6 @@ const EducatorGames: React.FC = () => {
   const [viewerSrc, setViewerSrc] = useState('');
   const [fullscreenAnimation, setFullscreenAnimation] = useState<EducatorContentItem | null>(null);
   const [fullscreenSrc, setFullscreenSrc] = useState('');
-  const [fullscreenClassroomGame, setFullscreenClassroomGame] = useState(false);
 
   useEffect(() => {
     fetchContent({ content_type: 'simulation' });
@@ -79,26 +77,6 @@ const EducatorGames: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {fullscreenClassroomGame && (
-        <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm flex flex-col">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-foreground truncate">JEEnie Math Tug of War</span>
-                <Badge className="text-[10px] bg-primary text-primary-foreground hover:bg-primary/90">Built-in Game</Badge>
-              </div>
-            </div>
-            <Button size="sm" variant="ghost" onClick={() => setFullscreenClassroomGame(false)} className="text-muted-foreground hover:text-foreground">
-              <X className="h-4 w-4 mr-1" /> Exit Fullscreen
-            </Button>
-          </div>
-          <div className="flex-1 min-h-0 overflow-hidden p-2 sm:p-3">
-            <JeenieMathTugOfWar fullscreen />
-          </div>
-        </div>
-      )}
-
       {fullscreenAnimation && (
         <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-sm flex flex-col">
           <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card shrink-0">
@@ -138,31 +116,6 @@ const EducatorGames: React.FC = () => {
 
       <div>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">JEEnie Games</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <Card className="hover:shadow-md transition-shadow group border-primary/20">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Sparkles className="h-3 w-3" /> Built-in
-                </Badge>
-              </div>
-              <CardTitle className="text-sm leading-snug">Math Tug of War</CardTitle>
-              <CardDescription className="text-xs line-clamp-2">
-                Team-vs-team classroom battle. Launch in fullscreen for smartboard fun.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex gap-2 mt-2">
-                <Button
-                  className="flex-1 bg-slate-900 border-b-4 border-slate-950 hover:bg-slate-800 hover:border-slate-900 text-white shadow-sm transition-all active:border-b-0 active:translate-y-1 rounded-xl font-bold h-10 px-4"
-                  onClick={() => setFullscreenClassroomGame(true)}
-                >
-                  <Play className="h-4 w-4 mr-2" /> Launch
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       {/* Search & Filters */}
