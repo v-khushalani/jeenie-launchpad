@@ -62,6 +62,7 @@ function buildJsxRuntimeHtml(title: string, sourceCode: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' https://unpkg.com; connect-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline'; default-src 'self'" />
   <title>${safeTitle}</title>
   <style>
     html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
@@ -258,9 +259,22 @@ export function useEducatorContent() {
       const rawUrl = import.meta.env.VITE_SUPABASE_URL;
       if (!rawUrl) throw new Error('VITE_SUPABASE_URL is not configured');
       const supabaseUrl = (rawUrl as string).replace(/\/$/, '');
+      
       const ext = input.file.name.split('.').pop() ?? 'pdf';
-      const safeTitle = input.title.replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 60);
-      const storagePath = `presentations/${sessionData.session.user.id}/${Date.now()}-${safeTitle}.${ext}`;
+      
+      // Generate descriptive filename similar to simulations
+      const sanitizedOriginal = input.file.name
+        .replace(/\.[^/.]+$/, '') // Remove extension
+        .replace(/[^a-z0-9_-]/gi, '_')
+        .toLowerCase()
+        .slice(0, 50);
+      
+      const timestamp = Date.now();
+      const fileType = ext.toUpperCase(); // PDF, PPT, PPTX
+      
+      // Naming format: original-filename-PDF-timestamp.pdf
+      // Example: physics_notes-PDF-1707123456.pdf
+      const storagePath = `presentations/${sessionData.session.user.id}/${sanitizedOriginal}-${fileType}-${timestamp}.${ext}`;
 
       // Use native window.fetch to bypass the 15-second fetchWithTimeout in the Supabase client
       await nativeStorageUpload(supabaseUrl, token, BUCKET, storagePath, input.file);
@@ -313,8 +327,22 @@ export function useEducatorContent() {
       if (input.file) {
         const uploadFile = await prepareSimulationUploadFile(input.title, input.file);
         const ext = uploadFile.name.split('.').pop() ?? 'html';
-        const safeTitle = input.title.replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 60);
-        storagePath = `simulations/${sessionData.session.user.id}/${Date.now()}-${safeTitle}.${ext}`;
+        
+        // Generate descriptive filename: originalname-componenttype-timestamp
+        const originalExt = input.file.name.split('.').pop() ?? 'jsx';
+        const sanitizedOriginal = input.file.name
+          .replace(/\.[^/.]+$/, '') // Remove extension
+          .replace(/[^a-z0-9_-]/gi, '_')
+          .toLowerCase()
+          .slice(0, 50);
+        
+        const timestamp = Date.now();
+        const componentType = originalExt.toUpperCase(); // JSX, TSX, JS
+        
+        // Naming format: original-filename-JSX-timestamp.html
+        // Example: quantum_mechanics_jsx-1707123456.html
+        storagePath = `simulations/${sessionData.session.user.id}/${sanitizedOriginal}-${componentType}-${timestamp}.${ext}`;
+        
         await nativeStorageUpload(supabaseUrl, token, BUCKET, storagePath, uploadFile);
         originalFilename = input.original_filename ?? input.file.name;
       }
