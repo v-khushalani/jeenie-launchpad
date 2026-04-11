@@ -230,7 +230,7 @@ export const EducatorContentManager: React.FC = () => {
             <DialogDescription>
               {uploadType === 'presentation'
                 ? 'Upload a PDF or PowerPoint file. Only educators can view this.'
-                : 'Embed a PhET/GeoGebra URL or upload a JSX/TSX/JS React animation file.'}
+                : 'Upload an HTML animation file, embed a PhET/GeoGebra URL, or upload a JSX/TSX React component.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -299,11 +299,11 @@ export const EducatorContentManager: React.FC = () => {
 
             {(uploadType === 'presentation' || (uploadType === 'simulation' && form.sourceType === 'file')) && (
               <div className="space-y-1">
-                <Label>{uploadType === 'presentation' ? 'PDF / PPT File' : 'JSX / TSX / JS File'} <span className="text-destructive">*</span></Label>
+                <Label>{uploadType === 'presentation' ? 'PDF / PPT File' : 'HTML / JSX / TSX / JS File'} <span className="text-destructive">*</span></Label>
                 <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
                   <Input
                     type="file"
-                    accept={uploadType === 'presentation' ? '.pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation' : '.jsx,.tsx,.js,text/javascript,application/javascript,text/jsx,text/tsx'}
+                    accept={uploadType === 'presentation' ? '.pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation' : '.html,.htm,.jsx,.tsx,.js,text/html,text/javascript,application/javascript'}
                     id="admin-content-upload"
                     className="hidden"
                     onChange={handleFileSelect}
