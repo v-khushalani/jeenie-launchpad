@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ['favicon.ico', 'logo.png', 'og-image.jpg'],
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,woff2}'],
-        globIgnores: ['**/pdf.worker.min-*.js', '**/pdf.worker.min-*.mjs', '**/mixpanel.module-*.js'],
+        globIgnores: ['**/pdf.worker.min-*.js', '**/pdf.worker.min-*.mjs', '**/mixpanel.module-*.js', '**/typescript-*.js'],
       },
       manifest: {
         name: 'JEEnie AI - AI-Powered JEE Preparation',
