@@ -103,9 +103,9 @@ export const EducatorContentManager: React.FC = () => {
         return;
       }
     } else {
-      const validExts = ['.jsx', '.tsx', '.js'];
+      const validExts = ['.jsx', '.tsx', '.js', '.html', '.htm'];
       if (!validExts.some((ext) => f.name.toLowerCase().endsWith(ext))) {
-        toast.error('Please upload a JSX/TSX/JS simulation file.');
+        toast.error('Please upload a JSX/TSX/JS or HTML simulation file.');
         return;
       }
     }
