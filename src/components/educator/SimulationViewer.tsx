@@ -137,18 +137,33 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
             </div>
           )}
           <AnnotationOverlay />
-          <iframe
-            ref={iframeRef}
-            src={src}
-            title={title}
-            className="w-full h-full border-0"
-            sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms allow-same-origin"
-            referrerPolicy="no-referrer"
-            style={{ display: 'block', transition: 'filter 0.3s ease' }}
-            onLoad={() => setIsLoaded(true)}
-            onError={() => setHasError(true)}
-            onContextMenu={(e) => e.preventDefault()}
-          />
+          {htmlContent ? (
+            <iframe
+              ref={iframeRef}
+              srcDoc={htmlContent}
+              title={title}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
+              referrerPolicy="no-referrer"
+              style={{ display: 'block', transition: 'filter 0.3s ease' }}
+              onLoad={() => setIsLoaded(true)}
+              onError={() => setHasError(true)}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+          ) : (
+            <iframe
+              ref={iframeRef}
+              src={effectiveSrc}
+              title={title}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
+              referrerPolicy="no-referrer"
+              style={{ display: 'block', transition: 'filter 0.3s ease' }}
+              onLoad={() => setIsLoaded(true)}
+              onError={() => setHasError(true)}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+          )}
         </div>
       </div>
     </>
