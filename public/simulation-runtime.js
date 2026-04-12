@@ -16,21 +16,8 @@ const showError = (message) => {
   errorBox.textContent = `Simulation error\n${message}`;
 };
 
-const getParentWindow = () => {
-  try {
-    if (window.parent && window.parent !== window) {
-      return window.parent;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-};
-
-const parentWindow = getParentWindow();
-const React = parentWindow?.__JEENIE_SIM_REACT__;
-const ReactDOM = parentWindow?.__JEENIE_SIM_REACT_DOM__;
+const React = window.React;
+const ReactDOM = window.ReactDOM;
 
 const isRenderableExport = (value) => {
   if (!value) return false;
