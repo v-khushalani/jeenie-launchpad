@@ -12,7 +12,7 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
         },
         {
           "key": "X-XSS-Protection",
@@ -51,6 +51,9 @@
     }
   ],
   "rewrites": [
+    { "source": "/simulation-host.html", "destination": "/simulation-host.html" },
+    { "source": "/simulation-runtime.js", "destination": "/simulation-runtime.js" },
+    { "source": "/simulation-runtime.css", "destination": "/simulation-runtime.css" },
     {
       "source": "/(.*)",
       "destination": "/index.html"
