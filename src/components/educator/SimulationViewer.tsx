@@ -24,6 +24,9 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const normalizedSrc = src.trim();
+  const htmlContent = normalizedSrc.startsWith('<') ? src : '';
+  const effectiveSrc = htmlContent ? undefined : normalizedSrc || undefined;
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -45,8 +48,8 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
   // Reset loading state when src changes
   useEffect(() => {
     setIsLoaded(false);
-    setHasError(!src);
-  }, [src]);
+    setHasError(!normalizedSrc);
+  }, [normalizedSrc]);
 
   // Blur on tab switch
   useEffect(() => {
@@ -137,33 +140,19 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
             </div>
           )}
           <AnnotationOverlay />
-          {htmlContent ? (
-            <iframe
-              ref={iframeRef}
-              srcDoc={htmlContent}
-              title={title}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
-              referrerPolicy="no-referrer"
-              style={{ display: 'block', transition: 'filter 0.3s ease' }}
-              onLoad={() => setIsLoaded(true)}
-              onError={() => setHasError(true)}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-          ) : (
-            <iframe
-              ref={iframeRef}
-              src={effectiveSrc}
-              title={title}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
-              referrerPolicy="no-referrer"
-              style={{ display: 'block', transition: 'filter 0.3s ease' }}
-              onLoad={() => setIsLoaded(true)}
-              onError={() => setHasError(true)}
-              onContextMenu={(e) => e.preventDefault()}
-            />
-          )}
+          <iframe
+            ref={iframeRef}
+            src={effectiveSrc}
+            srcDoc={htmlContent || undefined}
+            title={title}
+            className="w-full h-full border-0"
+            sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
+            referrerPolicy="no-referrer"
+            style={{ display: 'block', transition: 'filter 0.3s ease' }}
+            onLoad={() => setIsLoaded(true)}
+            onError={() => setHasError(true)}
+            onContextMenu={(e) => e.preventDefault()}
+          />
         </div>
       </div>
     </>
