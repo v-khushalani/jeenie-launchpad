@@ -44,21 +44,12 @@ const renderSimulation = async () => {
   window.simRoot = root;
   window.canvas = root;
 
-  // Fetch the module source and create a same-origin blob URL
-  // to bypass CORS restrictions on dynamic import() from Supabase storage
-  const res = await fetch(moduleUrl);
-  if (!res.ok) {
-    throw new Error(`Failed to load simulation: ${res.status} ${res.statusText}`);
-  }
-  const code = await res.text();
-  const blob = new Blob([code], { type: 'text/javascript' });
-  const blobUrl = URL.createObjectURL(blob);
-
   let mod;
   try {
-    mod = await import(blobUrl);
-  } finally {
-    URL.revokeObjectURL(blobUrl);
+    mod = await import(moduleUrl);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to load simulation module: ${message}`);
   }
 
   const candidate =

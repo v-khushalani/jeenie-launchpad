@@ -63,9 +63,19 @@ const EducatorGames: React.FC = () => {
       return '';
     }
 
-    return getSimulationContentKind(item.file_path, item.original_filename) === 'script'
-      ? buildHostedSimulationUrl(url, item.title)
-      : url;
+    const kind = getSimulationContentKind(item.file_path, item.original_filename);
+    if (kind === 'script') {
+      return buildHostedSimulationUrl(url, item.title);
+    }
+
+    // Supabase signed HTML can be served as text/plain with restrictive CSP sandbox.
+    // Fetching and passing as srcDoc keeps legacy HTML simulations runnable.
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) {
+      return '';
+    }
+
+    return await response.text();
   };
 
   const openAnimation = async (item: EducatorContentItem) => {

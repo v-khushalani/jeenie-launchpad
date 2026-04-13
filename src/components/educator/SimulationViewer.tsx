@@ -146,7 +146,7 @@ const SimulationViewer: React.FC<SimulationViewerProps> = ({
             srcDoc={htmlContent || undefined}
             title={title}
             className="w-full h-full border-0"
-            sandbox="allow-scripts allow-pointer-lock allow-popups allow-forms"
+            sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-forms"
             referrerPolicy="no-referrer"
             style={{ display: 'block', transition: 'filter 0.3s ease' }}
             onLoad={() => setIsLoaded(true)}
