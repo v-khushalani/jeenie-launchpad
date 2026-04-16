@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PasswordStrength } from '@/components/ui/password-strength';
 import { signupSchema } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
+import SEOHead from '@/components/SEOHead';
 
 const Signup = () => {
   const [fullName, setFullName] = useState('');
