@@ -1,10 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import SEOHead from '@/components/SEOHead';
 
 const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Privacy Policy"
+        description="Learn how JEEnie AI collects, uses and protects your personal data. We are committed to keeping your academic data safe and private."
+        canonical="https://jeenie.website/privacy-policy"
+      />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link to="/" className="inline-flex items-center text-primary hover:underline mb-8">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Home

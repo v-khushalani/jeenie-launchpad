@@ -839,13 +839,14 @@ const TestPage = () => {
     );
   }
   
+  const freeTestQuotaPending = !isPremium && !usageChecked;
+  const freeTestQuotaReached = !isPremium && usageChecked && monthlyTestsUsed >= MONTHLY_LIMIT_FREE;
+
   if (loading) {
     return <LoadingScreen message="Loading your tests..." />;
   }
 
   if (!testMode) {
-    const freeTestQuotaPending = !isPremium && !usageChecked;
-    const freeTestQuotaReached = !isPremium && usageChecked && monthlyTestsUsed >= MONTHLY_LIMIT_FREE;
 
     return (
       <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">

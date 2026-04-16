@@ -9,6 +9,7 @@ import Header from '@/components/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import SEOHead from '@/components/SEOHead';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -70,6 +71,7 @@ const Login = () => {
 
   return (
     <div className="mobile-app-shell-header-only flex flex-col bg-background overflow-hidden">
+      <SEOHead title="Sign In" description="Sign in to JEEnie AI to access your personalized JEE & NEET study dashboard, AI doubt solver and practice tests." canonical="https://jeenie.website/login" />
       <Header />
       
       <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-y-auto">

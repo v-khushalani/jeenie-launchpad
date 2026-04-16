@@ -1,8 +1,21 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /educator
+Disallow: /dashboard
+Disallow: /test-attempt
+Disallow: /test-results
+Disallow: /settings
+Disallow: /profile
+Disallow: /auth/callback
+Disallow: /reset-password
+Disallow: /goal-selection
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /educator
+Disallow: /dashboard
 
 User-agent: Twitterbot
 Allow: /
@@ -12,5 +25,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /educator
+Disallow: /dashboard
+Disallow: /test-attempt
+Disallow: /test-results
+Disallow: /settings
+Disallow: /profile
 
 Sitemap: https://jeenie.website/sitemap.xml

@@ -1,7 +1,7 @@
 {
-  "name": "JEEnie AI - AI-Powered JEE Preparation",
+  "name": "JEEnie AI – AI-Powered JEE & NEET Preparation",
   "short_name": "JEEnie AI",
-  "description": "AI-powered personalized JEE & NEET preparation platform by JEEnie",
+  "description": "Crack JEE Main, JEE Advanced & NEET with AI-personalized study plans, 50,000+ questions, smart analytics & gamified learning.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
