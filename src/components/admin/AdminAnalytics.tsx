@@ -67,17 +67,17 @@ export const AdminAnalytics: React.FC = () => {
   const days = range === '7d' ? 7 : range === '14d' ? 14 : 30;
 
   useEffect(() => {
-    fetchAll();
-  }, [range]);
+    const run = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchStats(), fetchDaily(), fetchSubjects(), fetchExamSplit()]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchAll = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([fetchStats(), fetchDaily(), fetchSubjects(), fetchExamSplit()]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    void run();
+  }, [range]);
 
   const fetchStats = async () => {
     try {

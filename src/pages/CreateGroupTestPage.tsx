@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,32 +74,13 @@ const CreateGroupTestPage = () => {
   const [copied, setCopied] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  useEffect(() => {
-    if (profile) fetchSubjectsAndChapters();
-  }, [profile?.target_exam, profile?.grade]);
-
-  useEffect(() => {
-    if (groupTestType === "custom") return;
-
-    const preset = GROUP_TEST_PRESETS[groupTestType];
-    const pattern = getExamPattern(preset.patternName);
-    setQuestionCount(pattern.totalQuestions);
-    setDuration(pattern.duration);
-    setSelectedSubjects([]);
-    setSelectedChapters([]);
-  }, [groupTestType]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
     setProfile(data);
-  };
+  }, [user?.id]);
 
-  const fetchSubjectsAndChapters = async () => {
+  const fetchSubjectsAndChapters = useCallback(async () => {
     if (!user || !profile) return;
     const targetExam = profile.target_exam || "JEE";
     const userGrade = parseGrade(profile.grade || 12);
@@ -123,7 +104,26 @@ const CreateGroupTestPage = () => {
     });
     setSubjects(subjectsToShow);
     setChapters(bySubject);
-  };
+  }, [user?.id, profile]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (profile) fetchSubjectsAndChapters();
+  }, [profile, fetchSubjectsAndChapters]);
+
+  useEffect(() => {
+    if (groupTestType === "custom") return;
+
+    const preset = GROUP_TEST_PRESETS[groupTestType];
+    const pattern = getExamPattern(preset.patternName);
+    setQuestionCount(pattern.totalQuestions);
+    setDuration(pattern.duration);
+    setSelectedSubjects([]);
+    setSelectedChapters([]);
+  }, [groupTestType]);
 
   const handleSubjectToggle = (subject: string) => {
     setSelectedSubjects((prev) =>

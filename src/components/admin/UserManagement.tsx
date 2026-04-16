@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +47,6 @@ export const UserManagement: React.FC = () => {
   const [missingRolesCount, setMissingRolesCount] = useState(0);
 
   useEffect(() => { fetchUsers(); }, []);
-  useEffect(() => { filterUsers(); }, [users, searchTerm, roleFilter]);
 
   const fetchUsers = async () => {
     try {
@@ -98,7 +97,7 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = users;
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -114,7 +113,9 @@ export const UserManagement: React.FC = () => {
       }
     }
     setFilteredUsers(filtered);
-  };
+  }, [users, searchTerm, roleFilter]);
+
+  useEffect(() => { filterUsers(); }, [filterUsers]);
 
   const syncMissingRoles = async () => {
     setSyncing(true);

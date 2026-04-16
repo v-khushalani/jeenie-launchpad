@@ -38,11 +38,7 @@ const GroupTestLeaderboard = () => {
   const [groupTestId, setGroupTestId] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
 
-  useEffect(() => {
-    if (code) fetchLeaderboard();
-  }, [code]);
-
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     try {
       // Get group test info
       const { data: groupTest, error: gtError } = await supabase
@@ -110,7 +106,11 @@ const GroupTestLeaderboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [code]);
+
+  useEffect(() => {
+    if (code) fetchLeaderboard();
+  }, [code, fetchLeaderboard]);
 
   // Real-time subscription for live leaderboard updates
   useEffect(() => {
@@ -138,7 +138,7 @@ const GroupTestLeaderboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [groupTestId]);
+  }, [groupTestId, fetchLeaderboard]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

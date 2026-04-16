@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,7 +51,7 @@ export const QuestionReportsManager: React.FC = () => {
   const [editData, setEditData] = useState<QuestionEditData | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -95,9 +95,9 @@ export const QuestionReportsManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
 
-  useEffect(() => { loadReports(); }, [statusFilter]);
+  useEffect(() => { loadReports(); }, [loadReports]);
 
   const updateStatus = async (reportId: string, newStatus: string, questionId?: string) => {
     const { error } = await supabase

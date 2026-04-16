@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,11 +30,7 @@ const EducatorGroupTests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showQR, setShowQR] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.id) loadTests();
-  }, [user?.id]);
-
-  const loadTests = async () => {
+  const loadTests = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('group_tests')
@@ -61,7 +57,11 @@ const EducatorGroupTests: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) loadTests();
+  }, [user?.id, loadTests]);
 
   const isExpired = (test: GroupTest) => {
     if (!test.expires_at) return false;

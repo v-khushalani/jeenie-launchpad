@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,12 +7,7 @@ const PeerComparison: React.FC = () => {
   const { user } = useAuth();
   const [percentile, setPercentile] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    calculatePercentile();
-  }, [user?.id]);
-
-  const calculatePercentile = async () => {
+  const calculatePercentile = useCallback(async () => {
     try {
       // Get my points
       const { data: myProfile } = await supabase
@@ -43,7 +38,12 @@ const PeerComparison: React.FC = () => {
     } catch {
       // silent
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    calculatePercentile();
+  }, [user?.id, calculatePercentile]);
 
   if (percentile === null || percentile < 1) return null;
 

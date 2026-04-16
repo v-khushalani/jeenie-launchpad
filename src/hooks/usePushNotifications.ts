@@ -61,7 +61,7 @@ export function usePushNotifications() {
 
   const subscribe = useCallback(async () => {
     if (!isSupported || !user?.id) {
-      logger.warn('Push notifications not available', { isSupported, hasUser: !!user });
+      logger.warn('Push notifications not available', { isSupported, hasUser: !!user?.id });
       return false;
     }
 

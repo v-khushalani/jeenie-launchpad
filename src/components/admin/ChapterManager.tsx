@@ -240,7 +240,7 @@ const ChapterManager = () => {
   };
 
   // Get batch_id for current filter - ALL chapters must be linked to a batch
-  const getCurrentBatchId = (): string | 'NOT_FOUND' => {
+  const getCurrentBatchId = useCallback((): string | 'NOT_FOUND' => {
     if (filterExam === 'JEE') {
       const batch = batches.find(b => 
         b.exam_type.toLowerCase() === 'jee' && 
@@ -264,7 +264,7 @@ const ChapterManager = () => {
     }
     
     return 'NOT_FOUND';
-  };
+  }, [filterExam, batches, selectedGrade]);
 
   // Get batch name for display
   const getBatchName = (batchId: string): string => {
@@ -290,7 +290,7 @@ const ChapterManager = () => {
       .order('chapter_number');
 
     setChapters(data || []);
-  }, [selectedSubject, filterExam, selectedGrade, batches]);
+  }, [selectedSubject, filterExam, selectedGrade, batches, getCurrentBatchId]);
 
   useEffect(() => {
     fetchChapters();

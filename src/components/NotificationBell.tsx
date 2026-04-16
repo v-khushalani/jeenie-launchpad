@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,21 @@ export const NotificationBell: React.FC = () => {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+
+  const fetchNotifications = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_notifications')
+      .select('id, title, message, is_read, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (data) {
+      setNotifications(data);
+      setUnreadCount(data.filter(n => !n.is_read).length);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -51,22 +66,7 @@ export const NotificationBell: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
-
-  const fetchNotifications = async () => {
-    if (!user?.id) return;
-    const { data } = await supabase
-      .from('user_notifications')
-      .select('id, title, message, is_read, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (data) {
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.is_read).length);
-    }
-  };
+  }, [user?.id, fetchNotifications]);
 
   const markAllRead = async () => {
     if (!user?.id || unreadCount === 0) return;

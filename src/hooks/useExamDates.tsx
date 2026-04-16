@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/utils/logger';
 
@@ -24,11 +24,7 @@ export const useExamDates = () => {
   const [foundationDate, setFoundationDate] = useState('2026-03-15');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadExamDates();
-  }, []);
-
-  const loadExamDates = async () => {
+  const loadExamDates = useCallback(async () => {
     try {
       const rawCache = localStorage.getItem(EXAM_DATES_CACHE_KEY);
       if (rawCache) {
@@ -59,7 +55,11 @@ export const useExamDates = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadExamDates();
+  }, [loadExamDates]);
 
   const applyExamDates = (data: ExamConfig[]) => {
     const jee = data.find((e) => e.exam_name === 'JEE');

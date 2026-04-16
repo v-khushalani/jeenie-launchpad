@@ -84,7 +84,6 @@ export function PDFQuestionExtractor() {
       setSelectedChapterId("");
       setSelectedChapterName("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSubject, selectedExam]);
 
   // Fetch available subjects from DB for chosen course

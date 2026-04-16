@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,11 +44,7 @@ const TestHistoryPage = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [filter, setFilter] = useState<'all' | 'solo' | 'group'>('all');
 
-  useEffect(() => {
-    if (user) loadTests();
-  }, [user, page, filter]);
-
-  const loadTests = async () => {
+  const loadTests = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -75,7 +71,11 @@ const TestHistoryPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, page, filter]);
+
+  useEffect(() => {
+    if (user) loadTests();
+  }, [user, loadTests]);
 
   // Summary stats from all loaded tests
   const allCompleted = tests.filter(t => t.status === 'completed');
