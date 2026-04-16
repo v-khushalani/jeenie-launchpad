@@ -126,6 +126,7 @@ const Signup = () => {
 
   return (
     <div className="mobile-app-shell-header-only flex flex-col bg-background">
+      <SEOHead title="Sign Up Free" description="Create your free JEEnie AI account. Get AI-powered JEE & NEET preparation with personalized study plans, smart practice and performance analytics." canonical="https://jeenie.website/signup" />
       <Header />
       
       <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-y-auto">
