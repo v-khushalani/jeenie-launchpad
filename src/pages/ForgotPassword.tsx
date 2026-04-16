@@ -8,6 +8,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import SEOHead from '@/components/SEOHead';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -56,6 +57,12 @@ const ForgotPassword = () => {
 
   return (
     <div className="mobile-app-shell-header-only flex flex-col bg-background overflow-hidden">
+      <SEOHead
+        title="Forgot Password"
+        description="Reset your JEEnie AI account password securely."
+        canonical="https://www.jeenie.website/forgot-password"
+        noIndex
+      />
       <Header />
       
       <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-y-auto">

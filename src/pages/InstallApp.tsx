@@ -3,6 +3,8 @@ import { Download, Smartphone, Share, MoreVertical, Plus, Check, ArrowLeft, Chro
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import SEOHead from '@/components/SEOHead';
+import JsonLd, { breadcrumbSchema } from '@/components/JsonLd';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -51,6 +53,17 @@ const InstallApp = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEOHead
+        title="Install JEEnie AI App"
+        description="Install JEEnie AI on Android, iPhone, iPad or desktop for faster access, offline support and instant study sessions for JEE Main, JEE Advanced and NEET prep."
+        canonical="https://www.jeenie.website/install"
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: 'Home', item: 'https://www.jeenie.website/' },
+          { name: 'Install App', item: 'https://www.jeenie.website/install' },
+        ])}
+      />
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center gap-3">

@@ -12,7 +12,7 @@ const ShareButton = ({ variant = 'default', className = '' }: ShareButtonProps) 
   const shareData = {
     title: 'JEEnie — AI-Powered JEE/NEET Prep',
     text: '🚀 I\'m using JEEnie to prepare for JEE/NEET with 70,000+ questions, AI doubt solver & smart study planner. Try it free!',
-    url: 'https://jeenie.website',
+    url: 'https://www.jeenie.website',
   };
 
   const handleShare = async () => {

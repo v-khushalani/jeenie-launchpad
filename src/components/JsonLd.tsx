@@ -25,12 +25,13 @@ export default JsonLd;
 export const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'EducationalOrganization',
+  '@id': 'https://www.jeenie.website/#organization',
   name: 'JEEnie AI',
-  url: 'https://jeenie.website',
-  logo: 'https://jeenie.website/logo.png',
+  url: 'https://www.jeenie.website',
+  logo: 'https://www.jeenie.website/logo.png',
   description:
     'AI-powered personalized learning platform for JEE Main, JEE Advanced, NEET and Foundation exam preparation.',
-  sameAs: [],
+  sameAs: ['https://www.instagram.com/jeenie_app/'],
   foundingDate: '2024',
   areaServed: { '@type': 'Country', name: 'India' },
   contactPoint: {
@@ -43,11 +44,12 @@ export const organizationSchema = {
 export const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
+  '@id': 'https://www.jeenie.website/#website',
   name: 'JEEnie AI',
-  url: 'https://jeenie.website',
+  url: 'https://www.jeenie.website',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://jeenie.website/practice?q={search_term_string}',
+    target: 'https://www.jeenie.website/practice?q={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 };
@@ -55,6 +57,7 @@ export const websiteSchema = {
 export const softwareAppSchema = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
+  '@id': 'https://www.jeenie.website/#software-app',
   name: 'JEEnie AI',
   applicationCategory: 'EducationalApplication',
   operatingSystem: 'Web, Android, iOS',
@@ -79,5 +82,18 @@ export const faqSchema = (faqs: { q: string; a: string }[]) => ({
     '@type': 'Question',
     name: f.q,
     acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+});
+
+export const breadcrumbSchema = (
+  items: { name: string; item: string }[]
+) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: items.map((entry, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: entry.name,
+    item: entry.item,
   })),
 });

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import SEOHead from '@/components/SEOHead';
+import JsonLd, { breadcrumbSchema } from '@/components/JsonLd';
 import {
   ArrowRight,
   BarChart3,
@@ -69,7 +70,13 @@ const WhyUsPage = () => {
       <SEOHead
         title="Why Choose JEEnie AI for JEE &amp; NEET Prep"
         description="Compare JEEnie AI with other coaching apps. AI doubt solving, adaptive difficulty, personalized study plans, parent dashboard & gamified learning at ₹99/mo."
-        canonical="https://jeenie.website/why-us"
+        canonical="https://www.jeenie.website/why-us"
+      />
+      <JsonLd
+        data={breadcrumbSchema([
+          { name: 'Home', item: 'https://www.jeenie.website/' },
+          { name: 'Why Us', item: 'https://www.jeenie.website/why-us' },
+        ])}
       />
       <Header />
       <main className="container mx-auto px-4 py-8 max-w-5xl">

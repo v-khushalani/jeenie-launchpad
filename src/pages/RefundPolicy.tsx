@@ -9,7 +9,7 @@ const RefundPolicy = () => {
       <SEOHead
         title="Refund &amp; Cancellation Policy"
         description="JEEnie AI refund and cancellation policy. Full refund within 7 days if premium features are unused. Learn about eligibility, process and timelines."
-        canonical="https://jeenie.website/refund-policy"
+        canonical="https://www.jeenie.website/refund-policy"
       />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link to="/" className="inline-flex items-center text-primary hover:underline mb-8">

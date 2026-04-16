@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import ReferralService from '@/services/referralService';
 import { logger } from '@/utils/logger';
+import SEOHead from '@/components/SEOHead';
 
 const SubscriptionPlans = () => {
   const { user } = useAuth();
@@ -71,6 +72,12 @@ const SubscriptionPlans = () => {
 
   return (
     <div className="mobile-app-shell bg-gradient-to-b from-background to-primary/5 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col overflow-hidden">
+      <SEOHead
+        title="Subscription Plans"
+        description="JEEnie AI premium plans and pricing."
+        canonical="https://www.jeenie.website/subscription-plans"
+        noIndex
+      />
       <Header />
       <div className="flex-1 min-h-0 px-4 flex items-center justify-center overflow-hidden">
         <div className="w-full max-w-md">

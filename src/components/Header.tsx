@@ -32,6 +32,8 @@ const Header = () => {
   const publicNavItems = [
     { name: 'Home', path: '/' },
     { name: 'Why Us', path: '/why-us' },
+    { name: 'About', path: '/about' },
+    { name: 'FAQ', path: '/faq' },
   ];
 
   const navItems = isAuthenticated ? (
@@ -68,6 +70,8 @@ const Header = () => {
   const mobileNavIcons: Record<string, React.ReactNode> = {
     Home: <Home className="w-4 h-4" />,
     'Why Us': <HelpCircle className="w-4 h-4" />,
+    About: <FileText className="w-4 h-4" />,
+    FAQ: <HelpCircle className="w-4 h-4" />,
     Dashboard: <LayoutDashboard className="w-4 h-4" />,
     Study: <BookOpen className="w-4 h-4" />,
     'Study Now': <BookOpen className="w-4 h-4" />,

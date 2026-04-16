@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { logger } from '@/utils/logger';
 import { isGoalComplete } from '@/config/goalConfig';
+import SEOHead from '@/components/SEOHead';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -92,6 +93,12 @@ const AuthCallback = () => {
 
   return (
     <div className="min-h-screen bg-muted flex items-center justify-center">
+      <SEOHead
+        title="Authentication Callback"
+        description="Authentication in progress."
+        canonical="https://www.jeenie.website/auth/callback"
+        noIndex
+      />
       <Card className="max-w-md mx-4">
         <CardContent className="text-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>

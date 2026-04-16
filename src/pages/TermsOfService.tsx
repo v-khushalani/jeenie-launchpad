@@ -9,7 +9,7 @@ const TermsOfService = () => {
       <SEOHead
         title="Terms of Service"
         description="Read the Terms of Service for JEEnie AI. Learn about subscription terms, acceptable use, intellectual property and liability for our AI-powered exam prep platform."
-        canonical="https://jeenie.website/terms-of-service"
+        canonical="https://www.jeenie.website/terms-of-service"
       />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link to="/" className="inline-flex items-center text-primary hover:underline mb-8">

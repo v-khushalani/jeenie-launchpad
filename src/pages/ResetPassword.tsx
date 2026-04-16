@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { PasswordStrength } from '@/components/ui/password-strength';
+import SEOHead from '@/components/SEOHead';
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
@@ -103,6 +104,12 @@ const ResetPassword = () => {
 
   return (
     <div className="mobile-app-shell-header-only flex flex-col bg-background overflow-hidden">
+      <SEOHead
+        title="Reset Password"
+        description="Set a new password for your JEEnie AI account."
+        canonical="https://www.jeenie.website/reset-password"
+        noIndex
+      />
       <Header />
       
       <div className="flex-1 min-h-0 flex items-center justify-center px-4 overflow-y-auto">

@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
       <SEOHead
         title="Privacy Policy"
         description="Learn how JEEnie AI collects, uses and protects your personal data. We are committed to keeping your academic data safe and private."
-        canonical="https://jeenie.website/privacy-policy"
+        canonical="https://www.jeenie.website/privacy-policy"
       />
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link to="/" className="inline-flex items-center text-primary hover:underline mb-8">

@@ -16,7 +16,7 @@ const DEFAULTS = {
     'Crack JEE Main, JEE Advanced & NEET with AI-personalized study plans, 50 000+ questions, smart analytics & gamified learning. Start free today!',
   ogImage:
     'https://storage.googleapis.com/gpt-engineer-file-uploads/pAJVu78QZ6WhuH9D77xLYDt4Fmg2/social-images/social-1775309330380-logo.webp',
-  url: 'https://jeenie.website',
+  url: 'https://www.jeenie.website',
 };
 
 const setMeta = (attr: string, key: string, content: string) => {

@@ -54,6 +54,8 @@ const PrivacyPolicy = lazyWithRetry(() => import('@/pages/PrivacyPolicy'), "Priv
 const TermsOfService = lazyWithRetry(() => import('@/pages/TermsOfService'), "TermsOfService");
 const RefundPolicy = lazyWithRetry(() => import('@/pages/RefundPolicy'), "RefundPolicy");
 const InstallApp = lazyWithRetry(() => import('@/pages/InstallApp'), "InstallApp");
+const AboutPage = lazyWithRetry(() => import('@/pages/AboutPage'), "AboutPage");
+const FAQPage = lazyWithRetry(() => import('@/pages/FAQPage'), "FAQPage");
 
 // Components
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -169,6 +171,8 @@ function App() {
                 {/* Public Route*/}
                   <Route path="/" element={<Index />} />
                   <Route path="/why-us" element={<WhyUsPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/refund-policy" element={<RefundPolicy />} />

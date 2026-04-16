@@ -27,7 +27,7 @@ const Index = () => {
       <SEOHead
         title={undefined}
         description="Crack JEE Main, JEE Advanced & NEET with AI-personalized study plans, 50,000+ questions, smart analytics & gamified learning. Start free today!"
-        canonical="https://jeenie.website"
+        canonical="https://www.jeenie.website"
       />
       <JsonLd data={organizationSchema} />
       <JsonLd data={websiteSchema} />
