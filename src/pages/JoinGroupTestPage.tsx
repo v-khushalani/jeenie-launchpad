@@ -27,7 +27,7 @@ interface GroupTest {
 const JoinGroupTestPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isPremium } = useAuth();
 
   const [code, setCode] = useState(searchParams.get("code") || "");
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,7 @@ const JoinGroupTestPage = () => {
   const [scannerSupported, setScannerSupported] = useState(false);
   const [scannerStarting, setScannerStarting] = useState(false);
   const [scannerError, setScannerError] = useState<string | null>(null);
+  const [quotaChecked, setQuotaChecked] = useState(false);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
   const scanTimerRef = React.useRef<number | null>(null);
@@ -71,6 +72,30 @@ const JoinGroupTestPage = () => {
     }
     return () => stopScanner();
   }, [showScanner, stopScanner]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const precheckQuota = async () => {
+      if (!isAuthenticated || !user?.id || isPremium) {
+        if (!cancelled) setQuotaChecked(true);
+        return;
+      }
+
+      try {
+        await UserLimitsService.canStartTest(user.id, { isPremium });
+      } finally {
+        if (!cancelled) setQuotaChecked(true);
+      }
+    };
+
+    setQuotaChecked(false);
+    precheckQuota();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, user?.id, isPremium]);
 
   const extractCode = React.useCallback((raw: string): string | null => {
     if (!raw) return null;
@@ -184,7 +209,12 @@ const JoinGroupTestPage = () => {
       return;
     }
 
-    const testAccess = await UserLimitsService.canStartTest(user.id);
+    if (!isPremium && !quotaChecked) {
+      toast.info('Checking your free test quota. Please wait a moment.');
+      return;
+    }
+
+    const testAccess = await UserLimitsService.canStartTest(user.id, { isPremium });
     if (!testAccess.canStart) {
       toast.error(`You've used all ${testAccess.testsLimit} free tests this month. Upgrade for unlimited tests.`);
       navigate("/subscription-plans");
@@ -352,7 +382,7 @@ const JoinGroupTestPage = () => {
                       <Button
                         className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl"
                         onClick={handleJoin}
-                        disabled={joining}
+                        disabled={joining || (!isPremium && !quotaChecked)}
                       >
                         {joining ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />

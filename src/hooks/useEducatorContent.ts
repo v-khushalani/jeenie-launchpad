@@ -53,7 +53,7 @@ export interface EducatorContentItem {
   subject: string;
   grade: number;
   chapter_id: string | null;
-  content_type: 'presentation' | 'simulation';
+  content_type: 'presentation' | 'simulation' | 'game';
   file_path: string | null;
   embed_url: string | null;
   thumbnail_url: string | null;
@@ -85,6 +85,17 @@ export interface AddSimulationInput {
   original_filename?: string;
 }
 
+export interface AddGameInput {
+  title: string;
+  description?: string;
+  subject: string;
+  grade: number;
+  chapter_id?: string;
+  embed_url?: string;
+  file?: File;
+  original_filename?: string;
+}
+
 const BUCKET = 'educator-content';
 
 export function useEducatorContent() {
@@ -92,7 +103,7 @@ export function useEducatorContent() {
   const [loading, setLoading] = useState(false);
 
   const fetchContent = useCallback(
-    async (filters: { grade?: number; subject?: string; content_type?: 'presentation' | 'simulation' } = {}) => {
+    async (filters: { grade?: number; subject?: string; content_type?: 'presentation' | 'simulation' | 'game' } = {}) => {
       setLoading(true);
       try {
         let query = supabase
@@ -264,6 +275,73 @@ export function useEducatorContent() {
     }
   }, []);
 
+  const addGame = useCallback(async (input: AddGameInput): Promise<boolean> => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Not authenticated — please refresh and try again');
+
+      const rawUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!rawUrl) throw new Error('VITE_SUPABASE_URL is not configured');
+      const supabaseUrl = (rawUrl as string).replace(/\/$/, '');
+      let storagePath: string | null = null;
+
+      const normalizedChapterId = normalizeChapterId(input.chapter_id);
+      let originalFilename: string | null = input.original_filename ?? input.file?.name ?? null;
+
+      if (input.file) {
+        const uploadFile = await prepareSimulationUploadFile(input.file);
+        const ext = uploadFile.name.split('.').pop() ?? 'html';
+
+        const originalExt = input.file.name.split('.').pop() ?? 'jsx';
+        const sanitizedOriginal = input.file.name
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[^a-z0-9_-]/gi, '_')
+          .toLowerCase()
+          .slice(0, 50);
+
+        const timestamp = Date.now();
+        const componentType = originalExt.toUpperCase();
+
+        storagePath = `games/${sessionData.session.user.id}/${sanitizedOriginal}-${componentType}-${timestamp}.${ext}`;
+
+        await nativeStorageUpload(supabaseUrl, token, BUCKET, storagePath, uploadFile);
+        originalFilename = input.original_filename ?? input.file.name;
+      }
+
+      const { error: insertError } = await supabase.from('educator_content').insert({
+        title: input.title,
+        description: input.description ?? null,
+        subject: input.subject.toLowerCase(),
+        grade: input.grade,
+        chapter_id: normalizedChapterId,
+        content_type: 'game',
+        is_active: true,
+        file_path: storagePath,
+        embed_url: input.embed_url ?? null,
+        original_filename: originalFilename,
+        uploaded_by: sessionData.session.user.id,
+      });
+
+      if (insertError) {
+        if (storagePath) {
+          await window.fetch(
+            `${supabaseUrl}/storage/v1/object/${BUCKET}/${storagePath}`,
+            { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
+          ).catch(() => {});
+        }
+        throw new Error(`Database insert failed: ${insertError.message}`);
+      }
+
+      toast.success('Game added successfully');
+      return true;
+    } catch (err: any) {
+      logger.error('addGame error:', err);
+      toast.error(err?.message ?? 'Failed to add game');
+      return false;
+    }
+  }, []);
+
   const deleteContent = useCallback(async (item: EducatorContentItem): Promise<boolean> => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -329,6 +407,7 @@ export function useEducatorContent() {
     getSignedUrl,
     uploadPresentation,
     addSimulation,
+    addGame,
     deleteContent,
   };
 }

@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-// Signup form validation schema
+// List of commonly weak passwords to prevent
+const WEAK_PASSWORDS = new Set([
+  'password', 'password123', '123456', 'abc123', 'qwerty',
+  'letmein', 'welcome', 'admin', 'root', 'student'
+]);
+
+// Signup form validation schema with enhanced password security
 export const signupSchema = z.object({
   fullName: z.string()
     .min(2, 'Name must be at least 2 characters')
@@ -12,9 +18,14 @@ export const signupSchema = z.object({
     .min(1, 'Email is required'),
   
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
-           'Password must contain uppercase, lowercase, and a number'),
+    .min(10, 'Password must be at least 10 characters')
+    .regex(/(?=.*[a-z])/, 'Password must contain lowercase letters')
+    .regex(/(?=.*[A-Z])/, 'Password must contain uppercase letters')
+    .regex(/(?=.*\d)/, 'Password must contain numbers')
+    .regex(/(?=.*[^A-Za-z0-9])/, 
+           'Password must contain a special character (!@#$%^&* etc.)')
+    .refine((pwd) => !WEAK_PASSWORDS.has(pwd.toLowerCase()),
+            'This password is too common. Please choose a stronger password'),
   
   confirmPassword: z.string()
     .min(1, 'Please confirm your password')

@@ -27,17 +27,17 @@ interface Chapter {
 }
 
 export const EducatorContentManager: React.FC = () => {
-  const { items, loading, fetchContent, uploadPresentation, addSimulation, deleteContent } =
+  const { items, loading, fetchContent, uploadPresentation, addSimulation, addGame, deleteContent } =
     useEducatorContent();
 
-  const [activeTab, setActiveTab] = useState<'presentation' | 'simulation'>('presentation');
+  const [activeTab, setActiveTab] = useState<'presentation' | 'simulation' | 'game'>('presentation');
   const [gradeFilter, setGradeFilter] = useState<number>(8);
   const [subjectFilter, setSubjectFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Upload dialog
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadType, setUploadType] = useState<'presentation' | 'simulation'>('presentation');
+  const [uploadType, setUploadType] = useState<'presentation' | 'simulation' | 'game'>('presentation');
   const [uploading, setUploading] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loadingChapters, setLoadingChapters] = useState(false);
@@ -86,7 +86,7 @@ export const EducatorContentManager: React.FC = () => {
     return result;
   }, [items, subjectFilter, searchQuery]);
 
-  const openUpload = (type: 'presentation' | 'simulation') => {
+  const openUpload = (type: 'presentation' | 'simulation' | 'game') => {
     setUploadType(type);
     setForm({ title: '', description: '', subject: SUBJECTS[0], grade: 8, chapter_id: '', file: null, sourceType: 'url', embed_url: '' });
     setUploadOpen(true);
@@ -105,7 +105,7 @@ export const EducatorContentManager: React.FC = () => {
     } else {
       const validExts = ['.jsx', '.tsx', '.js', '.html', '.htm'];
       if (!validExts.some((ext) => f.name.toLowerCase().endsWith(ext))) {
-        toast.error('Please upload a JSX/TSX/JS or HTML simulation file.');
+        toast.error(`Please upload a JSX/TSX/JS or HTML ${uploadType === 'game' ? 'game' : 'simulation'} file.`);
         return;
       }
     }
@@ -131,10 +131,22 @@ export const EducatorContentManager: React.FC = () => {
         chapter_id: form.chapter_id || undefined,
         file: form.file,
       });
-    } else {
-      if (form.sourceType === 'url' && !form.embed_url) { toast.error('Enter animation URL.'); setUploading(false); return; }
-      if (form.sourceType === 'file' && !form.file) { toast.error('Select animation file.'); setUploading(false); return; }
+    } else if (uploadType === 'simulation') {
+      if (form.sourceType === 'url' && !form.embed_url) { toast.error('Enter Virtual Lab URL.'); setUploading(false); return; }
+      if (form.sourceType === 'file' && !form.file) { toast.error('Select Virtual Lab file.'); setUploading(false); return; }
       ok = await addSimulation({
+        title: form.title,
+        description: form.description,
+        subject: form.subject,
+        grade: form.grade,
+        chapter_id: form.chapter_id || undefined,
+        embed_url: form.sourceType === 'url' ? form.embed_url : undefined,
+        file: form.sourceType === 'file' ? (form.file ?? undefined) : undefined,
+      });
+    } else {
+      if (form.sourceType === 'url' && !form.embed_url) { toast.error('Enter Game URL.'); setUploading(false); return; }
+      if (form.sourceType === 'file' && !form.file) { toast.error('Select Game file.'); setUploading(false); return; }
+      ok = await addGame({
         title: form.title,
         description: form.description,
         subject: form.subject,
@@ -157,7 +169,7 @@ export const EducatorContentManager: React.FC = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <p className="text-muted-foreground text-sm">
-            Manage presentations and interactive animations for the Educator Panel.
+            Manage presentations and virtual lab content for the Educator Panel.
           </p>
         </div>
         <div className="flex gap-2">
@@ -165,16 +177,20 @@ export const EducatorContentManager: React.FC = () => {
             <Upload className="h-4 w-4" /> Upload PPT
           </Button>
           <Button onClick={() => openUpload('simulation')} className="gap-2">
-            <Plus className="h-4 w-4" /> Add Animation
+            <Plus className="h-4 w-4" /> Add Virtual Lab
+          </Button>
+          <Button onClick={() => openUpload('game')} variant="secondary" className="gap-2">
+            <Plus className="h-4 w-4" /> Add Game
           </Button>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'presentation' | 'simulation')}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'presentation' | 'simulation' | 'game')}>
         <div className="flex flex-wrap items-center gap-4">
           <TabsList>
             <TabsTrigger value="presentation">Presentations</TabsTrigger>
-            <TabsTrigger value="simulation">Interactive Animations</TabsTrigger>
+            <TabsTrigger value="simulation">Virtual Lab</TabsTrigger>
+            <TabsTrigger value="game">Games</TabsTrigger>
           </TabsList>
 
           {activeTab === 'presentation' && (
@@ -218,6 +234,9 @@ export const EducatorContentManager: React.FC = () => {
         <TabsContent value="simulation" className="mt-4">
           <ContentGrid items={filtered} loading={loading} onDelete={deleteContent} type="simulation" />
         </TabsContent>
+        <TabsContent value="game" className="mt-4">
+          <ContentGrid items={filtered} loading={loading} onDelete={deleteContent} type="game" />
+        </TabsContent>
       </Tabs>
 
       {/* Upload Dialog */}
@@ -225,12 +244,14 @@ export const EducatorContentManager: React.FC = () => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {uploadType === 'presentation' ? 'Upload Presentation' : 'Add Interactive Animation'}
+              {uploadType === 'presentation' ? 'Upload Presentation' : uploadType === 'simulation' ? 'Add Virtual Lab' : 'Add Game'}
             </DialogTitle>
             <DialogDescription>
               {uploadType === 'presentation'
                 ? 'Upload a PDF or PowerPoint file. Only educators can view this.'
-                : 'Upload an HTML animation file, embed a PhET/GeoGebra URL, or upload a JSX/TSX React component.'}
+                : uploadType === 'simulation'
+                  ? 'Upload an HTML simulation file, embed a PhET/GeoGebra URL, or upload a JSX/TSX React component.'
+                  : 'Upload an HTML game file, embed a game URL, or upload a JSX/TSX React game component.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -274,9 +295,9 @@ export const EducatorContentManager: React.FC = () => {
               </div>
             )}
 
-            {uploadType === 'simulation' && (
+            {(uploadType === 'simulation' || uploadType === 'game') && (
               <div className="space-y-2">
-                <Label>Animation Source <span className="text-destructive">*</span></Label>
+                <Label>{uploadType === 'game' ? 'Game Source' : 'Virtual Lab Source'} <span className="text-destructive">*</span></Label>
                 <RadioGroup value={form.sourceType} onValueChange={(v) => setForm((p) => ({ ...p, sourceType: v as 'url' | 'file' }))} className="flex gap-4">
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="url" id="src-url" />
@@ -290,16 +311,16 @@ export const EducatorContentManager: React.FC = () => {
               </div>
             )}
 
-            {uploadType === 'simulation' && form.sourceType === 'url' ? (
+            {(uploadType === 'simulation' || uploadType === 'game') && form.sourceType === 'url' ? (
               <div className="space-y-1">
-                <Label>Animation URL <span className="text-destructive">*</span></Label>
-                <Input value={form.embed_url} onChange={(e) => setForm((p) => ({ ...p, embed_url: e.target.value }))} placeholder="https://phet.colorado.edu/sims/html/…" type="url" />
+                <Label>{uploadType === 'game' ? 'Game URL' : 'Virtual Lab URL'} <span className="text-destructive">*</span></Label>
+                <Input value={form.embed_url} onChange={(e) => setForm((p) => ({ ...p, embed_url: e.target.value }))} placeholder={uploadType === 'game' ? 'https://example.com/your-game' : 'https://phet.colorado.edu/sims/html/…'} type="url" />
               </div>
             ) : null}
 
-            {(uploadType === 'presentation' || (uploadType === 'simulation' && form.sourceType === 'file')) && (
+            {(uploadType === 'presentation' || ((uploadType === 'simulation' || uploadType === 'game') && form.sourceType === 'file')) && (
               <div className="space-y-1">
-                <Label>{uploadType === 'presentation' ? 'PDF / PPT File' : 'HTML / JSX / TSX / JS File'} <span className="text-destructive">*</span></Label>
+                <Label>{uploadType === 'presentation' ? 'PDF / PPT File' : uploadType === 'game' ? 'Game File (HTML / JSX / TSX / JS)' : 'HTML / JSX / TSX / JS File'} <span className="text-destructive">*</span></Label>
                 <div className="border-2 border-dashed rounded-lg p-4 text-center hover:border-primary/50 transition-colors">
                   <Input
                     type="file"
@@ -355,7 +376,7 @@ const ContentGrid: React.FC<{
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12 gap-2">
           {type === 'presentation' ? <FileText className="h-10 w-10 text-muted-foreground" /> : <Sparkles className="h-10 w-10 text-muted-foreground" />}
-          <p className="text-muted-foreground text-sm">No {type === 'presentation' ? 'presentations' : 'animations'} found.</p>
+          <p className="text-muted-foreground text-sm">No {type === 'presentation' ? 'presentations' : type === 'game' ? 'games' : 'virtual lab items'} found.</p>
         </CardContent>
       </Card>
     );

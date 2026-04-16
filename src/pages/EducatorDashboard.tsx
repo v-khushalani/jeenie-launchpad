@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { BookOpen, Sparkles, LogOut, ChevronDown, Users } from 'lucide-react';
+import { BookOpen, Beaker, Gamepad2, LogOut, ChevronDown, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +14,14 @@ import { cn } from '@/lib/utils';
 import EducatorChapters from '@/components/educator/EducatorChapters';
 import EducatorGames from '@/components/educator/EducatorGames';
 import EducatorGroupTests from '@/components/educator/EducatorGroupTests';
+import VirtualLab from '@/components/virtual-lab/VirtualLab';
 
-type Tab = 'chapters' | 'animations' | 'group-tests';
+type Tab = 'chapters' | 'virtual-lab' | 'games' | 'group-tests';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'chapters', label: 'Chapters', icon: <BookOpen className="h-4 w-4" /> },
-  { id: 'animations', label: 'Animations', icon: <Sparkles className="h-4 w-4" /> },
+  { id: 'virtual-lab', label: 'Virtual Lab', icon: <Beaker className="h-4 w-4" /> },
+  { id: 'games', label: 'Games', icon: <Gamepad2 className="h-4 w-4" /> },
   { id: 'group-tests', label: 'Group Tests', icon: <Users className="h-4 w-4" /> },
 ];
 
@@ -121,7 +123,8 @@ const EducatorDashboard: React.FC = () => {
       {/* ── Main Content ──────────────────────────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'chapters' && <EducatorChapters />}
-        {activeTab === 'animations' && <EducatorGames />}
+        {activeTab === 'virtual-lab' && <VirtualLab />}
+        {activeTab === 'games' && <EducatorGames />}
         {activeTab === 'group-tests' && <EducatorGroupTests />}
       </main>
 

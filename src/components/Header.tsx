@@ -21,6 +21,8 @@ const Header = () => {
   const { isAuthenticated, signOut, isPremium, user, userRole } = useAuth();
   const { isAdmin } = useAdminAuth();
   const { theme, toggleTheme } = useTheme();
+  const isEducator = userRole === 'educator';
+  const isFreeStudent = isAuthenticated && !isPremium && !isAdmin && !isEducator;
 
   const handleNavigation = (path: string) => {
     setIsMenuOpen(false);
@@ -31,8 +33,6 @@ const Header = () => {
     { name: 'Home', path: '/' },
     { name: 'Why Us', path: '/why-us' },
   ];
-
-  const isEducator = userRole === 'educator';
 
   const navItems = isAuthenticated ? (
     isAdmin ? [
@@ -45,10 +45,11 @@ const Header = () => {
     ] : [
       { name: 'Dashboard', path: '/dashboard' },
       { name: 'Study Now', path: '/study-now' },
-      { name: 'AI Planner', path: '/ai-planner' },
       { name: 'Tests', path: '/tests' },
-      { name: 'Analytics', path: '/analytics' },
-      
+      ...(isPremium ? [
+        { name: 'AI Planner', path: '/ai-planner' },
+        { name: 'Analytics', path: '/analytics' },
+      ] : []),
     ]
   ) : publicNavItems;
 
@@ -83,6 +84,10 @@ const Header = () => {
     ? [
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Study', path: '/study-now' },
+        ...(isPremium ? [
+          { name: 'AI Planner', path: '/ai-planner' },
+          { name: 'Analytics', path: '/analytics' },
+        ] : []),
         { name: 'Tests', path: '/tests' },
         { name: 'Profile', path: '/profile' },
       ]
@@ -252,7 +257,7 @@ const Header = () => {
                 </Button>
                 {isAuthenticated ? (
                   <>
-                    {!isAdmin && !isEducator && (
+                    {!isAdmin && !isEducator && !isFreeStudent && (
                       <>
                         <Button
                           variant="ghost"

@@ -20,6 +20,7 @@ import { parseGrade, isFoundationGrade, extractGradeFromExamType } from '@/utils
 import { FilterPills, MultiFilterPills } from '@/components/ui/FilterPills';
 import { SUBSCRIPTION_CONFIG } from '@/constants/unified';
 import { testsAPI } from '@/services/api';
+import { UserLimitsService } from '@/services/userLimitsService';
 import { 
   getBatchForStudent, 
   getBatchSubjectsFromDB, 
@@ -75,6 +76,7 @@ const TestPage = () => {
   const { isPremium } = useAuth();
   const [monthlyTestsUsed, setMonthlyTestsUsed] = useState(0);
   const MONTHLY_LIMIT_FREE = SUBSCRIPTION_CONFIG.FREE.monthlyTestLimit;
+  const [usageChecked, setUsageChecked] = useState(false);
   const [testHistory, setTestHistory] = useState<TestHistorySession[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
@@ -117,10 +119,10 @@ const TestPage = () => {
     return nextValue;
   };
 
-  const checkMonthlyUsage = async () => {
-    // Skip check for premium users
+  const refreshMonthlyUsage = async () => {
     if (isPremium) {
       setMonthlyTestsUsed(0);
+      setUsageChecked(true);
       return 0;
     }
 
@@ -128,39 +130,17 @@ const TestPage = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setMonthlyTestsUsed(0);
+        setUsageChecked(true);
         return 0;
       }
 
-      const localMonthlyCount = getLocalMonthlyUsage(user.id);
-
-      // Get start of current month
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      
-      // Count completed/reserved test sessions this month using safe row fetch (avoid HEAD/count edge-case errors)
-      const { data, error } = await supabase
-        .from('test_sessions')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('created_at', startOfMonth.toISOString())
-        .limit(MONTHLY_LIMIT_FREE + 5);
-      
-      if (error) {
-        logger.error('Error counting test sessions:', error);
-        setMonthlyTestsUsed(localMonthlyCount);
-        return localMonthlyCount;
-      }
-      
-      const cloudMonthlyCount = data?.length || 0;
-      const effectiveMonthlyCount = Math.max(cloudMonthlyCount, localMonthlyCount);
-      setMonthlyTestsUsed(effectiveMonthlyCount);
-      logger.info('Monthly test usage:', {
-        cloudCount: cloudMonthlyCount,
-        localCount: localMonthlyCount,
-        effectiveCount: effectiveMonthlyCount,
+      const monthlyUsage = await UserLimitsService.getMonthlyTestUsage(user.id);
+      setMonthlyTestsUsed(monthlyUsage);
+      logger.info('Monthly test usage snapshot:', {
+        monthlyUsage,
         limit: MONTHLY_LIMIT_FREE,
       });
-      return effectiveMonthlyCount;
+      return monthlyUsage;
     } catch (error) {
       logger.error('Error checking monthly usage:', error);
       try {
@@ -171,13 +151,17 @@ const TestPage = () => {
       } catch {
         setMonthlyTestsUsed(0);
         return 0;
+      } finally {
+        setUsageChecked(true);
       }
+    } finally {
+      setUsageChecked(true);
     }
   };
 
   useEffect(() => {
     loadProfile();
-    checkMonthlyUsage();
+    refreshMonthlyUsage();
     loadTestHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
@@ -467,11 +451,23 @@ const TestPage = () => {
   };
 
   const startTest = async (mode = testMode) => {
-    // Re-check usage at click-time so free limit cannot be bypassed on stale UI state.
-    const latestMonthlyUsage = await checkMonthlyUsage();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      toast.error("Please login to take tests");
+      navigate('/login');
+      return;
+    }
+
+    if (!isPremium && !usageChecked) {
+      toast.info('Checking your free test quota. Please wait a moment.');
+      return;
+    }
+
+    const testAccess = await UserLimitsService.canStartTest(user.id, { isPremium });
 
     // Early exit for free users who exceeded limit
-    if (!isPremium && latestMonthlyUsage >= MONTHLY_LIMIT_FREE) {
+    if (!testAccess.canStart) {
       setShowUpgradeModal(true);
       toast.error(`You've used all ${MONTHLY_LIMIT_FREE} free tests this month!`);
       return;
@@ -848,6 +844,9 @@ const TestPage = () => {
   }
 
   if (!testMode) {
+    const freeTestQuotaPending = !isPremium && !usageChecked;
+    const freeTestQuotaReached = !isPremium && usageChecked && monthlyTestsUsed >= MONTHLY_LIMIT_FREE;
+
     return (
       <div className="mobile-app-shell bg-background flex flex-col overflow-hidden">
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -869,7 +868,9 @@ const TestPage = () => {
                         Mock Tests: {monthlyTestsUsed}/{MONTHLY_LIMIT_FREE} this month
                       </p>
                       <p className="text-xs sm:text-sm text-primary/70 mt-1">
-                        {monthlyTestsUsed >= MONTHLY_LIMIT_FREE ? (
+                        {freeTestQuotaPending ? (
+                          <span className="font-semibold">Checking your test quota...</span>
+                        ) : freeTestQuotaReached ? (
                           <span className="font-semibold">Limit reached! Upgrade for unlimited tests.</span>
                         ) : (
                           <span>Upgrade to Pro for unlimited mock tests!</span>
@@ -1109,7 +1110,10 @@ const TestPage = () => {
 
               <div 
                 className="group relative overflow-hidden rounded-2xl bg-white border-2 border-orange-200 hover:border-orange-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl dark:bg-slate-900 dark:border-slate-700"
-                onClick={() => startTest("full")}
+                onClick={() => {
+                  if (freeTestQuotaPending) return;
+                  setTestMode("full");
+                }}
               >
                 <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
                   <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-md text-xs">
@@ -1168,7 +1172,7 @@ const TestPage = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-600/90 hover:to-red-600/90 text-white font-semibold py-2 sm:py-3 rounded-xl shadow-md transition-all duration-300 text-sm sm:text-base">
+                  <Button className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-600/90 hover:to-red-600/90 text-white font-semibold py-2 sm:py-3 rounded-xl shadow-md transition-all duration-300 text-sm sm:text-base" disabled={freeTestQuotaPending || freeTestQuotaReached}>
                     <Play className="w-4 h-4 mr-2" />
                     Start Mock Test
                   </Button>
@@ -1188,7 +1192,10 @@ const TestPage = () => {
               {/* PYQ Mock Test Card */}
               <div 
                 className="group relative overflow-hidden rounded-2xl bg-white border-2 border-amber-200 hover:border-amber-400 hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl dark:bg-slate-900 dark:border-slate-700"
-                onClick={() => setTestMode("pyq")}
+                onClick={() => {
+                  if (freeTestQuotaPending) return;
+                  setTestMode("pyq");
+                }}
               >
                 <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10">
                   <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 shadow-md text-xs">
@@ -1330,7 +1337,7 @@ const TestPage = () => {
 
                 <Button
                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-500/90 hover:to-yellow-600/90 text-white font-semibold py-3 rounded-xl shadow-md text-sm sm:text-base"
-                  disabled={!pyqExam || !pyqYear || loading}
+                  disabled={!pyqExam || !pyqYear || loading || freeTestQuotaPending || freeTestQuotaReached}
                   onClick={() => startTest("pyq")}
                 >
                   <Play className="w-4 h-4 mr-2" />
@@ -1453,6 +1460,7 @@ const TestPage = () => {
                     <Button 
                       onClick={() => startTest("chapter")}
                       className="w-full sm:w-auto bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-md text-sm sm:text-base"
+                      disabled={freeTestQuotaPending || freeTestQuotaReached}
                     >
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       Start Test Now
@@ -1528,6 +1536,7 @@ const TestPage = () => {
                     <Button 
                       onClick={() => startTest("subject")}
                       className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-600/90 hover:to-pink-600/90 text-white font-semibold px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-md text-sm sm:text-base"
+                      disabled={freeTestQuotaPending || freeTestQuotaReached}
                     >
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       Start Test Now

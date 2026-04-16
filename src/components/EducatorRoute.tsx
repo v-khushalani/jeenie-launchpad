@@ -93,7 +93,7 @@ const EducatorRoute: React.FC<EducatorRouteProps> = ({ children }) => {
               <span>Why do we require approval?</span>
             </div>
             <p className="text-blue-700 text-xs leading-relaxed">
-              The Educator Portal contains exclusive teaching resources (PPTs, interactive animations) intended only for verified educators. Manual approval ensures content security and exclusivity.
+              The Educator Portal contains exclusive teaching resources (PPTs, virtual lab content) intended only for verified educators. Manual approval ensures content security and exclusivity.
             </p>
           </div>
 

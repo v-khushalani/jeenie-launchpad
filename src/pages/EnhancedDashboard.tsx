@@ -306,15 +306,17 @@ const EnhancedDashboard = () => {
                           <Target className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                           Take Test
                         </Button>
-                        <Button 
-                          size="sm"
-                          onClick={() => navigate("/analytics")} 
-                          variant="outline"
-                          className="bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/40 shadow-lg transition-all flex-1 sm:flex-none text-xs sm:text-sm"
-                        >
-                          <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                          Analytics
-                        </Button>
+                        {isPremium && (
+                          <Button 
+                            size="sm"
+                            onClick={() => navigate("/analytics")} 
+                            variant="outline"
+                            className="bg-white/10 hover:bg-white/20 text-white border-white/20 hover:border-white/40 shadow-lg transition-all flex-1 sm:flex-none text-xs sm:text-sm"
+                          >
+                            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                            Analytics
+                          </Button>
+                        )}
                         <Button 
                           size="sm"
                           onClick={() => navigate("/test-history")} 

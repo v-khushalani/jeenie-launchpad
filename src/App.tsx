@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +14,7 @@ import { LiveNotificationBanner } from "@/components/LiveNotificationBanner";
 import { useAutoSubscribePush } from "@/hooks/useAutoSubscribePush";
 import { OfflineBanner } from "@/components/ui/StatusStates";
 import { testsAPI } from "@/services/api";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
 // Eagerly loaded pages (critical for initial load)
 import Index from "./pages/Index";
@@ -25,34 +26,34 @@ import AuthCallback from '@/pages/AuthCallback';
 import WhyUsPage from "./pages/WhyUsPage";
 
 // Lazy loaded pages (split into separate bundles)
-const StudyNowPage = lazy(() => import("./pages/StudyNowPage"));
-const PracticePage = lazy(() => import("./pages/PracticePage"));
-const TestPage = lazy(() => import("./pages/TestPage"));
-const TestAttemptPage = lazy(() => import("./pages/TestAttemptPage"));
-const TestHistoryPage = lazy(() => import("./pages/TestHistoryPage"));
-const TestResultsPage = lazy(() => import("./pages/TestResultsPage"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Profile = lazy(() => import("./pages/Profile"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const GoalSelectionPage = lazy(() => import('@/pages/GoalSelectionPage'));
+const StudyNowPage = lazyWithRetry(() => import("./pages/StudyNowPage"), "StudyNowPage");
+const PracticePage = lazyWithRetry(() => import("./pages/PracticePage"), "PracticePage");
+const TestPage = lazyWithRetry(() => import("./pages/TestPage"), "TestPage");
+const TestAttemptPage = lazyWithRetry(() => import("./pages/TestAttemptPage"), "TestAttemptPage");
+const TestHistoryPage = lazyWithRetry(() => import("./pages/TestHistoryPage"), "TestHistoryPage");
+const TestResultsPage = lazyWithRetry(() => import("./pages/TestResultsPage"), "TestResultsPage");
+const Settings = lazyWithRetry(() => import("./pages/Settings"), "Settings");
+const Profile = lazyWithRetry(() => import("./pages/Profile"), "Profile");
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"), "NotFound");
+const GoalSelectionPage = lazyWithRetry(() => import('@/pages/GoalSelectionPage'), "GoalSelectionPage");
 
 
-const AIStudyPlannerPage = lazy(() => import('./pages/AIStudyPlannerPage'));
-const EnhancedDashboard = lazy(() => import("./pages/EnhancedDashboard"));
-const AnalyticsPage = lazy(() => import("@/pages/AnalyticsPage"));
-const AdminDashboard = lazy(() => import("@/pages/AdminDashboard"));
-const EducatorDashboard = lazy(() => import("@/pages/EducatorDashboard"));
-const SubscriptionPlans = lazy(() => import('@/pages/SubscriptionPlans'));
+const AIStudyPlannerPage = lazyWithRetry(() => import('./pages/AIStudyPlannerPage'), "AIStudyPlannerPage");
+const EnhancedDashboard = lazyWithRetry(() => import("./pages/EnhancedDashboard"), "EnhancedDashboard");
+const AnalyticsPage = lazyWithRetry(() => import("@/pages/AnalyticsPage"), "AnalyticsPage");
+const AdminDashboard = lazyWithRetry(() => import("@/pages/AdminDashboard"), "AdminDashboard");
+const EducatorDashboard = lazyWithRetry(() => import("@/pages/EducatorDashboard"), "EducatorDashboard");
+const SubscriptionPlans = lazyWithRetry(() => import('@/pages/SubscriptionPlans'), "SubscriptionPlans");
 
-const BadgesPage = lazy(() => import('@/pages/BadgesPage'));
-const DiagnosticQuizPage = lazy(() => import('@/pages/DiagnosticQuizPage'));
-const CreateGroupTestPage = lazy(() => import('@/pages/CreateGroupTestPage'));
-const JoinGroupTestPage = lazy(() => import('@/pages/JoinGroupTestPage'));
-const GroupTestLeaderboard = lazy(() => import('@/pages/GroupTestLeaderboard'));
-const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
-const RefundPolicy = lazy(() => import('@/pages/RefundPolicy'));
-const InstallApp = lazy(() => import('@/pages/InstallApp'));
+const BadgesPage = lazyWithRetry(() => import('@/pages/BadgesPage'), "BadgesPage");
+const DiagnosticQuizPage = lazyWithRetry(() => import('@/pages/DiagnosticQuizPage'), "DiagnosticQuizPage");
+const CreateGroupTestPage = lazyWithRetry(() => import('@/pages/CreateGroupTestPage'), "CreateGroupTestPage");
+const JoinGroupTestPage = lazyWithRetry(() => import('@/pages/JoinGroupTestPage'), "JoinGroupTestPage");
+const GroupTestLeaderboard = lazyWithRetry(() => import('@/pages/GroupTestLeaderboard'), "GroupTestLeaderboard");
+const PrivacyPolicy = lazyWithRetry(() => import('@/pages/PrivacyPolicy'), "PrivacyPolicy");
+const TermsOfService = lazyWithRetry(() => import('@/pages/TermsOfService'), "TermsOfService");
+const RefundPolicy = lazyWithRetry(() => import('@/pages/RefundPolicy'), "RefundPolicy");
+const InstallApp = lazyWithRetry(() => import('@/pages/InstallApp'), "InstallApp");
 
 // Components
 import ProtectedRoute from "@/components/ProtectedRoute";

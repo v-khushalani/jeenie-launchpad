@@ -7,10 +7,10 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight, GraduationCap, Phone, Chevro
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { PasswordStrength } from '@/components/ui/password-strength';
+import { signupSchema } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
 
 const Signup = () => {
@@ -23,7 +23,6 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [accountType, setAccountType] = useState<'student' | 'educator'>('student');
-  const [emailFormOpen, setEmailFormOpen] = useState(false);
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -58,49 +57,67 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      toast({ title: "Name required", description: "Please enter your full name (at least 2 characters)", variant: "destructive" });
+    // ✅ USE ZOD SCHEMA FOR VALIDATION (single source of truth)
+    const validationResult = signupSchema.safeParse({
+      fullName,
+      email,
+      password,
+      confirmPassword,
+    });
+
+    if (!validationResult.success) {
+      // Show first validation error
+      const firstError = validationResult.error.errors[0];
+      toast({ 
+        title: "Validation Error", 
+        description: firstError.message, 
+        variant: "destructive" 
+      });
       return;
     }
 
+    // ✅ Validate phone number
     const phoneClean = phone.replace(/\s/g, '');
     if (!/^[6-9]\d{9}$/.test(phoneClean)) {
-      toast({ title: "Invalid phone", description: "Please enter a valid 10-digit Indian mobile number", variant: "destructive" });
-      return;
-    }
-
-    if (password.length < 8) {
-      toast({ title: "Password too weak", description: "Password must be at least 8 characters", variant: "destructive" });
-      return;
-    }
-
-    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      toast({ title: "Password too weak", description: "Password must contain uppercase, lowercase, and a number", variant: "destructive" });
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast({ title: "Passwords don't match", description: "Please make sure both passwords are the same", variant: "destructive" });
+      toast({ 
+        title: "Invalid phone", 
+        description: "Please enter a valid 10-digit Indian mobile number (starts with 6-9)", 
+        variant: "destructive" 
+      });
       return;
     }
 
     setIsLoading(true);
-    const result = await signUpWithEmail(email.trim(), password, fullName.trim(), accountType, phone.replace(/\s/g, ''));
+    const result = await signUpWithEmail(email.trim(), password, fullName.trim(), accountType, phoneClean);
     
     if (result.error) {
-      const isRateLimit = result.error.toLowerCase().includes('rate limit') || result.error.toLowerCase().includes('email');
-      if (isRateLimit) {
-        toast({ 
-          title: "Email limit reached", 
-          description: "Too many signups right now. Try Google Sign-In instead — it's instant!", 
-          variant: "destructive" 
-        });
+      // ✅ SECURITY: Normalize error messages to prevent user enumeration
+      let displayError = result.error;
+      
+      // If error mentions "email already exists" or similar, don't reveal it
+      if (displayError.toLowerCase().includes('already exists') || 
+          displayError.toLowerCase().includes('duplicate') ||
+          displayError.toLowerCase().includes('user already')) {
+        displayError = 'This email is already registered. Please sign in or use a different email.';
+      } else if (displayError.toLowerCase().includes('rate limit') || 
+                 displayError.toLowerCase().includes('too many')) {
+        displayError = 'Too many signup attempts. Try again later or use Google Sign-In.';
       } else {
-        toast({ title: "Signup Failed", description: result.error, variant: "destructive" });
+        // Generic error for any other issue
+        displayError = 'Failed to create account. Please try again.';
       }
+      
+      toast({ 
+        title: "Signup Failed", 
+        description: displayError, 
+        variant: "destructive" 
+      });
       setIsLoading(false);
     } else {
-      toast({ title: "Account Created! 🎉", description: "Check your email to verify your account" });
+      toast({ 
+        title: "Account Created! 🎉", 
+        description: "Check your email to verify your account" 
+      });
       setIsLoading(false);
       setTimeout(() => navigate('/login'), 2000);
     }
@@ -139,92 +156,81 @@ const Signup = () => {
               <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">or</span></div>
             </div>
 
-            {/* Collapsible Email Form */}
-            <Collapsible open={emailFormOpen} onOpenChange={setEmailFormOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full border-border text-muted-foreground hover:text-foreground">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Sign up with email
-                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${emailFormOpen ? 'rotate-180' : ''}`} />
+            <div className="mt-4">
+              <form onSubmit={handleSignup} className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-primary font-semibold text-sm">Account Type</Label>
+                  <Select value={accountType} onValueChange={(val) => setAccountType(val as 'student' | 'educator')}>
+                    <SelectTrigger className="border-input focus:border-primary h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">
+                        <span className="flex items-center gap-2"><User className="h-4 w-4" /> Student</span>
+                      </SelectItem>
+                      <SelectItem value="educator">
+                        <span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Educator</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName" className="text-primary text-sm">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input id="fullName" type="text" placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9 h-9 border-input focus:border-primary" required />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="text-primary text-sm">Mobile Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input id="phone" type="tel" placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} className="pl-9 h-9 border-input focus:border-primary" required maxLength={10} />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-primary text-sm">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input id="email" type="email" placeholder="your.email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9 h-9 border-input focus:border-primary" required autoComplete="off" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="password" className="text-primary text-sm">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input id="password" type={showPassword ? "text" : "password"} placeholder="Strong password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9 pr-9 h-9 border-input focus:border-primary" required autoComplete="new-password" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className="text-primary text-sm">Confirm</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-9 pr-9 h-9 border-input focus:border-primary" required autoComplete="new-password" />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <PasswordStrength password={password} className="-mt-1" />
+
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-5 text-base font-semibold" disabled={isLoading}>
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                  <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-              </CollapsibleTrigger>
-
-              <CollapsibleContent className="mt-4">
-                <form onSubmit={handleSignup} className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-primary font-semibold text-sm">Account Type</Label>
-                    <Select value={accountType} onValueChange={(val) => setAccountType(val as 'student' | 'educator')}>
-                      <SelectTrigger className="border-input focus:border-primary h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="student">
-                          <span className="flex items-center gap-2"><User className="h-4 w-4" /> Student</span>
-                        </SelectItem>
-                        <SelectItem value="educator">
-                          <span className="flex items-center gap-2"><GraduationCap className="h-4 w-4" /> Educator</span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fullName" className="text-primary text-sm">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="fullName" type="text" placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pl-9 h-9 border-input focus:border-primary" required />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone" className="text-primary text-sm">Mobile Number</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="phone" type="tel" placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} className="pl-9 h-9 border-input focus:border-primary" required maxLength={10} />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-primary text-sm">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input id="email" type="email" placeholder="your.email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9 h-9 border-input focus:border-primary" required autoComplete="off" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="password" className="text-primary text-sm">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="password" type={showPassword ? "text" : "password"} placeholder="Strong password" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-9 pr-9 h-9 border-input focus:border-primary" required autoComplete="new-password" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="text-primary text-sm">Confirm</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Confirm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-9 pr-9 h-9 border-input focus:border-primary" required autoComplete="new-password" />
-                        <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
-                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <PasswordStrength password={password} className="-mt-1" />
-
-                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-5 text-base font-semibold" disabled={isLoading}>
-                    {isLoading ? 'Creating Account...' : 'Create Account'}
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </form>
-              </CollapsibleContent>
-            </Collapsible>
+              </form>
+            </div>
 
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">

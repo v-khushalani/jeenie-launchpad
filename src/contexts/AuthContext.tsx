@@ -207,7 +207,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         logger.error('❌ Email sign in error:', error);
         setIsLoading(false);
-        return { error: error.message };
+        
+        // ✅ SECURITY: Normalize error messages to prevent user enumeration
+        let displayError = error.message;
+        if (displayError.toLowerCase().includes('invalid') || 
+            displayError.toLowerCase().includes('credentials') ||
+            displayError.toLowerCase().includes('login') ||
+            displayError.toLowerCase().includes('user')) {
+          displayError = 'Invalid email or password. Please try again.';
+        } else if (displayError.toLowerCase().includes('email not confirmed')) {
+          displayError = 'Please confirm your email before signing in. Check your inbox for the verification link.';
+        } else if (displayError.toLowerCase().includes('rate limit') || 
+                   displayError.toLowerCase().includes('too many')) {
+          displayError = 'Too many login attempts. Please try again in a few minutes.';
+        }
+        
+        return { error: displayError };
       }
 
       logger.log('✅ Email sign in successful');
@@ -220,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       logger.error('❌ Sign-in error:', error);
       setIsLoading(false);
-      return { error: error.message || 'Failed to sign in' };
+      return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
 
@@ -247,7 +262,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         logger.error('❌ Email sign up error:', error);
         setIsLoading(false);
-        return { error: error.message };
+        
+        // ✅ SECURITY: Normalize error messages to prevent user enumeration
+        let displayError = error.message;
+        if (displayError.toLowerCase().includes('already exists') || 
+            displayError.toLowerCase().includes('duplicate') ||
+            displayError.toLowerCase().includes('user already')) {
+          displayError = 'This email is already registered. Please sign in or use a different email.';
+        } else if (displayError.toLowerCase().includes('rate limit') || 
+                   displayError.toLowerCase().includes('too many')) {
+          displayError = 'Too many signup attempts. Try again later or use Google Sign-In.';
+        } else if (displayError.toLowerCase().includes('invalid') || 
+                   displayError.toLowerCase().includes('password')) {
+          displayError = 'Password does not meet security requirements.';
+        }
+        
+        return { error: displayError };
       }
 
       // Profile is auto-created by the handle_new_user database trigger
@@ -276,7 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       logger.error('❌ Sign-up error:', error);
       setIsLoading(false);
-      return { error: error.message || 'Failed to sign up' };
+      return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
 

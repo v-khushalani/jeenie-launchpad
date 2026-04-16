@@ -5,6 +5,11 @@ import { FREE_LIMITS } from '@/config/subscriptionPlans';
 import { logger } from '@/utils/logger';
 
 const LOCAL_MONTHLY_TEST_USAGE_KEY = 'testMonthlyUsageLocal';
+const MONTHLY_TEST_USAGE_CACHE_KEY = 'testMonthlyUsageCache';
+
+interface TestAccessOptions {
+  isPremium?: boolean;
+}
 
 export class UserLimitsService {
 
@@ -28,6 +33,36 @@ export class UserLimitsService {
     }
   }
 
+  private static getCachedMonthlyUsage(userId: string): number {
+    try {
+      const raw = localStorage.getItem(MONTHLY_TEST_USAGE_CACHE_KEY);
+      if (!raw) return 0;
+
+      const parsed = JSON.parse(raw) as Record<string, number>;
+      const key = `${userId}:${this.getCurrentMonthKey()}`;
+      const value = parsed?.[key];
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private static setCachedMonthlyUsage(userId: string, nextValue: number): void {
+    try {
+      const raw = localStorage.getItem(MONTHLY_TEST_USAGE_CACHE_KEY);
+      const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+      const key = `${userId}:${this.getCurrentMonthKey()}`;
+      parsed[key] = Math.max(0, nextValue);
+      localStorage.setItem(MONTHLY_TEST_USAGE_CACHE_KEY, JSON.stringify(parsed));
+    } catch {
+      // Ignore cache write failures; local storage fallback will still work.
+    }
+  }
+
+  private static getFastMonthlyUsage(userId: string): number {
+    return Math.max(this.getLocalMonthlyUsage(userId), this.getCachedMonthlyUsage(userId));
+  }
+
   static recordMonthlyTestUsage(userId: string): number {
     try {
       const raw = localStorage.getItem(LOCAL_MONTHLY_TEST_USAGE_KEY);
@@ -36,9 +71,12 @@ export class UserLimitsService {
       const nextValue = this.getLocalMonthlyUsage(userId) + 1;
       parsed[key] = Math.max(0, nextValue);
       localStorage.setItem(LOCAL_MONTHLY_TEST_USAGE_KEY, JSON.stringify(parsed));
+      this.setCachedMonthlyUsage(userId, parsed[key] || nextValue);
       return parsed[key] || nextValue;
     } catch {
-      return this.getLocalMonthlyUsage(userId) + 1;
+      const fallbackValue = this.getLocalMonthlyUsage(userId) + 1;
+      this.setCachedMonthlyUsage(userId, fallbackValue);
+      return fallbackValue;
     }
   }
 
@@ -99,7 +137,13 @@ export class UserLimitsService {
 
   // Monthly test limit: 2 for free, unlimited for pro
   static async getMonthlyTestUsage(userId: string): Promise<number> {
+    const cachedMonthlyCount = this.getCachedMonthlyUsage(userId);
     const localMonthlyCount = this.getLocalMonthlyUsage(userId);
+    const fastMonthlyCount = Math.max(localMonthlyCount, cachedMonthlyCount);
+
+    if (fastMonthlyCount >= FREE_LIMITS.testsPerMonth) {
+      return fastMonthlyCount;
+    }
 
     try {
       const now = new Date();
@@ -114,32 +158,48 @@ export class UserLimitsService {
 
       if (error) {
         logger.warn('Monthly test usage lookup failed, using local fallback', { userId, error: error.message });
-        return localMonthlyCount;
+        this.setCachedMonthlyUsage(userId, fastMonthlyCount);
+        return fastMonthlyCount;
       }
 
-      return Math.max(data?.length || 0, localMonthlyCount);
+      const cloudMonthlyCount = data?.length || 0;
+      const effectiveMonthlyCount = Math.max(cloudMonthlyCount, fastMonthlyCount);
+      this.setCachedMonthlyUsage(userId, effectiveMonthlyCount);
+      return effectiveMonthlyCount;
     } catch (error) {
       logger.warn('Monthly test usage lookup crashed, using local fallback', {
         userId,
         error: error instanceof Error ? error.message : String(error),
       });
-      return localMonthlyCount;
+      this.setCachedMonthlyUsage(userId, fastMonthlyCount);
+      return fastMonthlyCount;
     }
   }
 
-  static async canStartTest(userId: string): Promise<{
+  static async canStartTest(userId: string, options: TestAccessOptions = {}): Promise<{
     canStart: boolean;
     testsUsed: number;
     testsLimit: number;
     reason?: string;
   }> {
-    const isPro = await this.isPro(userId);
+    const isPro = options.isPremium ?? await this.isPro(userId);
     if (isPro) {
       return { canStart: true, testsUsed: 0, testsLimit: Infinity };
     }
 
-    const testsUsed = await this.getMonthlyTestUsage(userId);
+    const fastMonthlyCount = this.getFastMonthlyUsage(userId);
     const testsLimit = FREE_LIMITS.testsPerMonth;
+
+    if (fastMonthlyCount >= testsLimit) {
+      return {
+        canStart: false,
+        testsUsed: fastMonthlyCount,
+        testsLimit,
+        reason: 'monthly_test_limit_reached',
+      };
+    }
+
+    const testsUsed = await this.getMonthlyTestUsage(userId);
 
     if (testsUsed >= testsLimit) {
       return {

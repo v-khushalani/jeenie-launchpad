@@ -7,12 +7,12 @@ interface UploadFormData {
   description: string;
   subject: 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology' | '';
   grade: number | '';
-  contentType: 'simulation' | 'presentation' | '';
+  contentType: 'simulation' | 'presentation' | 'game' | '';
   file: File | null;
 }
 
 export const AdminContentUploader: React.FC = () => {
-  const { addSimulation, uploadPresentation } = useEducatorContent();
+  const { addSimulation, addGame, uploadPresentation } = useEducatorContent();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -43,13 +43,14 @@ export const AdminContentUploader: React.FC = () => {
   const GRADES = [8, 9, 10, 11, 12] as const;
   const ACCEPTED_EXTENSIONS = {
     simulation: ['.jsx', '.tsx', '.js'],
+    game: ['.jsx', '.tsx', '.js'],
     presentation: ['.pdf', '.ppt', '.pptx'],
   };
 
   // ===== FILE VALIDATION =====
   const validateFile = (file: File, type: string): { valid: boolean; error?: string } => {
     const validExts =
-      type === 'simulation'
+      type === 'simulation' || type === 'game'
         ? ['.jsx', '.tsx', '.js']
         : ['.pdf', '.ppt', '.pptx'];
 
@@ -64,7 +65,7 @@ export const AdminContentUploader: React.FC = () => {
       };
     }
 
-    const maxSize = formData.contentType === 'simulation' ? 2 * 1024 * 1024 : 50 * 1024 * 1024; // 2MB for JSX, 50MB for PDF
+    const maxSize = formData.contentType === 'simulation' || formData.contentType === 'game' ? 2 * 1024 * 1024 : 50 * 1024 * 1024; // 2MB for JSX/TSX/JS, 50MB for PDF/PPT
     if (file.size > maxSize) {
       return {
         valid: false,
@@ -175,6 +176,14 @@ export const AdminContentUploader: React.FC = () => {
           grade: Number(formData.grade),
           file: formData.file,
         });
+      } else if (formData.contentType === 'game') {
+        await addGame({
+          title: formData.title,
+          description: formData.description,
+          subject: formData.subject.toLowerCase(),
+          grade: Number(formData.grade),
+          file: formData.file,
+        });
       } else {
         await uploadPresentation({
           title: formData.title,
@@ -190,7 +199,7 @@ export const AdminContentUploader: React.FC = () => {
         isLoading: false,
         progress: 100,
         status: 'success',
-        message: `${formData.contentType === 'simulation' ? 'Simulation' : 'Presentation'} uploaded successfully!`,
+        message: `${formData.contentType === 'simulation' ? 'Virtual Lab' : formData.contentType === 'game' ? 'Game' : 'Presentation'} uploaded successfully!`,
       });
 
       // Reset form
@@ -260,7 +269,7 @@ export const AdminContentUploader: React.FC = () => {
             <Zap className="w-8 h-8 text-yellow-400" />
           </div>
           <p className="text-slate-400 text-lg">
-            Upload simulations or presentations for educators
+            Upload virtual labs, games, or presentations for educators
           </p>
         </div>
 
@@ -268,8 +277,8 @@ export const AdminContentUploader: React.FC = () => {
         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 md:p-12 shadow-2xl">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* CONTENT TYPE SELECTOR */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(['simulation', 'presentation'] as const).map((type) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(['simulation', 'game', 'presentation'] as const).map((type) => (
                 <button
                   key={type}
                   type="button"
@@ -302,10 +311,10 @@ export const AdminContentUploader: React.FC = () => {
                             : 'text-slate-300'
                         }`}
                       >
-                        {type}
+                        {type === 'simulation' ? 'Virtual Lab' : type === 'game' ? 'Game' : 'Presentation'}
                       </div>
                       <div className="text-sm text-slate-400">
-                        {type === 'simulation'
+                        {type === 'simulation' || type === 'game'
                           ? '.jsx, .tsx, .js'
                           : '.pdf, .ppt'}
                       </div>
@@ -326,7 +335,7 @@ export const AdminContentUploader: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, title: e.target.value }))
                 }
-                placeholder="e.g., Quantum Mechanics Simulation"
+                placeholder="e.g., Kinematics Virtual Lab / Projectile Game"
                 className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-slate-100 placeholder-slate-500"
                 disabled={uploadState.isLoading}
               />
@@ -423,7 +432,7 @@ export const AdminContentUploader: React.FC = () => {
                 onChange={handleFileInput}
                 className="hidden"
                 accept={
-                  formData.contentType === 'simulation'
+                  formData.contentType === 'simulation' || formData.contentType === 'game'
                     ? '.jsx,.tsx,.js'
                     : '.pdf,.ppt,.pptx'
                 }
@@ -461,7 +470,7 @@ export const AdminContentUploader: React.FC = () => {
                         : 'Select a content type first'}
                     </p>
                     <p className="text-slate-400 text-sm">
-                      {formData.contentType === 'simulation'
+                      {formData.contentType === 'simulation' || formData.contentType === 'game'
                         ? 'Supported: .jsx, .tsx, .js (Max 2MB)'
                         : formData.contentType === 'presentation'
                           ? 'Supported: .pdf, .ppt, .pptx (Max 50MB)'
@@ -548,8 +557,13 @@ export const AdminContentUploader: React.FC = () => {
           {[
             {
               icon: FileText,
-              title: 'Simulations',
+              title: 'Virtual Labs',
               desc: 'Upload interactive JSX/TSX components',
+            },
+            {
+              icon: Zap,
+              title: 'Games',
+              desc: 'Upload playable React/JS game components',
             },
             {
               icon: Cloud,
@@ -557,7 +571,7 @@ export const AdminContentUploader: React.FC = () => {
               desc: 'Upload PDF or PowerPoint files',
             },
             {
-              icon: Zap,
+              icon: Plus,
               title: 'Auto-Deploy',
               desc: 'Content instantly available to educators',
             },
