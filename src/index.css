@@ -491,7 +491,8 @@ html {
   margin: 0.5em 0;
 }
 
-.katex-error {
-  color: inherit;
+.math-display .katex .katex-error,
+.math-display .katex-error {
+  color: inherit !important;
   font-family: inherit;
 }

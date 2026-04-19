@@ -1,42 +1,36 @@
 # 🚀 JEEnie — AI-Powered Learning Platform for JEE/NEET
 
-A comprehensive, production-ready learning platform for JEE/NEET aspirants with adaptive practice, AI doubt solving, gamification, and educator tools.
+A complete student, educator, and admin platform built for competitive exam preparation with adaptive practice, AI assistance, and content management.
 
 **Website**: [jeenie.website](https://jeenie.website)  
 **Status**: ✅ Production Ready
-**Last Updated**: March 25, 2026
 
 ---
 
 ## ✨ Key Features
 
 ### Student Features
-- 🤖 **JEEnie AI Mentor** — AI doubt solver powered by Google Gemini
-- 📚 **Adaptive Practice** — ELO-based difficulty adjustment, chapter/topic-wise practice
-- 🎯 **Daily Limits & Goals** — Free: 15 questions/day, Pro: unlimited
-- 🔥 **Streak System** — Daily streaks with smart goal tracking via `daily_progress` table
-- 🏆 **Gamification** — Points, levels (Beginner→Legend), badges, leaderboard
-- 📊 **Analytics Dashboard** — Subject-wise progress rings, accuracy trends, peer comparison
-- ⏰ **Exam Countdown** — Dynamic countdown to JEE/NEET with urgency colors
-- 👥 **Peer Comparison** — Percentile rank vs all students (scalable COUNT queries)
-- 📝 **Mock Tests** — Full-length tests with detailed results & history
-- 🔊 **Text-to-Speech & Voice Input** — Accessible learning
-- 💳 **Razorpay Payments** — Subscription plans with referral rewards
-- 📱 **PWA + Capacitor** — Installable app, Play Store ready
-- 🌙 **Dark Mode** — Full dark mode support across all screens
-- 🎓 **Onboarding Tutorial** — 3-step guided tour for new users
+- 🤖 **AI Doubt Solver** — Instant conceptual help with Google Gemini and KaTeX-backed math rendering
+- 📚 **Adaptive Practice** — Chapter/topic filtering, subject tests, and difficulty adjustment
+- 🎯 **Daily Goals & Limits** — Free users get daily question caps, Pro users enjoy unlimited practice
+- 🔥 **Streak System** — Point-backed streaks and daily progress tracking
+- 🏆 **Gamification** — Levels, badges, leaderboard, and study incentives
+- 📊 **Analytics Dashboard** — Visual mastery and accuracy tracking
+- 📝 **Mock Tests** — Full-length tests with reporting and review flow
+- 📱 **PWA + Capacitor** — Installable web app with mobile support
+- 🌙 **Dark Mode** — System-aware theme support
 
 ### Educator Features
-- 📄 **Content Management** — Upload PDFs, videos, simulations
-- 📋 **Group Tests** — Create tests with QR code join links
-- 📊 **Student Analytics** — Track batch performance
+- 📄 **Content Management** — Manage batches, chapters, topics, and questions
+- 📋 **Group Tests** — Create shareable group tests with QR and join links
+- 📊 **Student Analytics** — Track batch performance and summaries
 
 ### Admin Features
-- 👤 **User Management** — Roles (student/educator/admin), bulk operations
-- 📥 **PDF Question Extraction** — AI-powered question import
-- 🏷️ **Batch Management** — Course batches with subject assignments
-- 🔧 **Feature Flags** — Gradual feature rollout
-- 📢 **Push Notifications** — Send targeted notifications
+- 👤 **User & Role Management** — Admin, educator, and student access control
+- 🏷️ **Batches & Content Manager** — Unified course content with synced JEE/NEET Physics and Chemistry chapters
+- 📥 **PDF Question Extraction** — AI-assisted import of question banks
+- 📢 **Announcements & Notifications** — Send targeted updates to users
+- 🔧 **Feature Flags** — Controlled feature rollout and experimentation
 
 ---
 
@@ -44,23 +38,23 @@ A comprehensive, production-ready learning platform for JEE/NEET aspirants with 
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18 + TypeScript + Vite 7 + Tailwind CSS |
+| Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
 | Backend | Supabase (PostgreSQL + Edge Functions + Auth) |
-| AI | Google Gemini API + OpenAI (TTS) |
+| AI | Google Gemini + OpenAI |
 | Payments | Razorpay |
 | Mobile | Capacitor (Android/iOS) + PWA |
-| Analytics | Mixpanel |
-| Monitoring | Sentry |
+| Testing | Vitest + Playwright |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Local Setup
 
 ### Prerequisites
-- Node.js 18+ and npm
-- Supabase project (ref: `ngduavjaiqyiqjzelfpl`)
+- Node.js 18+
+- npm
+- Supabase project configured with environment variables
 
-### Setup
+### Install & Run
 
 ```bash
 npm install
@@ -68,18 +62,29 @@ cp .env.example .env.local
 npm run dev
 ```
 
-### Environment Variables
+### Useful Commands
+
+```bash
+npm run dev           # Start local development server
+npm run build         # Create production build
+npm run preview       # Preview production build
+npm run lint          # Run ESLint
+npm run typecheck     # Run TypeScript checks
+npm run check         # Run lint + typecheck
+npm test              # Run Vitest unit tests
+```
+
+---
+
+## ✅ Recommended Environment Variables
 
 ```env
-VITE_SUPABASE_URL="https://ngduavjaiqyiqjzelfpl.supabase.co"
-VITE_SUPABASE_ANON_KEY="your_anon_key"
+VITE_SUPABASE_URL="https://your-supabase-project.supabase.co"
+VITE_SUPABASE_ANON_KEY="your_supabase_anon_key"
 VITE_RAZORPAY_KEY_ID="your_razorpay_key"
 ```
 
-Backend secrets are configured via **Supabase Dashboard → Settings → Secrets**:
-- `GEMINI_API_KEY` — Google Gemini for AI features
-- `OPENAI_API_KEY` — OpenAI for Text-to-Speech
-- `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` — Payment processing
+Sensitive keys such as `GEMINI_API_KEY`, `OPENAI_API_KEY`, and Razorpay keys should be configured through your Supabase secrets.
 
 ---
 
@@ -87,88 +92,41 @@ Backend secrets are configured via **Supabase Dashboard → Settings → Secrets
 
 ```
 src/
-├── components/         # Reusable UI components
-│   ├── admin/          # Admin dashboard components
-│   ├── educator/       # Educator tools
-│   ├── gamification/   # Badges, points
-│   ├── landing/        # Landing page sections
-│   ├── mobile/         # Mobile navigation
-│   ├── study-planner/  # AI study planner widgets
-│   └── ui/             # shadcn/ui components
+├── components/         # Reusable UI and admin components
+│   ├── admin/          # Admin dashboard tools
+│   ├── educator/       # Educator-facing workflows
+│   ├── ui/             # Shared UI primitives
 ├── pages/              # Route pages
 ├── hooks/              # Custom React hooks
-├── services/           # API services & business logic
-│   ├── api/            # API client modules
-│   └── nlp/            # NLP/curriculum matching
-├── contexts/           # React contexts (Auth, FeatureFlags)
+├── services/           # External service integration and API logic
+├── contexts/           # React providers and auth context
 ├── config/             # App configuration
-├── constants/          # Unified constants
-├── utils/              # Utility functions
-└── integrations/       # Supabase client & types
+├── constants/          # Shared constants and enums
+├── utils/              # Utility helpers
+└── integrations/       # Supabase and external integrations
 
 supabase/
-├── functions/          # 15+ Edge Functions
+├── functions/          # Edge functions
 ├── migrations/         # Database migrations
-└── config.toml         # Supabase config
+└── config.toml         # Supabase configuration
 ```
 
 ---
 
-## 🔧 Available Commands
+## 📘 Notes
 
-```bash
-npm run dev           # Start dev server (port 5173)
-npm run build         # Production build
-npm run preview       # Preview production build
-npm run lint          # ESLint
-npm run typecheck     # TypeScript check
-npm run check         # Lint + TypeCheck
-npm test              # Run Vitest tests
-```
+- The admin content manager supports shared Physics and Chemistry chapter metadata across JEE and NEET when these subjects are managed together.
+- KaTeX math rendering has been tuned to avoid red error artifacts in questions, options, and explanations.
+- The app supports both exam-specific content and shared senior-secondary chapter views.
 
 ---
 
-## 📱 Play Store Deployment
+## 🔐 Security Practices
 
-### Option A: TWA (Easiest — No Code)
-1. Deploy to [jeenie.website](https://jeenie.website) via Vercel
-2. Go to [pwabuilder.com](https://www.pwabuilder.com) → enter URL
-3. Download Android `.aab` bundle
-4. Upload to [Google Play Console](https://play.google.com/console) (₹2,100 one-time)
-
-### Option B: Capacitor Native
-```bash
-npm run build
-npx cap sync android
-# Open in Android Studio → Build → Generate Signed Bundle
-```
-
----
-
-## 🗄️ Key Database Tables
-
-| Table | Purpose |
-|-------|---------|
-| `profiles` | User profiles, streaks, points, subscription |
-| `questions` / `questions_public` | Question bank (public view for students) |
-| `question_attempts` | Practice mode attempts |
-| `test_sessions` / `test_attempts` | Test mode data |
-| `daily_progress` | Daily question counts, accuracy, goal tracking |
-| `topic_mastery` | Per-topic mastery levels |
-| `batches` / `chapters` / `topics` | Content hierarchy |
-| `group_tests` | Educator-created group tests |
-| `payments` | Razorpay payment records |
-| `user_roles` | Role-based access (student/educator/admin) |
-
----
-
-## 🔐 Security
-
-- Row-Level Security (RLS) on all tables
-- `user_roles` table for RBAC (never stored on profiles)
-- `has_role()` security-definer function prevents recursive RLS
-- `protect_premium_fields` trigger prevents client-side premium manipulation
-- PKCE OAuth flow for Google login
+- Row-Level Security (RLS) on core tables
+- RBAC via `user_roles`
+- Secure auth via Supabase Auth and session handling
+- Protected premium and admin-only features via server-side policies
 
 ---
 
@@ -178,6 +136,4 @@ MIT License — See [LICENSE](LICENSE)
 
 ---
 
-**Domain**: jeenie.website  
-**Support**: support@jeenie.website  
-**Maintainer**: JEEnie Team
+**Support**: support@jeenie.website

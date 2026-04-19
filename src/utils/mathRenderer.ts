@@ -191,7 +191,7 @@ function renderWithKatex(latex: string, displayMode: boolean = false): string {
     return katex.renderToString(latex.trim(), {
       displayMode,
       throwOnError: false,
-      errorColor: '#cc0000',
+      errorColor: 'inherit',
       strict: false,
       trust: true,
       output: 'html'

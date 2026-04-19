@@ -201,29 +201,33 @@ export const UnifiedContentManager = () => {
 
   // ─── Batch Helper ─────────────────────────────────────────────────────────
 
-  const getOrCreateBatch = useCallback(async (grade: number): Promise<Batch | null> => {
-    const examType = getExamTypeForGrade(grade, grade >= 11 ? selectedExamType : null);
-    let batch = batches.find(b => b.grade === grade && b.exam_type === examType);
+  const getOrCreateBatch = useCallback(async (grade: number, examType: string | null = null): Promise<Batch | null> => {
+    const resolvedExamType = getExamTypeForGrade(grade, grade >= 11 ? examType : null);
+    let batch = batches.find(b => b.grade === grade && b.exam_type === resolvedExamType);
     if (batch) return batch;
 
     try {
-      const batchName = grade >= 11 
-        ? `Grade ${grade} - ${examType}` 
+      const batchName = grade >= 11
+        ? `Grade ${grade} - ${resolvedExamType}`
         : `Foundation Grade ${grade}`;
 
       const { data: newBatch, error } = await supabase
         .from('batches')
         .insert({
-          name: batchName, exam_type: examType, grade,
+          name: batchName,
+          exam_type: resolvedExamType,
+          grade,
           description: `${batchName} Study Material`,
-          is_active: true, is_free: true, display_order: grade,
+          is_active: true,
+          is_free: true,
+          display_order: grade,
         })
         .select('id, name, exam_type, grade')
         .single();
 
       if (error) throw error;
 
-      const subjects = getSubjectsForGrade(grade, grade >= 11 ? examType : null);
+      const subjects = getSubjectsForGrade(grade, grade >= 11 ? resolvedExamType : null);
       await supabase.from('batch_subjects').insert(
         subjects.map((subject, i) => ({ batch_id: newBatch.id, subject, display_order: i + 1 }))
       );
@@ -237,6 +241,22 @@ export const UnifiedContentManager = () => {
       return null;
     }
   }, [batches, selectedExamType]);
+
+  const getOrCreateBatchesForCurrentSelection = useCallback(async (): Promise<Batch[]> => {
+    if (selectedGrade < 11) {
+      const batch = await getOrCreateBatch(selectedGrade, null);
+      return batch ? [batch] : [];
+    }
+
+    if (['Physics', 'Chemistry'].includes(selectedSubject)) {
+      const batchTypes = ['JEE', 'NEET'] as const;
+      const created = await Promise.all(batchTypes.map((type) => getOrCreateBatch(selectedGrade, type)));
+      return created.filter(Boolean) as Batch[];
+    }
+
+    const batch = await getOrCreateBatch(selectedGrade, selectedExamType);
+    return batch ? [batch] : [];
+  }, [getOrCreateBatch, selectedExamType, selectedGrade, selectedSubject]);
 
   // ─── Data Fetching ────────────────────────────────────────────────────────
 
@@ -484,30 +504,35 @@ export const UnifiedContentManager = () => {
 
   const handleSaveChapter = async () => {
     if (!chapterForm.chapter_name.trim()) { toast.error('Chapter name is required'); return; }
-    const batch = await getOrCreateBatch(selectedGrade);
-    if (!batch) return;
 
     try {
       if (editingChapter) {
+        const chapterIds = editingChapter.sourceChapterIds || [editingChapter.id];
         const { error } = await supabase.from('chapters').update({
           chapter_name: chapterForm.chapter_name,
           chapter_number: chapterForm.chapter_number,
           description: chapterForm.description || null,
           is_free: chapterForm.is_free
-        }).eq('id', editingChapter.id);
+        }).in('id', chapterIds);
         if (error) throw error;
         toast.success('Chapter updated');
       } else {
-        const { error } = await supabase.from('chapters').insert({
+        const batchesToUse = await getOrCreateBatchesForCurrentSelection();
+        if (batchesToUse.length === 0) return;
+
+        const inserts = batchesToUse.map((batch) => ({
           chapter_name: chapterForm.chapter_name,
           chapter_number: chapterForm.chapter_number,
           subject: selectedSubject,
           description: chapterForm.description || null,
           is_free: chapterForm.is_free,
           batch_id: batch.id
-        });
+        }));
+
+        const { error } = await supabase.from('chapters').insert(inserts);
         if (error) throw error;
-        toast.success('Chapter added');
+        const addedLabel = batchesToUse.length > 1 ? ' (synced across JEE + NEET)' : '';
+        toast.success(`Chapter added${addedLabel}`);
       }
       setChapterDialogOpen(false);
       fetchChapters();
@@ -519,9 +544,14 @@ export const UnifiedContentManager = () => {
 
   const handleDeleteChapter = async (ch: Chapter) => {
     const count = chapterQuestionCounts[ch.id] || 0;
-    if (!confirm(`Delete "${ch.chapter_name}"? This will delete all its topics and ${count} question(s).`)) return;
+    const chapterIds = ch.sourceChapterIds || [ch.id];
+    const confirmMessage = chapterIds.length > 1
+      ? `Delete "${ch.chapter_name}" across JEE + NEET? This will delete all its topics and ${count} question(s).`
+      : `Delete "${ch.chapter_name}"? This will delete all its topics and ${count} question(s).`;
+
+    if (!confirm(confirmMessage)) return;
     try {
-      const { error } = await supabase.from('chapters').delete().eq('id', ch.id);
+      const { error } = await supabase.from('chapters').delete().in('id', chapterIds);
       if (error) throw error;
       toast.success('Chapter deleted');
       if (selectedChapter?.id === ch.id) { setSelectedChapter(null); setViewMode('chapters'); }
@@ -535,21 +565,48 @@ export const UnifiedContentManager = () => {
   // ─── Move Chapter to Another Grade ────────────────────────────────────────
 
   const moveChapterToGrade = async (ch: Chapter, targetGrade: number) => {
-    const examType = getExamTypeForGrade(targetGrade, targetGrade >= 11 ? selectedExamType : null);
-    // Find or create target batch
-    let targetBatch = batches.find(b => b.grade === targetGrade && b.exam_type === examType);
-    if (!targetBatch) {
-      const created = await getOrCreateBatch(targetGrade);
-      if (!created) return;
-      targetBatch = created;
+    const chapterIds = ch.sourceChapterIds || [ch.id];
+    const { data: chapterRows, error: chapterError } = await supabase
+      .from('chapters')
+      .select('id,batch_id')
+      .in('id', chapterIds);
+
+    if (chapterError) {
+      logger.error('Error fetching chapter batch data:', chapterError);
+      toast.error('Failed to move chapter');
+      return;
     }
 
+    const batchIds = Array.from(new Set(chapterRows?.map((row) => row.batch_id).filter(Boolean) as string[]));
+    const { data: batchRows, error: batchError } = batchIds.length > 0
+      ? await supabase.from('batches').select('id,exam_type').in('id', batchIds)
+      : { data: [], error: null };
+
+    if (batchError) {
+      logger.error('Error fetching batch info for move:', batchError);
+      toast.error('Failed to move chapter');
+      return;
+    }
+
+    const batchById = new Map(batchRows?.map((batch) => [batch.id, batch.exam_type]));
+
     try {
-      // Move chapter to new batch
-      const { error } = await supabase.from('chapters').update({ batch_id: targetBatch.id }).eq('id', ch.id);
-      if (error) throw error;
-      // Move all questions in this chapter to the new batch
-      await supabase.from('questions').update({ batch_id: targetBatch.id }).eq('chapter_id', ch.id);
+      const updatePromises = chapterRows?.map(async (chapterRow) => {
+        const currentExamType = chapterRow.batch_id ? batchById.get(chapterRow.batch_id) : selectedExamType;
+        const targetExamType = targetGrade >= 11 ? currentExamType || selectedExamType : null;
+        const targetBatch = targetGrade < 11
+          ? (await getOrCreateBatch(targetGrade, null))
+          : (await getOrCreateBatch(targetGrade, targetExamType));
+
+        if (!targetBatch) {
+          throw new Error('Unable to resolve target batch');
+        }
+
+        await supabase.from('chapters').update({ batch_id: targetBatch.id }).eq('id', chapterRow.id);
+        await supabase.from('questions').update({ batch_id: targetBatch.id }).eq('chapter_id', chapterRow.id);
+      }) || [];
+
+      await Promise.all(updatePromises);
       toast.success(`"${ch.chapter_name}" moved to Grade ${targetGrade}`);
       fetchChapters();
     } catch (e: any) {
@@ -873,6 +930,11 @@ export const UnifiedContentManager = () => {
               </CardTitle>
               <CardDescription>
                 {selectedSubject} chapters for Grade {selectedGrade}
+                {selectedGrade >= 11 && ['Physics', 'Chemistry'].includes(selectedSubject)
+                  ? ' (shared across JEE + NEET)'
+                  : selectedGrade >= 11
+                    ? ` (${selectedExamType})`
+                    : ''}
               </CardDescription>
             </div>
             <Button size="sm" onClick={openAddChapter}>
