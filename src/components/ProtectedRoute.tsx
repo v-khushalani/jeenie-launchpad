@@ -38,12 +38,39 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       abortRef.current = new AbortController();
 
       try {
+        // ✅ FIX 1: Check recent goal save confirmation first (prevents race condition loops)
+        const recentSaveConfirmed = sessionStorage.getItem('_goalSaveConfirmed');
+        if (recentSaveConfirmed) {
+          try {
+            const saveInfo = JSON.parse(recentSaveConfirmed);
+            // If save was less than 30 seconds ago, trust it
+            if (Date.now() - saveInfo.timestamp < 30000) {
+              logger.info('Goal save recently confirmed, skipping DB check');
+              setNeedsGoalSelection(false);
+              setGoalsChecked(true);
+              return;
+            }
+          } catch (e) {
+            logger.warn('Could not parse goal save confirmation');
+          }
+        }
+
+        // ✅ FIX 2: Check sessionStorage completion flag first (bypass DB queries during sync)
+        const goalSelectionComplete = sessionStorage.getItem('goalSelectionComplete') === 'true';
+        if (goalSelectionComplete) {
+          logger.info('Goal selection marked complete in sessionStorage, allowing access');
+          setNeedsGoalSelection(false);
+          setGoalsChecked(true);
+          return;
+        }
+
         // Check localStorage cache first
         const cachedGoals = localStorage.getItem('userGoals');
         if (cachedGoals) {
           try {
             const goals = JSON.parse(cachedGoals);
             if (goals?.goal && goals?.grade) {
+              logger.info('Using cached user goals');
               setNeedsGoalSelection(false);
               setGoalsChecked(true);
               return;
@@ -51,14 +78,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           } catch {
             // Invalid cached goals — fall through
           }
-        }
-
-        // Check session flag — don't remove it so re-mounts still see it
-        const goalSelectionComplete = sessionStorage.getItem('goalSelectionComplete') === 'true';
-        if (goalSelectionComplete) {
-          setNeedsGoalSelection(false);
-          setGoalsChecked(true);
-          return;
         }
 
         // Query profile with timeout
@@ -78,12 +97,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         const { data: profile, error } = result;
 
         if (error && error.code === 'TIMEOUT') {
-          logger.warn('Goal check timed out — allowing access');
-          setNeedsGoalSelection(false);
+          logger.warn('Goal check timed out — allowing access (trust client state if available)');
+          // ✅ FIX 3: If timeout, check if we have any local indication of goal completion
+          if (goalSelectionComplete || cachedGoals) {
+            setNeedsGoalSelection(false);
+          } else {
+            // Without any local confirmation, allow access to avoid blocking the user
+            // The route itself will handle redirects if needed
+            setNeedsGoalSelection(false);
+          }
         } else if (error && error.code !== 'PGRST116') {
           logger.error('Error checking goals:', error);
           setNeedsGoalSelection(false);
-        } else if (!isGoalComplete(profile || {})) {
+        } else if (error?.code === 'PGRST116' || !profile) {
+          // No profile found - user is new and needs goal selection
+          setNeedsGoalSelection(true);
+        } else if (!isGoalComplete(profile)) {
           setNeedsGoalSelection(true);
         } else {
           // Profile is complete — cache for next visit

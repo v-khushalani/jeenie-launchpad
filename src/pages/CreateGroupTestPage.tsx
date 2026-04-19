@@ -167,7 +167,7 @@ const CreateGroupTestPage = () => {
       let questionIds: string[] = [];
 
       if (groupTestType === "custom") {
-        let query = supabase.from("questions").select("id");
+        let query = supabase.from("questions").select("id").eq('is_active', true);
         if (batch?.id) query = query.eq("batch_id", batch.id);
 
         if (selectedChapters.length > 0) {
@@ -202,6 +202,7 @@ const CreateGroupTestPage = () => {
             .select("id")
             .in("exam", preset.examAliases)
             .eq("subject", subject)
+            .eq('is_active', true)
             .limit(perSubjectConfig.questionsPerSubject * 3);
 
           if (subjectError) throw subjectError;

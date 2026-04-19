@@ -18,9 +18,11 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
       {options.map((opt) => (
         <button
           key={opt}
+          type="button"
           onClick={() => onSelect(opt)}
+          aria-pressed={selected === opt}
           className={cn(
-            'whitespace-nowrap rounded-full border font-medium transition-all shrink-0',
+            'whitespace-nowrap rounded-full border font-medium transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
             size === 'sm' ? 'px-3 py-1 text-xs' : 'px-4 py-1.5 text-sm',
             selected === opt
               ? 'bg-primary text-primary-foreground border-primary shadow-sm'

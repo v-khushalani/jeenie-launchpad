@@ -511,7 +511,8 @@ const TestPage = () => {
           let query = supabase.from('questions').select('*')
             .eq('exam', pyqExam)
             .eq('year', parseInt(pyqYear))
-            .eq('subject', subject);
+            .eq('subject', subject)
+            .eq('is_active', true);
 
           if (attemptedIds.length > 0) {
             query = query.not('id', 'in', `(${attemptedIds.join(',')})`);
@@ -611,7 +612,7 @@ const TestPage = () => {
         const allSelected: any[] = [];
         for (const subject of pattern.subjects) {
           const config = pattern.subjectConfig[subject];
-          let query = supabase.from('questions').select('*').eq('exam', examFieldForTest).eq('subject', subject);
+          let query = supabase.from('questions').select('*').eq('exam', examFieldForTest).eq('subject', subject).eq('is_active', true);
 
           if (testBatch?.id) {
             query = query.eq('batch_id', testBatch.id);
@@ -722,7 +723,7 @@ const TestPage = () => {
       logger.info('Chapter/Subject test exam field', { targetExam, examFieldForTest, userGrade, batchId: chapterTestBatch?.id });
       
       const questions = await fetchAllPaginated(() => {
-        let query = supabase.from('questions').select('*').eq('exam', examFieldForTest);
+        let query = supabase.from('questions').select('*').eq('exam', examFieldForTest).eq('is_active', true);
 
         if (chapterTestBatch?.id) {
           query = query.eq('batch_id', chapterTestBatch.id);

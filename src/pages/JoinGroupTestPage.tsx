@@ -223,13 +223,14 @@ const JoinGroupTestPage = () => {
 
     setJoining(true);
     try {
-      // Fetch full question data using question_ids
+      // Fetch full question data using question_ids (excluding inactive/reported questions)
       const questionIds = groupTest.question_ids;
       
       const { data: questions, error } = await supabase
         .from("questions")
         .select("*")
-        .in("id", questionIds);
+        .in("id", questionIds)
+        .eq('is_active', true);
 
       if (error) throw error;
 

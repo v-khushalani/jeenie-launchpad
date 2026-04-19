@@ -45,6 +45,7 @@ interface Chapter {
   description: string | null;
   is_free: boolean | null;
   batch_id: string | null;
+  sourceChapterIds?: string[];
 }
 
 interface Topic {
@@ -53,6 +54,7 @@ interface Topic {
   topic_number: number | null;
   topic_name: string;
   description?: string | null;
+  sourceTopicIds?: string[];
 }
 
 interface Question {
@@ -247,53 +249,87 @@ export const UnifiedContentManager = () => {
     if (!error) setBatches(data || []);
   }, []);
 
+  const getChapterSubjectGroup = useCallback(() => {
+    if (selectedGrade >= 11 && ['Physics', 'Chemistry'].includes(selectedSubject)) {
+      return [selectedSubject];
+    }
+    return [selectedSubject];
+  }, [selectedGrade, selectedSubject]);
+
+  const dedupeChapters = useCallback((chapterRows: Chapter[]) => {
+    const seen = new Map<string, Chapter>();
+    chapterRows.forEach((row) => {
+      const key = `${row.chapter_number}:${row.chapter_name.trim().toLowerCase()}`;
+      const existing = seen.get(key);
+      if (!existing) {
+        seen.set(key, { ...row, sourceChapterIds: [row.id] });
+      } else {
+        existing.sourceChapterIds = [...new Set([...(existing.sourceChapterIds || [existing.id]), row.id])];
+      }
+    });
+    return Array.from(seen.values()).sort((a, b) => a.chapter_number - b.chapter_number);
+  }, []);
+
+  const getRelevantBatchIds = useCallback(() => {
+    if (selectedGrade < 11) {
+      const batch = batches.find(b => b.grade === selectedGrade && b.exam_type === getExamTypeForGrade(selectedGrade, null));
+      return batch ? [batch.id] : [];
+    }
+
+    if (['Physics', 'Chemistry'].includes(selectedSubject)) {
+      const gradeBatches = batches.filter(b => b.grade === selectedGrade && ['JEE', 'NEET'].includes(b.exam_type));
+      return gradeBatches.map((b) => b.id);
+    }
+
+    const batch = batches.find(b => b.grade === selectedGrade && b.exam_type === getExamTypeForGrade(selectedGrade, selectedExamType));
+    return batch ? [batch.id] : [];
+  }, [batches, selectedGrade, selectedSubject, selectedExamType]);
+
   const fetchChapters = useCallback(async () => {
     setLoading(true);
     try {
-      const examType = getExamTypeForGrade(selectedGrade, selectedGrade >= 11 ? selectedExamType : null);
-      const batch = batches.find(b => b.grade === selectedGrade && b.exam_type === examType);
-      if (!batch) {
-        // No batch yet — show empty to prompt creation
-        const { data } = await supabase
-          .from('chapters')
-          .select('*')
-          .eq('subject', selectedSubject)
-          .is('batch_id', null)
-          .order('chapter_number');
-        setChapters(data || []);
+      const batchIds = getRelevantBatchIds();
+      const chapterSubjects = getChapterSubjectGroup();
+      const query = supabase.from('chapters').select('*').in('subject', chapterSubjects as string[]).order('chapter_number');
+      if (batchIds.length > 0) {
+        query.in('batch_id', batchIds);
       } else {
-        const { data } = await supabase
-          .from('chapters')
-          .select('*')
-          .eq('batch_id', batch.id)
-          .eq('subject', selectedSubject)
-          .order('chapter_number');
-        setChapters(data || []);
+        query.is('batch_id', null);
       }
+      const { data } = await query;
+      setChapters(dedupeChapters(data || []));
     } catch (e) {
       logger.error('Error fetching chapters:', e);
     } finally {
       setLoading(false);
     }
-  }, [batches, selectedGrade, selectedSubject, selectedExamType]);
+  }, [getChapterSubjectGroup, getRelevantBatchIds, dedupeChapters]);
 
   const fetchChapterQuestionCounts = useCallback(async () => {
-    const chapterIds = chapters.map(c => c.id);
-    if (chapterIds.length === 0) { setChapterQuestionCounts({}); return; }
+    const sourceIds = chapters.flatMap((c) => c.sourceChapterIds || [c.id]);
+    if (sourceIds.length === 0) { setChapterQuestionCounts({}); return; }
+
+    const chapterMapping = new Map<string, string>();
+    chapters.forEach((c) => {
+      const ids = c.sourceChapterIds || [c.id];
+      ids.forEach((id) => chapterMapping.set(id, c.id));
+    });
 
     try {
-      // Paginated fetch to avoid Supabase 1000-row cap
       const data = await fetchAllPaginated(() =>
         supabase
           .from('questions')
           .select('chapter_id')
-          .in('chapter_id', chapterIds)
+          .in('chapter_id', sourceIds)
       );
       
       const counts: Record<string, number> = {};
-      chapterIds.forEach(id => { counts[id] = 0; });
+      chapters.forEach((c) => { counts[c.id] = 0; });
       data?.forEach(q => {
-        if (q.chapter_id) counts[q.chapter_id] = (counts[q.chapter_id] || 0) + 1;
+        if (q.chapter_id) {
+          const canonicalId = chapterMapping.get(q.chapter_id) || q.chapter_id;
+          counts[canonicalId] = (counts[canonicalId] || 0) + 1;
+        }
       });
       setChapterQuestionCounts(counts);
     } catch (e) {
@@ -301,43 +337,66 @@ export const UnifiedContentManager = () => {
     }
   }, [chapters]);
 
+  const dedupeTopics = useCallback((topicRows: Topic[]) => {
+    const seen = new Map<string, Topic>();
+    topicRows.forEach((row) => {
+      const key = `${row.topic_number}:${row.topic_name.trim().toLowerCase()}`;
+      const existing = seen.get(key);
+      if (!existing) {
+        seen.set(key, { ...row, sourceTopicIds: [row.id] });
+      } else {
+        existing.sourceTopicIds = [...new Set([...(existing.sourceTopicIds || [existing.id]), row.id])];
+      }
+    });
+    return Array.from(seen.values()).sort((a, b) => (a.topic_number ?? 0) - (b.topic_number ?? 0));
+  }, []);
+
   const fetchTopics = useCallback(async () => {
     if (!selectedChapter) { setTopics([]); return; }
     setLoading(true);
     try {
+      const chapterIds = selectedChapter.sourceChapterIds || [selectedChapter.id];
       const { data } = await supabase
         .from('topics')
         .select('*')
-        .eq('chapter_id', selectedChapter.id)
+        .in('chapter_id', chapterIds)
         .order('topic_number');
-      setTopics(data || []);
+      setTopics(dedupeTopics(data || []));
     } catch (e) {
       logger.error('Error fetching topics:', e);
     } finally {
       setLoading(false);
     }
-  }, [selectedChapter]);
+  }, [selectedChapter, dedupeTopics]);
 
   const fetchTopicQuestionCounts = useCallback(async () => {
     if (!selectedChapter) return;
-    const topicIds = topics.map(t => t.id);
+    const topicIds = topics.flatMap((t) => t.sourceTopicIds || [t.id]);
     if (topicIds.length === 0) { setTopicQuestionCounts({}); return; }
+
+    const topicMapping = new Map<string, string>();
+    topics.forEach((t) => {
+      const ids = t.sourceTopicIds || [t.id];
+      ids.forEach((id) => topicMapping.set(id, t.id));
+    });
+
     try {
-      // Paginated fetch to avoid Supabase 1000-row cap
+      const chapterIds = selectedChapter.sourceChapterIds || [selectedChapter.id];
       const data = await fetchAllPaginated(() =>
         supabase
           .from('questions')
           .select('topic_id')
-          .eq('chapter_id', selectedChapter.id)
+          .in('chapter_id', chapterIds)
       );
       
       const counts: Record<string, number> = {};
-      topicIds.forEach(id => { counts[id] = 0; });
+      topics.forEach((t) => { counts[t.id] = 0; });
       counts['__chapter_only__'] = 0;
       
       data?.forEach(q => {
-        if (q.topic_id && counts[q.topic_id] !== undefined) {
-          counts[q.topic_id]++;
+        if (q.topic_id && topicMapping.has(q.topic_id)) {
+          const canonicalId = topicMapping.get(q.topic_id)!;
+          counts[canonicalId] = (counts[canonicalId] || 0) + 1;
         } else if (!q.topic_id) {
           counts['__chapter_only__']++;
         }
@@ -354,9 +413,11 @@ export const UnifiedContentManager = () => {
       let query = supabase.from('questions').select('*', { count: 'exact' });
 
       if (selectedTopic) {
-        query = query.eq('topic_id', selectedTopic.id);
+        const topicIds = selectedTopic.sourceTopicIds || [selectedTopic.id];
+        query = query.in('topic_id', topicIds);
       } else if (selectedChapter) {
-        query = query.eq('chapter_id', selectedChapter.id);
+        const chapterIds = selectedChapter.sourceChapterIds || [selectedChapter.id];
+        query = query.in('chapter_id', chapterIds);
       }
 
       if (searchQuery.trim()) {
@@ -756,10 +817,11 @@ export const UnifiedContentManager = () => {
       </div>
 
       {/* Grade + Exam Type + Subject Selectors — FilterPills */}
-      <div className="space-y-3">
-        <div>
+      <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-[auto_auto_1fr] items-end">
+        <div className="min-w-0">
           <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Grade</Label>
           <FilterPills
+            className="min-w-0"
             options={GRADES.map(g => `Grade ${g}`)}
             selected={`Grade ${selectedGrade}`}
             onSelect={v => setSelectedGrade(Number(v.replace('Grade ', '')))}
@@ -767,9 +829,10 @@ export const UnifiedContentManager = () => {
           />
         </div>
         {selectedGrade >= 11 && (
-          <div>
+          <div className="min-w-0">
             <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Exam</Label>
             <FilterPills
+              className="min-w-0"
               options={[...SENIOR_EXAM_TYPES]}
               selected={selectedExamType}
               onSelect={setSelectedExamType}
@@ -777,9 +840,10 @@ export const UnifiedContentManager = () => {
             />
           </div>
         )}
-        <div>
+        <div className="min-w-0">
           <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Subject</Label>
           <FilterPills
+            className="min-w-0"
             options={getSubjectsForGrade(selectedGrade, selectedGrade >= 11 ? selectedExamType : null)}
             selected={selectedSubject}
             onSelect={setSelectedSubject}

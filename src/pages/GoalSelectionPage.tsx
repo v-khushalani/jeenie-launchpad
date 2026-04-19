@@ -70,6 +70,19 @@ const GoalSelectionPage = () => {
       try {
         redirectCheckedRef.current = true;
         
+        // ✅ FIX: Check local completion flag first (fast path for recent saves)
+        const recentSaveConfirmed = sessionStorage.getItem('_goalSaveConfirmed');
+        if (recentSaveConfirmed) {
+          try {
+            const saveInfo = JSON.parse(recentSaveConfirmed);
+            if (Date.now() - saveInfo.timestamp < 30000) {
+              setIsLoading(false);
+              navigate('/dashboard', { replace: true });
+              return;
+            }
+          } catch { /* invalid save info */ }
+        }
+
         const cachedGoals = localStorage.getItem('userGoals');
         if (cachedGoals) {
           try {
@@ -188,6 +201,7 @@ const GoalSelectionPage = () => {
 
   const handleStartJourney = () => {
     if (!selectedExam || !selectedGrade) return;
+    // ✅ FIX: Show welcome dialog
     setShowWelcomeDialog(true);
   };
 
@@ -286,11 +300,24 @@ const GoalSelectionPage = () => {
         createdAt: new Date().toISOString(),
       };
       localStorage.setItem('userGoals', JSON.stringify(userGoals));
+      
+      // ✅ CRITICAL FIX: Set completion flag BEFORE navigation to prevent redirect loops
+      // This flag is checked first in ProtectedRoute to bypass DB queries during race conditions
       sessionStorage.setItem('goalSelectionComplete', 'true');
+      
+      // ✅ Also set this flag so ProtectedRoute doesn't redirect back to goal selection
+      sessionStorage.setItem('_goalSaveConfirmed', JSON.stringify({
+        exam: selectedExam,
+        grade: selectedGrade,
+        timestamp: Date.now()
+      }));
 
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Small delay to ensure sessionStorage is written
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       setIsStartingJourney(false);
-      // Redirect to diagnostic quiz for first-time users
+      
+      // ✅ Redirect to diagnostic quiz for first-time users
       const diagnosticDone = localStorage.getItem('diagnosticComplete');
       if (diagnosticDone) {
         navigate('/dashboard', { replace: true });
